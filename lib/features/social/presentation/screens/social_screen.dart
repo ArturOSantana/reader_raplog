@@ -254,6 +254,25 @@ class _FeedEventContent extends StatelessWidget {
             if (item.goalDescription != null) item.goalDescription!,
           ],
         );
+      case FeedEventType.readingSession:
+        return _EventCard(
+          emoji: '📖',
+          color: AppColors.forestGreenLight,
+          lines: [
+            'Terminou uma sessão',
+            if (item.bookTitle != null) item.bookTitle!,
+            if (item.pagesRead != null && item.pagesRead! > 0)
+              '${item.pagesRead} páginas · ${item.readingTimeLabel}',
+            if (item.streakDays != null && item.streakDays! > 1)
+              '🔥 ${item.streakDays} dias de ofensiva',
+          ],
+        );
+      case FeedEventType.joinedClub:
+        return _EventCard(
+          emoji: '📚',
+          color: AppColors.warmGoldLight,
+          lines: ['Entrou em um clube de leitura'],
+        );
     }
   }
 }

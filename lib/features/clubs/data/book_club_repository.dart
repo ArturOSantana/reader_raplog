@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../shared/models/book_club.dart';
+import '../../../shared/models/club_extras.dart';
+import '../../../shared/models/social_feed.dart';
 
 class BookClubRepository {
   final SupabaseClient _client;
@@ -16,6 +18,8 @@ class BookClubRepository {
         .select(
           'role, club:book_clubs(id, name, description, cover_url, '
           'current_book_id, current_book_title, current_book_author, '
+          'current_book_status, reading_pace_pages_per_day, '
+          'reading_target_end_date, reading_started_at, '
           'status, closed_at, visibility, invite_code, '
           'max_admins, admins_can_promote, created_at)',
         )
@@ -496,5 +500,132 @@ class BookClubRepository {
 
   Future<void> deletePoll(String pollId) async {
     await _client.from('club_book_polls').delete().eq('id', pollId);
+  }
+
+  // ── Feed do clube ─────────────────────────────────────────────────────────
+
+  Future<List<FeedItem>> fetchClubFeed(String clubId,
+      {int limit = 40}) async {
+    final data = await _client
+        .from('social_feed')
+        .select(
+          'id, user_id, event_type, club_id, book_title, book_author, rating, review, '
+          'reading_time_minutes, pages_read, current_page, session_minutes, '
+          'streak_days, achievement_name, goal_description, '
+          'likes_count, comments_count, reactions_summary, created_at, '
+          'profile:profiles!social_feed_user_id_fkey(name, avatar_url)',
+        )
+        .eq('club_id', clubId)
+        .order('created_at', ascending: false)
+        .limit(limit);
+
+    final rows = List<Map<String, dynamic>>.from(data as List);
+    if (rows.isEmpty) return [];
+
+    final ids = rows.map((r) => r['id'] as String).toList();
+    final likesData = await _client
+        .from('feed_likes')
+        .select('feed_id')
+        .eq('user_id', _userId)
+        .filter('feed_id', 'in', '(${ids.map((id) => '"$id"').join(',')})');
+    final likedIds =
+        Set<String>.from((likesData as List).map((e) => e['feed_id']));
+
+    return rows
+        .map((row) =>
+            FeedItem.fromMap({...row, 'liked_by_me': likedIds.contains(row['id'])}))
+        .toList();
+  }
+
+  // ── Pessoas lendo agora ───────────────────────────────────────────────────
+
+  Future<List<ClubReadingNowEntry>> fetchReadingNow(String clubId) async {
+    final data = await _client.rpc(
+      'club_reading_now',
+      params: {'p_club_id': clubId},
+    );
+    return List<Map<String, dynamic>>.from(data as List)
+        .map(ClubReadingNowEntry.fromMap)
+        .toList();
+  }
+
+  // ── Progresso coletivo ────────────────────────────────────────────────────
+
+  Future<ClubReadingProgress?> fetchReadingProgress(String clubId) async {
+    final data = await _client.rpc(
+      'club_reading_progress',
+      params: {'p_club_id': clubId},
+    );
+    final rows = List<Map<String, dynamic>>.from(data as List);
+    if (rows.isEmpty) return null;
+    return ClubReadingProgress.fromMap(rows.first);
+  }
+
+  // ── Ofensiva coletiva ─────────────────────────────────────────────────────
+
+  Future<int> fetchClubStreak(String clubId) async {
+    final result = await _client.rpc(
+      'calculate_club_streak',
+      params: {'p_club_id': clubId},
+    );
+    return (result as num?)?.toInt() ?? 0;
+  }
+
+  // ── Estatísticas do clube ─────────────────────────────────────────────────
+
+  Future<ClubStats?> fetchClubStats(String clubId) async {
+    final data = await _client
+        .from('club_stats')
+        .select()
+        .eq('club_id', clubId)
+        .maybeSingle();
+    if (data == null) return null;
+    return ClubStats.fromMap(
+      clubId,
+      Map<String, dynamic>.from(data as Map),
+    );
+  }
+
+  // ── Ranking do clube ──────────────────────────────────────────────────────
+
+  /// [period]: 'current_book' | 'week' | 'month' | 'all'
+  /// [criteria]: 'pages' | 'minutes' | 'sessions' | 'xp'
+  Future<List<ClubRankingEntry>> fetchRanking(
+    String clubId, {
+    String period = 'all',
+    String criteria = 'xp',
+  }) async {
+    final data = await _client.rpc(
+      'club_ranking',
+      params: {
+        'p_club_id': clubId,
+        'p_period': period,
+        'p_criteria': criteria,
+      },
+    );
+    return List<Map<String, dynamic>>.from(data as List)
+        .map(ClubRankingEntry.fromMap)
+        .toList();
+  }
+
+  // ── Hall da Fama ──────────────────────────────────────────────────────────
+
+  Future<List<ClubHallOfFameEntry>> fetchHallOfFame(String clubId) async {
+    final data = await _client
+        .from('club_hall_of_fame')
+        .select()
+        .eq('club_id', clubId)
+        .order('season_ended_at', ascending: false);
+    return List<Map<String, dynamic>>.from(data as List)
+        .map(ClubHallOfFameEntry.fromMap)
+        .toList();
+  }
+
+  Future<String> closeReadingCycle(String clubId) async {
+    final result = await _client.rpc(
+      'close_reading_cycle',
+      params: {'p_club_id': clubId},
+    );
+    return result as String;
   }
 }

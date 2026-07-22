@@ -62,6 +62,11 @@ class BookClub extends Equatable {
   final String? currentBookTitle;
   final String? currentBookAuthor;
   final String? currentBookId;
+  // Ciclo de leitura
+  final String currentBookStatus; // none|voting|chosen|reading|finished
+  final int? readingPacePerDay;
+  final DateTime? readingTargetEndDate;
+  final DateTime? readingStartedAt;
   final int memberCount;
   final DateTime createdAt;
   final ClubStatus status;
@@ -82,6 +87,10 @@ class BookClub extends Equatable {
     this.currentBookTitle,
     this.currentBookAuthor,
     this.currentBookId,
+    this.currentBookStatus = 'none',
+    this.readingPacePerDay,
+    this.readingTargetEndDate,
+    this.readingStartedAt,
     required this.memberCount,
     required this.createdAt,
     this.status = ClubStatus.active,
@@ -126,6 +135,14 @@ class BookClub extends Equatable {
         currentBookTitle: map['current_book_title'] as String?,
         currentBookAuthor: map['current_book_author'] as String?,
         currentBookId: map['current_book_id'] as String?,
+        currentBookStatus: map['current_book_status'] as String? ?? 'none',
+        readingPacePerDay: (map['reading_pace_pages_per_day'] as num?)?.toInt(),
+        readingTargetEndDate: map['reading_target_end_date'] != null
+            ? DateTime.parse(map['reading_target_end_date'] as String)
+            : null,
+        readingStartedAt: map['reading_started_at'] != null
+            ? DateTime.parse(map['reading_started_at'] as String)
+            : null,
         memberCount: (map['member_count'] as num?)?.toInt() ?? 0,
         createdAt: DateTime.parse(map['created_at'] as String),
         status: ClubStatusX.fromDb(map['status'] as String?),
