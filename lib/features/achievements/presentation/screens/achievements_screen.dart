@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/shell/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/achievement.dart';
@@ -16,7 +17,7 @@ class AchievementsScreen extends ConsumerWidget {
     final achievements = ref.watch(_achievementsProvider);
 
     return Scaffold(
-      appBar: AppBar(leading: const DrawerButton(), title: const Text('Conquistas')),
+      appBar: AppBar(leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => mainScaffoldKey.currentState?.openDrawer(), tooltip: 'Abrir menu'), title: const Text('Conquistas')),
       body: achievements.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erro: $e')),

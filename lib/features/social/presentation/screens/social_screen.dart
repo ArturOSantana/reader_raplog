@@ -5,6 +5,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/friend.dart';
 import '../../../../shared/models/social_feed.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../clubs/presentation/screens/book_clubs_screen.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -57,11 +58,6 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
             tooltip: 'Amigos',
             onPressed: () => context.push('/friends'),
           ),
-          IconButton(
-            icon: const Icon(Icons.group_outlined),
-            tooltip: 'Clubes',
-            onPressed: () => context.push('/clubs'),
-          ),
         ],
         bottom: TabBar(
           controller: _tabs,
@@ -77,7 +73,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
         children: const [
           _FeedTab(),
           _FriendsTab(),
-          _ClubsPreviewTab(),
+          BookClubsBody(),
         ],
       ),
     );
@@ -379,50 +375,6 @@ class _FriendSocialTile extends StatelessWidget {
 }
 
 // ── Clubs Preview Tab ─────────────────────────────────────────────────────────
-
-class _ClubsPreviewTab extends ConsumerWidget {
-  const _ClubsPreviewTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.forestGreen.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.groups_outlined,
-                size: 48,
-                color: AppColors.forestGreen,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text('Clube do Livro', style: AppTextStyles.headlineMedium),
-            const SizedBox(height: 8),
-            Text(
-              'Crie ou participe de clubes,\nleia junto com seus amigos\ne discuta cada capítulo.',
-              style: AppTextStyles.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => context.push('/clubs'),
-              icon: const Icon(Icons.groups_outlined),
-              label: const Text('Ver meus clubes'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ── Shared Widgets ────────────────────────────────────────────────────────────
 

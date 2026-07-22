@@ -45,6 +45,7 @@ dependencies:
 
   # Share
   share_plus: ^13.0.0
+  screenshot: ^3.0.0
 
   # Utils
   intl: ^0.19.0

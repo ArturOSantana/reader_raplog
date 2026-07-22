@@ -16,7 +16,7 @@ class SocialFeedRepository {
         .select(
           'id, user_id, event_type, book_title, book_author, rating, '
           'streak_days, achievement_name, goal_description, likes_count, created_at, '
-          'profile:profiles(name, avatar_url)',
+          'profile:profiles!social_feed_user_id_fkey(name, avatar_url)',
         )
         .order('created_at', ascending: false)
         .limit(limit);

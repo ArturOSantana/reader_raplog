@@ -1,12 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'dart:ui' as ui;
+import '../../../../core/shell/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/achievement.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../achievements/data/achievement_service.dart';
 import '../../../home/presentation/screens/home_screen.dart';
+import '../widgets/book_completion_card.dart';
 
 final _activeSessionIdProvider = StateProvider<String?>((ref) => null);
 final _timerRunningProvider = StateProvider<bool>((ref) => false);
@@ -144,12 +149,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   void _showCompleteBookDialog() {
+    final book = _selectedBook!;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Livro concluído!'),
         content: Text(
-          'Você chegou à última página de "${_selectedBook!.title}". Deseja marcar como lido?',
+          'Você chegou à última página de "${book.title}". Deseja marcar como lido?',
         ),
         actions: [
           TextButton(
@@ -165,7 +171,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             onPressed: () async {
               Navigator.pop(context);
               await ref.read(bookRepositoryProvider).update(
-                _selectedBook!.id,
+                book.id,
                 {
                   'status': 'read',
                   'end_date':
@@ -178,17 +184,34 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 sessionStartedAt: DateTime.now(),
               );
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                        '"${_selectedBook!.title}" marcado como lido!'),
-                  ),
-                );
+                _showShareBottomSheet(book.copyWith(
+                  status: BookStatus.read,
+                  endDate: DateTime.now(),
+                ));
               }
             },
             child: const Text('Marcar como lido'),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Chave global para capturar o card como PNG.
+  final GlobalKey _cardRepaintKey = GlobalKey();
+
+  void _showShareBottomSheet(Book completedBook) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.darkBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _ShareCompletionSheet(
+        book: completedBook,
+        cardRepaintKey: _cardRepaintKey,
+        sessionRepository: ref.read(sessionRepositoryProvider),
       ),
     );
   }
@@ -270,7 +293,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final sessionId = ref.watch(_activeSessionIdProvider);
 
     return Scaffold(
-      appBar: AppBar(leading: const DrawerButton(), title: const Text('Leitura')),
+      appBar: AppBar(leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => mainScaffoldKey.currentState?.openDrawer(), tooltip: 'Abrir menu'), title: const Text('Leitura')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -367,6 +390,183 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bottom sheet de compartilhamento após concluir o livro
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ShareCompletionSheet extends StatefulWidget {
+  final Book book;
+  final GlobalKey cardRepaintKey;
+  final dynamic sessionRepository; // SessionRepository
+
+  const _ShareCompletionSheet({
+    required this.book,
+    required this.cardRepaintKey,
+    required this.sessionRepository,
+  });
+
+  @override
+  State<_ShareCompletionSheet> createState() => _ShareCompletionSheetState();
+}
+
+class _ShareCompletionSheetState extends State<_ShareCompletionSheet> {
+  int _totalMinutes = 0;
+  int _totalSessions = 0;
+  bool _loading = true;
+  bool _sharing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final stats = await widget.sessionRepository
+          .fetchBookTotalStats(widget.book.id) as Map<String, int>;
+      if (mounted) {
+        setState(() {
+          _totalMinutes = stats['total_minutes'] ?? 0;
+          _totalSessions = stats['total_sessions'] ?? 0;
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _shareAsImage() async {
+    setState(() => _sharing = true);
+    try {
+      final boundary = widget.cardRepaintKey.currentContext
+          ?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+
+      final pngBytes = byteData.buffer.asUint8List();
+      final xFile = XFile.fromData(
+        pngBytes,
+        name: 'readlog_conclusao.png',
+        mimeType: 'image/png',
+      );
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [xFile],
+          text: '📚 Acabei de ler "${widget.book.title}"'
+              '${widget.book.author != null ? ' de ${widget.book.author}' : ''}'
+              ' — registrado no ReadLog!',
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 32, left: 16, right: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Alça
+          Container(
+            width: 36,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              color: AppColors.darkBorder,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          const Text(
+            'Compartilhar conquista',
+            style: TextStyle(
+              fontFamily: 'Fraunces',
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: AppColors.darkTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Preview do card (capturável)
+          if (_loading)
+            const SizedBox(
+              height: 260,
+              child: Center(
+                child: CircularProgressIndicator(
+                    color: AppColors.warmGold),
+              ),
+            )
+          else
+            RepaintBoundary(
+              key: widget.cardRepaintKey,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: BookCompletionCard(
+                  book: widget.book,
+                  totalMinutes: _totalMinutes,
+                  totalSessions: _totalSessions,
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 24),
+
+          // Botão compartilhar como imagem
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _loading || _sharing ? null : _shareAsImage,
+              icon: _sharing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.download_outlined),
+              label: Text(_sharing ? 'Gerando imagem…' : 'Compartilhar imagem'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.warmGold,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 52),
+                textStyle: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Fechar
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.darkTextSecondary,
+              ),
+              child: const Text('Fechar'),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/shell/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/goal.dart';
@@ -45,7 +46,7 @@ class DashboardScreen extends ConsumerWidget {
     final data = ref.watch(_dashboardDataProvider);
 
     return Scaffold(
-      appBar: AppBar(leading: const DrawerButton(), title: const Text('Dashboard')),
+      appBar: AppBar(leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => mainScaffoldKey.currentState?.openDrawer(), tooltip: 'Abrir menu'), title: const Text('Dashboard')),
       body: data.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erro: $e')),

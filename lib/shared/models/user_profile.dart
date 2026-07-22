@@ -7,6 +7,9 @@ class UserProfile extends Equatable {
   final String? avatarUrl;
   final int? yearlyGoal;
   final String? favoriteGenre;
+  final String? favoriteAuthors;
+  final String? favoriteBook;
+  final bool onboardingCompleted;
   final DateTime updatedAt;
 
   const UserProfile({
@@ -16,6 +19,9 @@ class UserProfile extends Equatable {
     this.avatarUrl,
     this.yearlyGoal,
     this.favoriteGenre,
+    this.favoriteAuthors,
+    this.favoriteBook,
+    this.onboardingCompleted = false,
     required this.updatedAt,
   });
 
@@ -26,6 +32,9 @@ class UserProfile extends Equatable {
         avatarUrl: map['avatar_url'] as String?,
         yearlyGoal: map['yearly_goal'] as int?,
         favoriteGenre: map['favorite_genre'] as String?,
+        favoriteAuthors: map['favorite_authors'] as String?,
+        favoriteBook: map['favorite_book'] as String?,
+        onboardingCompleted: map['onboarding_completed'] as bool? ?? false,
         updatedAt: DateTime.parse(map['updated_at'] as String),
       );
 
@@ -35,6 +44,9 @@ class UserProfile extends Equatable {
         'avatar_url': avatarUrl,
         'yearly_goal': yearlyGoal,
         'favorite_genre': favoriteGenre,
+        'favorite_authors': favoriteAuthors,
+        'favorite_book': favoriteBook,
+        'onboarding_completed': onboardingCompleted,
       };
 
   UserProfile copyWith({
@@ -43,6 +55,9 @@ class UserProfile extends Equatable {
     String? avatarUrl,
     int? yearlyGoal,
     String? favoriteGenre,
+    String? favoriteAuthors,
+    String? favoriteBook,
+    bool? onboardingCompleted,
   }) =>
       UserProfile(
         id: id,
@@ -51,9 +66,21 @@ class UserProfile extends Equatable {
         avatarUrl: avatarUrl ?? this.avatarUrl,
         yearlyGoal: yearlyGoal ?? this.yearlyGoal,
         favoriteGenre: favoriteGenre ?? this.favoriteGenre,
+        favoriteAuthors: favoriteAuthors ?? this.favoriteAuthors,
+        favoriteBook: favoriteBook ?? this.favoriteBook,
+        onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
         updatedAt: DateTime.now(),
       );
 
   @override
-  List<Object?> get props => [id, name, bio, yearlyGoal, favoriteGenre];
+  List<Object?> get props => [
+        id,
+        name,
+        bio,
+        yearlyGoal,
+        favoriteGenre,
+        favoriteAuthors,
+        favoriteBook,
+        onboardingCompleted,
+      ];
 }

@@ -7,6 +7,9 @@ import '../../shared/providers/providers.dart';
 import '../../shared/widgets/offline_banner.dart';
 import '../../core/theme/app_theme.dart';
 
+/// Chave global exposta para que telas filhas possam abrir o Drawer do MainShell.
+final mainScaffoldKey = GlobalKey<ScaffoldState>();
+
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -75,6 +78,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     final email = user?.email ?? '';
 
     return Scaffold(
+      key: mainScaffoldKey,
       drawer: _AppDrawer(
         currentLocation: location,
         avatarUrl: avatarUrl,

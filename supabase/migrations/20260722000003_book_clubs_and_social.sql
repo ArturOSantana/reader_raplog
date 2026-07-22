@@ -58,16 +58,41 @@
 
   ALTER TABLE book_club_members ENABLE ROW LEVEL SECURITY;
 
+  -- ── Funções auxiliares SECURITY DEFINER ──────────────────────
+  -- Consultam book_club_members sem acionar o RLS (evitam recursão infinita).
+
+  CREATE OR REPLACE FUNCTION is_club_member(p_club_id UUID, p_user_id UUID)
+  RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
+    SELECT EXISTS (
+      SELECT 1 FROM book_club_members
+      WHERE club_id = p_club_id AND user_id = p_user_id
+    );
+  $$;
+
+  CREATE OR REPLACE FUNCTION is_club_moderator(p_club_id UUID, p_user_id UUID)
+  RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
+    SELECT EXISTS (
+      SELECT 1 FROM book_club_members
+      WHERE club_id = p_club_id
+        AND user_id = p_user_id
+        AND role IN ('admin', 'moderator')
+    );
+  $$;
+
+  CREATE OR REPLACE FUNCTION is_club_admin(p_club_id UUID, p_user_id UUID)
+  RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
+    SELECT EXISTS (
+      SELECT 1 FROM book_club_members
+      WHERE club_id = p_club_id
+        AND user_id = p_user_id
+        AND role = 'admin'
+    );
+  $$;
+
   -- Membros veem outros membros do mesmo clube
   CREATE POLICY "club_members: member select"
     ON book_club_members FOR SELECT
-    USING (
-      EXISTS (
-        SELECT 1 FROM book_club_members m2
-        WHERE m2.club_id = book_club_members.club_id
-          AND m2.user_id = auth.uid()
-      )
-    );
+    USING (is_club_member(club_id, auth.uid()));
 
   -- Usuário pode entrar (inserir a si mesmo como member)
   CREATE POLICY "club_members: self insert"
@@ -77,26 +102,14 @@
   -- Apenas admin/moderador pode alterar papéis
   CREATE POLICY "club_members: moderator update"
     ON book_club_members FOR UPDATE
-    USING (
-      EXISTS (
-        SELECT 1 FROM book_club_members m2
-        WHERE m2.club_id = book_club_members.club_id
-          AND m2.user_id = auth.uid()
-          AND m2.role IN ('admin', 'moderator')
-      )
-    );
+    USING (is_club_moderator(club_id, auth.uid()));
 
   -- Membro pode sair (deletar a si mesmo); admin pode remover qualquer um
   CREATE POLICY "club_members: self or admin delete"
     ON book_club_members FOR DELETE
     USING (
       auth.uid() = user_id OR
-      EXISTS (
-        SELECT 1 FROM book_club_members m2
-        WHERE m2.club_id = book_club_members.club_id
-          AND m2.user_id = auth.uid()
-          AND m2.role = 'admin'
-      )
+      is_club_admin(club_id, auth.uid())
     );
 
   -- ────────────────────────────────────────────────────────────

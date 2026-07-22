@@ -66,6 +66,23 @@ class SessionRepository {
     return (data as List).map((e) => ReadingSession.fromMap(e)).toList();
   }
 
+  /// Retorna {total_minutes, total_sessions} somando todas as sessões do livro.
+  Future<Map<String, int>> fetchBookTotalStats(String bookId) async {
+    final data = await _client
+        .from('reading_sessions')
+        .select('duration_minutes')
+        .eq('user_id', _userId)
+        .eq('book_id', bookId)
+        .not('ended_at', 'is', null);
+
+    final list = data as List;
+    int totalMinutes = 0;
+    for (final row in list) {
+      totalMinutes += (row['duration_minutes'] as int? ?? 0);
+    }
+    return {'total_minutes': totalMinutes, 'total_sessions': list.length};
+  }
+
   Future<Map<String, dynamic>> fetchDailyStats() async {
     final today = DateTime.now().toIso8601String().substring(0, 10);
     final data = await _client

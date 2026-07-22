@@ -23,6 +23,7 @@ import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
 import '../../features/clubs/presentation/screens/book_clubs_screen.dart';
 import '../../features/clubs/presentation/screens/book_club_detail_screen.dart';
+import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../shell/main_shell.dart';
 import 'route_persistence.dart';
 
@@ -40,6 +41,20 @@ class _AuthNotifier extends ChangeNotifier {
       _ref.read(authStateProvider).valueOrNull?.session != null;
 }
 
+/// Provider que carrega (e cacheia) se o usuário já completou o onboarding.
+/// Exposto fora do router para que o SplashScreen possa invalidar após login.
+final onboardingCompletedProvider = FutureProvider<bool>((ref) async {
+  final client = ref.watch(supabaseClientProvider);
+  final userId = client.auth.currentUser?.id;
+  if (userId == null) return true; // não logado → não bloqueia
+  final data = await client
+      .from('profiles')
+      .select('onboarding_completed')
+      .eq('id', userId)
+      .maybeSingle();
+  return data?['onboarding_completed'] as bool? ?? false;
+});
+
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = _AuthNotifier(ref);
   final initialRoute = ref.watch(initialRouteProvider) ?? '/';
@@ -51,10 +66,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoggedIn = notifier.isLoggedIn;
       final onAuth = state.matchedLocation.startsWith('/auth');
       final onSplash = state.matchedLocation == '/';
+      final onOnboarding = state.matchedLocation == '/onboarding';
 
       if (onSplash) return null;
       if (!isLoggedIn && !onAuth) return '/auth/login';
       if (isLoggedIn && onAuth) return '/home';
+      // Permite que o SplashScreen gerencie o redirect para /onboarding
+      if (onOnboarding) return null;
       return null;
     },
     routes: [
@@ -65,6 +83,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auth/login',
         builder: (_, __) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (_, __) => const OnboardingScreen(),
       ),
       ShellRoute(
         builder: (_, __, child) => MainShell(child: child),

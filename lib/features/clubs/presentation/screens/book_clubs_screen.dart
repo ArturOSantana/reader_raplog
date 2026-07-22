@@ -11,45 +11,242 @@ final _myClubsProvider = FutureProvider<List<BookClub>>((ref) {
   return ref.watch(bookClubRepositoryProvider).listMyClubs();
 });
 
+// ── Filtro ────────────────────────────────────────────────────────────────────
+
+enum _ClubFilter {
+  all,
+  isOwner,
+  isAdmin,
+  isMember,
+  active,
+  onVacation,
+  closed;
+
+  String get label {
+    switch (this) {
+      case _ClubFilter.all:
+        return 'Todos';
+      case _ClubFilter.isOwner:
+        return 'Proprietário';
+      case _ClubFilter.isAdmin:
+        return 'Administrador';
+      case _ClubFilter.isMember:
+        return 'Membro';
+      case _ClubFilter.active:
+        return 'Ativos';
+      case _ClubFilter.onVacation:
+        return 'Em férias';
+      case _ClubFilter.closed:
+        return 'Encerrados';
+    }
+  }
+}
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
+/// Tela completa com Scaffold + AppBar (usada na rota /clubs).
 class BookClubsScreen extends ConsumerWidget {
   const BookClubsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final clubsAsync = ref.watch(_myClubsProvider);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Clubes do Livro')),
-      body: clubsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Erro: $e')),
-        data: (clubs) {
-          if (clubs.isEmpty) {
-            return _EmptyClubs(onCreate: () => _showCreateSheet(context, ref));
-          }
-          return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(_myClubsProvider),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(20),
-              itemCount: clubs.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, i) => _ClubCard(club: clubs[i]),
+      body: const BookClubsBody(),
+    );
+  }
+}
+
+/// Corpo reutilizável — pode ser embutido dentro de um TabBarView
+/// sem conflito de Scaffold.
+class BookClubsBody extends ConsumerStatefulWidget {
+  const BookClubsBody({super.key});
+
+  @override
+  ConsumerState<BookClubsBody> createState() => _BookClubsBodyState();
+}
+
+class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
+  _ClubFilter _activeFilter = _ClubFilter.all;
+  String _search = '';
+  bool _fabOpen = false;
+
+  List<BookClub> _applyFilter(List<BookClub> clubs) {
+    return clubs.where((c) {
+      if (_search.isNotEmpty &&
+          !c.name.toLowerCase().contains(_search.toLowerCase())) {
+        return false;
+      }
+      switch (_activeFilter) {
+        case _ClubFilter.all:
+          return true;
+        case _ClubFilter.isOwner:
+          return c.isOwner;
+        case _ClubFilter.isAdmin:
+          return c.isAdmin;
+        case _ClubFilter.isMember:
+          return c.memberRole == 'member';
+        case _ClubFilter.active:
+          return c.isActive;
+        case _ClubFilter.onVacation:
+          return c.isOnVacation;
+        case _ClubFilter.closed:
+          return c.isClosed;
+      }
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final clubsAsync = ref.watch(_myClubsProvider);
+
+    return Stack(
+      children: [
+        clubsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Erro: $e')),
+          data: (clubs) {
+            final filtered = _applyFilter(clubs);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Barra de busca ─────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Buscar clube...',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                    ),
+                    onChanged: (v) => setState(() => _search = v),
+                  ),
+                ),
+                // ── Chips de filtro ────────────────────────────────────────
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    children: _ClubFilter.values
+                        .map(
+                          (f) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: _FilterChip(
+                              label: f.label,
+                              active: _activeFilter == f,
+                              onTap: () => setState(() => _activeFilter = f),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+                // ── Lista ──────────────────────────────────────────────────
+                Expanded(
+                  child: filtered.isEmpty
+                      ? _EmptyState(
+                          hasClubs: clubs.isNotEmpty,
+                          onCreate: () => _showCreateSheet(context),
+                          onJoin: () => _showJoinSheet(context),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () async =>
+                              ref.invalidate(_myClubsProvider),
+                          child: ListView.separated(
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 10),
+                            itemBuilder: (_, i) =>
+                                _ClubCard(club: filtered[i]),
+                          ),
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+        // ── FAB posicionado dentro do Stack para funcionar em TabBarView ──
+        if (_fabOpen)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () => setState(() => _fabOpen = false),
+              child: const ColoredBox(color: Colors.transparent),
             ),
-          );
-        },
+          ),
+        if (_fabOpen) ...[
+          Positioned(
+            right: 20,
+            bottom: 84,
+            child: _FabMenuItem(
+              icon: Icons.login,
+              label: 'Entrar com código',
+              onTap: () {
+                setState(() => _fabOpen = false);
+                _showJoinSheet(context);
+              },
+            ),
+          ),
+          Positioned(
+            right: 20,
+            bottom: 140,
+            child: _FabMenuItem(
+              icon: Icons.add,
+              label: 'Criar clube',
+              onTap: () {
+                setState(() => _fabOpen = false);
+                _showCreateSheet(context);
+              },
+            ),
+          ),
+        ],
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton(
+            heroTag: 'clubs_fab',
+            onPressed: () => setState(() => _fabOpen = !_fabOpen),
+            backgroundColor: AppColors.forestGreen,
+            foregroundColor: Colors.white,
+            child: AnimatedRotation(
+              turns: _fabOpen ? 0.125 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: const Icon(Icons.add),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showJoinSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateSheet(context, ref),
-        backgroundColor: AppColors.forestGreen,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
+      builder: (_) => _JoinClubSheet(
+        onJoined: (club) {
+          ref.invalidate(_myClubsProvider);
+          if (context.mounted) context.push('/clubs/${club.id}');
+        },
       ),
     );
   }
 
-  void _showCreateSheet(BuildContext context, WidgetRef ref) {
+  void _showCreateSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -67,6 +264,48 @@ class BookClubsScreen extends ConsumerWidget {
   }
 }
 
+// ── Filter Chip ───────────────────────────────────────────────────────────────
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: active
+              ? AppColors.forestGreen
+              : AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: active ? AppColors.forestGreen : AppColors.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: active ? Colors.white : AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Club Card ─────────────────────────────────────────────────────────────────
 
 class _ClubCard extends StatelessWidget {
@@ -79,122 +318,212 @@ class _ClubCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push('/clubs/${club.id}'),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(
+            color: club.isClosed
+                ? AppColors.border
+                : club.isOnVacation
+                    ? AppColors.warmGold.withValues(alpha: 0.35)
+                    : AppColors.border,
+          ),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Ícone / avatar do clube
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: AppColors.forestGreen.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.groups_outlined,
-                color: AppColors.forestGreen,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Nome + badge de papel
-                  Row(
+            Row(
+              children: [
+                // Avatar
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _iconBg(club),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.groups_outlined,
+                      color: _iconColor(club), size: 26),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          club.name,
-                          style: AppTextStyles.titleMedium,
+                      // Nome + badge de papel
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              club.name,
+                              style: AppTextStyles.titleMedium,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          _RoleBadge(club),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      // Livro atual
+                      if (club.currentBookTitle != null)
+                        Text(
+                          club.currentBookTitle!,
+                          style: AppTextStyles.bodyMedium,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                        )
+                      else
+                        Text(
+                          'Nenhum livro definido',
+                          style: AppTextStyles.bodyMedium
+                              .copyWith(color: AppColors.textMuted),
                         ),
-                      ),
-                      if (club.isAdmin)
-                        _RoleBadge('Admin', AppColors.forestGreen)
-                      else if (club.isModerator)
-                        _RoleBadge('Mod', AppColors.warmGold),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  // Livro atual
-                  if (club.currentBookTitle != null)
-                    Text(
-                      '📚 ${club.currentBookTitle}',
-                      style: AppTextStyles.bodyMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  else
-                    Text(
-                      'Nenhum livro definido',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textMuted),
-                    ),
-                  const SizedBox(height: 4),
-                  // Contagem de membros
-                  Row(
-                    children: [
-                      const Icon(Icons.person_outline,
-                          size: 12, color: AppColors.textMuted),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${club.memberCount} ${club.memberCount == 1 ? 'membro' : 'membros'}',
-                        style: AppTextStyles.labelMedium,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+                const Icon(Icons.chevron_right,
+                    color: AppColors.textMuted, size: 20),
+              ],
             ),
-            const Icon(Icons.chevron_right,
-                color: AppColors.textMuted, size: 20),
+            const SizedBox(height: 10),
+            // ── Linha inferior: membros + status ─────────────────────────
+            Row(
+              children: [
+                const Icon(Icons.person_outline,
+                    size: 13, color: AppColors.textMuted),
+                const SizedBox(width: 3),
+                Text(
+                  '${club.memberCount} ${club.memberCount == 1 ? 'membro' : 'membros'}',
+                  style: AppTextStyles.labelMedium,
+                ),
+                const Spacer(),
+                _StatusBadge(club.status),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
+
+  Color _iconBg(BookClub c) {
+    if (c.isClosed) return AppColors.surfaceVariant;
+    if (c.isOnVacation) return AppColors.warmGold.withValues(alpha: 0.1);
+    return AppColors.forestGreen.withValues(alpha: 0.1);
+  }
+
+  Color _iconColor(BookClub c) {
+    if (c.isClosed) return AppColors.textMuted;
+    if (c.isOnVacation) return AppColors.warmGold;
+    return AppColors.forestGreen;
+  }
 }
 
-class _RoleBadge extends StatelessWidget {
-  final String label;
-  final Color color;
+// ── Status Badge ──────────────────────────────────────────────────────────────
 
-  const _RoleBadge(this.label, this.color);
+class _StatusBadge extends StatelessWidget {
+  final ClubStatus status;
+
+  const _StatusBadge(this.status);
 
   @override
   Widget build(BuildContext context) {
+    late final Color bg;
+    late final Color fg;
+    late final IconData icon;
+
+    switch (status) {
+      case ClubStatus.active:
+        bg = AppColors.success.withValues(alpha: 0.12);
+        fg = AppColors.success;
+        icon = Icons.circle;
+        break;
+      case ClubStatus.onVacation:
+        bg = AppColors.warmGold.withValues(alpha: 0.12);
+        fg = AppColors.warmGold;
+        icon = Icons.beach_access_outlined;
+        break;
+      case ClubStatus.closed:
+        bg = AppColors.surfaceVariant;
+        fg = AppColors.textMuted;
+        icon = Icons.lock_outline;
+        break;
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: status == ClubStatus.active ? 7 : 12, color: fg),
+          const SizedBox(width: 4),
+          Text(
+            status.label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: fg,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ── Empty state ───────────────────────────────────────────────────────────────
+// ── Role Badge ────────────────────────────────────────────────────────────────
 
-class _EmptyClubs extends StatelessWidget {
+class _RoleBadge extends StatelessWidget {
+  final BookClub club;
+
+  const _RoleBadge(this.club);
+
+  @override
+  Widget build(BuildContext context) {
+    if (club.isOwner) {
+      return _badge('Dono', AppColors.warmGold);
+    }
+    if (club.isAdmin) {
+      return _badge('Admin', AppColors.forestGreen);
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _badge(String label, Color color) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      );
+}
+
+// ── Empty State ───────────────────────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  final bool hasClubs;
   final VoidCallback onCreate;
+  final VoidCallback onJoin;
 
-  const _EmptyClubs({required this.onCreate});
+  const _EmptyState({
+    required this.hasClubs,
+    required this.onCreate,
+    required this.onJoin,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -210,26 +539,36 @@ class _EmptyClubs extends StatelessWidget {
                 color: AppColors.forestGreen.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.groups_outlined,
-                size: 52,
-                color: AppColors.forestGreen,
-              ),
+              child: const Icon(Icons.groups_outlined,
+                  size: 52, color: AppColors.forestGreen),
             ),
             const SizedBox(height: 24),
-            Text('Nenhum clube ainda', style: AppTextStyles.headlineMedium),
+            Text(
+              hasClubs ? 'Nenhum clube encontrado' : 'Nenhum clube ainda',
+              style: AppTextStyles.headlineMedium,
+            ),
             const SizedBox(height: 8),
             Text(
-              'Crie um clube do livro, convide amigos\ne leiam juntos com calendário de encontros.',
+              hasClubs
+                  ? 'Tente ajustar os filtros ou a busca.'
+                  : 'Crie um clube do livro, convide amigos\ne leiam juntos com calendário de encontros.',
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onCreate,
-              icon: const Icon(Icons.add),
-              label: const Text('Criar clube'),
-            ),
+            if (!hasClubs) ...[
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: onCreate,
+                icon: const Icon(Icons.add),
+                label: const Text('Criar clube'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: onJoin,
+                icon: const Icon(Icons.login),
+                label: const Text('Entrar com código'),
+              ),
+            ],
           ],
         ),
       ),
@@ -252,6 +591,7 @@ class _CreateClubSheetState extends ConsumerState<_CreateClubSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
+  ClubVisibility _visibility = ClubVisibility.private;
   bool _loading = false;
 
   @override
@@ -270,6 +610,7 @@ class _CreateClubSheetState extends ConsumerState<_CreateClubSheet> {
             description: _descController.text.trim().isEmpty
                 ? null
                 : _descController.text.trim(),
+            visibility: _visibility,
           );
       if (mounted) {
         Navigator.pop(context);
@@ -327,7 +668,21 @@ class _CreateClubSheetState extends ConsumerState<_CreateClubSheet> {
                 labelText: 'Descrição (opcional)',
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
+            // ── Visibilidade ─────────────────────────────────────────────
+            Row(
+              children: [
+                const Text('Visibilidade:',
+                    style: TextStyle(
+                        fontSize: 13, color: AppColors.textSecondary)),
+                const SizedBox(width: 12),
+                _VisibilityToggle(
+                  value: _visibility,
+                  onChanged: (v) => setState(() => _visibility = v),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -344,6 +699,230 @@ class _CreateClubSheetState extends ConsumerState<_CreateClubSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Visibility Toggle ─────────────────────────────────────────────────────────
+
+class _VisibilityToggle extends StatelessWidget {
+  final ClubVisibility value;
+  final ValueChanged<ClubVisibility> onChanged;
+
+  const _VisibilityToggle({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _toggle(ClubVisibility.private, Icons.lock_outline, 'Privado'),
+        const SizedBox(width: 8),
+        _toggle(ClubVisibility.public, Icons.public, 'Público'),
+      ],
+    );
+  }
+
+  Widget _toggle(ClubVisibility v, IconData icon, String label) {
+    final active = value == v;
+    return GestureDetector(
+      onTap: () => onChanged(v),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: active
+              ? AppColors.forestGreen.withValues(alpha: 0.12)
+              : AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: active ? AppColors.forestGreen : AppColors.border,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon,
+                size: 14,
+                color:
+                    active ? AppColors.forestGreen : AppColors.textMuted),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: active ? AppColors.forestGreen : AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── FAB Menu Item ─────────────────────────────────────────────────────────────
+
+class _FabMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _FabMenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(label,
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w500)),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.forestGreen,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Join Club Sheet ───────────────────────────────────────────────────────────
+
+class _JoinClubSheet extends ConsumerStatefulWidget {
+  final ValueChanged<BookClub> onJoined;
+
+  const _JoinClubSheet({required this.onJoined});
+
+  @override
+  ConsumerState<_JoinClubSheet> createState() => _JoinClubSheetState();
+}
+
+class _JoinClubSheetState extends ConsumerState<_JoinClubSheet> {
+  final _codeController = TextEditingController();
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _join() async {
+    final code = _codeController.text.trim();
+    if (code.isEmpty) return;
+    setState(() => _loading = true);
+    try {
+      final repo = ref.read(bookClubRepositoryProvider);
+      final club = await repo.fetchByInviteCode(code);
+      if (club == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Código inválido ou clube não encontrado.')),
+          );
+        }
+        return;
+      }
+      await repo.joinClub(club.id);
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onJoined(club);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao entrar no clube. Tente novamente.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Entrar em um clube', style: AppTextStyles.headlineMedium),
+          const SizedBox(height: 8),
+          const Text(
+            'Peça o código de convite ao dono ou admin do clube.',
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _codeController,
+            autocorrect: false,
+            textCapitalization: TextCapitalization.characters,
+            decoration: const InputDecoration(
+              labelText: 'Código de convite',
+              hintText: 'Ex: ABC12345',
+              prefixIcon: Icon(Icons.key_outlined),
+            ),
+            onSubmitted: (_) => _join(),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _loading ? null : _join,
+              child: _loading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Text('Entrar no clube'),
+            ),
+          ),
+        ],
       ),
     );
   }

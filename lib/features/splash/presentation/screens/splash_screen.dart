@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/providers/providers.dart';
 
@@ -11,15 +12,17 @@ class SplashScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authStateProvider);
 
-    auth.whenData((state) {
-      Future.microtask(() {
-        if (!context.mounted) return;
-        if (state.session != null) {
-          context.go('/home');
-        } else {
-          context.go('/auth/login');
-        }
-      });
+    auth.whenData((state) async {
+      if (!context.mounted) return;
+      if (state.session == null) {
+        context.go('/auth/login');
+        return;
+      }
+
+      // Usuário logado: verifica se o onboarding foi completado
+      final completed = await ref.read(onboardingCompletedProvider.future);
+      if (!context.mounted) return;
+      context.go(completed ? '/home' : '/onboarding');
     });
 
     return Scaffold(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/shell/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/goal.dart';
@@ -16,7 +17,7 @@ class GoalsScreen extends ConsumerWidget {
     final goals = ref.watch(_goalsProvider);
 
     return Scaffold(
-      appBar: AppBar(leading: const DrawerButton(), title: const Text('Metas')),
+      appBar: AppBar(leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => mainScaffoldKey.currentState?.openDrawer(), tooltip: 'Abrir menu'), title: const Text('Metas')),
       body: goals.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erro: $e')),

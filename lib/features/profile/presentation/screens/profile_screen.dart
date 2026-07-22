@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/shell/main_shell.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -24,7 +25,7 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const DrawerButton(),
+        leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => mainScaffoldKey.currentState?.openDrawer(), tooltip: 'Abrir menu'),
         title: const Text('Perfil'),
         actions: [
           IconButton(
@@ -90,7 +91,17 @@ class ProfileScreen extends ConsumerWidget {
                     if (profile.favoriteGenre != null)
                       _InfoChip(
                         icon: Icons.menu_book_outlined,
-                        label: 'Gênero: ${profile.favoriteGenre}',
+                        label: 'Gênero favorito: ${profile.favoriteGenre}',
+                      ),
+                    if (profile.favoriteBook != null && profile.favoriteBook!.isNotEmpty)
+                      _InfoChip(
+                        icon: Icons.auto_stories_outlined,
+                        label: 'Livro favorito: ${profile.favoriteBook}',
+                      ),
+                    if (profile.favoriteAuthors != null && profile.favoriteAuthors!.isNotEmpty)
+                      _InfoChip(
+                        icon: Icons.person_outline_rounded,
+                        label: 'Autores favoritos: ${profile.favoriteAuthors}',
                       ),
                   ],
                 ),
@@ -229,6 +240,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final TextEditingController _bioController;
   late final TextEditingController _yearlyGoalController;
   late final TextEditingController _genreController;
+  late final TextEditingController _authorsController;
+  late final TextEditingController _favoriteBookController;
   bool _loading = false;
   String? _errorMessage;
 
@@ -245,6 +258,12 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     _genreController = TextEditingController(
       text: widget.profile?.favoriteGenre ?? '',
     );
+    _authorsController = TextEditingController(
+      text: widget.profile?.favoriteAuthors ?? '',
+    );
+    _favoriteBookController = TextEditingController(
+      text: widget.profile?.favoriteBook ?? '',
+    );
   }
 
   @override
@@ -253,6 +272,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     _bioController.dispose();
     _yearlyGoalController.dispose();
     _genreController.dispose();
+    _authorsController.dispose();
+    _favoriteBookController.dispose();
     super.dispose();
   }
 
@@ -276,6 +297,12 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         'favorite_genre': _genreController.text.trim().isEmpty
             ? null
             : _genreController.text.trim(),
+        'favorite_authors': _authorsController.text.trim().isEmpty
+            ? null
+            : _authorsController.text.trim(),
+        'favorite_book': _favoriteBookController.text.trim().isEmpty
+            ? null
+            : _favoriteBookController.text.trim(),
       });
       widget.onSaved();
       if (mounted) Navigator.pop(context);
@@ -349,6 +376,22 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                     labelText: 'Gênero favorito (opcional)'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _favoriteBookController,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                    labelText: 'Livro favorito (opcional)'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _authorsController,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Autores favoritos (opcional)',
+                  hintText: 'Ex: Machado de Assis, Clarice Lispector',
+                ),
               ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 12),

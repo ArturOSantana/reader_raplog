@@ -62,7 +62,11 @@ class CalendarScreen extends ConsumerWidget {
                 _StreakBanner(streak: streak),
                 const SizedBox(height: 20),
                 // ── Calendário mensal com ofensivas ──────────────────────
-                _MonthCalendar(heatmap: heatmap, meetings: meetings),
+                _MonthCalendar(
+                  heatmap: heatmap,
+                  meetings: meetings,
+                  streak: streak,
+                ),
                 const SizedBox(height: 24),
                 // ── Próximos encontros ───────────────────────────────────
                 if (meetings.isNotEmpty) ...[
@@ -164,8 +168,13 @@ class _StreakBanner extends StatelessWidget {
 class _MonthCalendar extends ConsumerWidget {
   final List<Map<String, dynamic>> heatmap;
   final List<BookClubMeeting> meetings;
+  final int streak;
 
-  const _MonthCalendar({required this.heatmap, required this.meetings});
+  const _MonthCalendar({
+    required this.heatmap,
+    required this.meetings,
+    required this.streak,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -178,6 +187,16 @@ class _MonthCalendar extends ConsumerWidget {
       final date = row['date'] as String?;
       final mins = (row['total_minutes'] as num?)?.toInt() ?? 0;
       if (date != null) readMinutesByDay[date] = mins;
+    }
+
+    // Calcula quais dias fazem parte da streak atual
+    final Set<String> streakDays = {};
+    if (streak > 0) {
+      final today = DateTime.now();
+      for (int i = 0; i < streak; i++) {
+        final d = today.subtract(Duration(days: i));
+        streakDays.add(_dateKey(d));
+      }
     }
     final Map<String, List<BookClubMeeting>> meetingsByDay = {};
     for (final m in meetings) {
@@ -267,6 +286,7 @@ class _MonthCalendar extends ConsumerWidget {
               minutes: mins,
               hasMeeting: hasMeeting,
               isToday: isToday,
+              isStreakDay: streakDays.contains(key),
               colorScheme: colorScheme,
               onTap: hasMeeting
                   ? () => _showDaySheet(
@@ -333,6 +353,7 @@ class _DayCell extends StatelessWidget {
   final int minutes;
   final bool hasMeeting;
   final bool isToday;
+  final bool isStreakDay;
   final ColorScheme colorScheme;
   final VoidCallback? onTap;
 
@@ -341,6 +362,7 @@ class _DayCell extends StatelessWidget {
     required this.minutes,
     required this.hasMeeting,
     required this.isToday,
+    required this.isStreakDay,
     required this.colorScheme,
     this.onTap,
   });
@@ -389,6 +411,12 @@ class _DayCell extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                 ),
+              ),
+            if (isStreakDay && minutes > 0)
+              const Positioned(
+                top: 1,
+                right: 1,
+                child: Text('🔥', style: TextStyle(fontSize: 8)),
               ),
           ],
         ),
