@@ -72,6 +72,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         scopes: ['email', 'profile'],
       );
 
+      // Força o seletor de conta sempre, descartando qualquer sessão em cache.
+      await googleSignIn.signOut();
       final googleUser = await googleSignIn.signIn();
       if (googleUser == null) return; // cancelado pelo usuário
 

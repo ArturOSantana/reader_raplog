@@ -19,7 +19,8 @@ class SplashScreen extends ConsumerWidget {
         return;
       }
 
-      // Usuário logado: verifica se o onboarding foi completado
+      // Usuário logado: força nova leitura do provider (invalida cache antigo)
+      ref.invalidate(onboardingCompletedProvider);
       final completed = await ref.read(onboardingCompletedProvider.future);
       if (!context.mounted) return;
       context.go(completed ? '/home' : '/onboarding');

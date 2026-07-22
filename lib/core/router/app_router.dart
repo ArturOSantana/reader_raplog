@@ -52,7 +52,7 @@ class _AuthNotifier extends ChangeNotifier {
 /// Exposto fora do router para que o SplashScreen possa invalidar após login.
 final onboardingCompletedProvider = FutureProvider<bool>((ref) async {
   final userId = ref.read(supabaseClientProvider).auth.currentUser?.id;
-  if (userId == null) return true; // não logado → não bloqueia
+  if (userId == null) return false; // não logado → sem onboarding concluído
   final profile = await ref.read(profileRepositoryProvider).fetch();
   return profile?.onboardingCompleted ?? false;
 });
