@@ -11,14 +11,22 @@ class SessionRepository {
   Future<ReadingSession> startSession({
     required String bookId,
     required int startPage,
+    SessionGoal? goal,
+    int? goalValue,
   }) async {
+    final now = DateTime.now();
     final data = await _client
         .from('reading_sessions')
         .insert({
           'user_id': _userId,
           'book_id': bookId,
           'start_page': startPage,
-          'started_at': DateTime.now().toIso8601String(),
+          'started_at': now.toIso8601String(),
+          'created_at': now.toIso8601String(),
+          'status': 'active',
+          'paused_duration_seconds': 0,
+          if (goal != null) 'session_goal': goal.name,
+          if (goalValue != null) 'goal_value': goalValue,
         })
         .select()
         .single();
@@ -29,6 +37,7 @@ class SessionRepository {
     required String sessionId,
     required int endPage,
     String? notes,
+    int pausedDurationSeconds = 0,
   }) async {
     final now = DateTime.now();
     final session = await _client
@@ -38,15 +47,25 @@ class SessionRepository {
         .single();
 
     final startedAt = DateTime.parse(session['started_at'] as String);
-    final durationMinutes = now.difference(startedAt).inMinutes;
+    // Duração real = total desde início - segundos pausados
+    final totalSeconds = now.difference(startedAt).inSeconds;
+    final netSeconds =
+        (totalSeconds - pausedDurationSeconds).clamp(0, totalSeconds);
+    final durationMinutes = netSeconds ~/ 60;
+
+    final startPage = session['start_page'] as int? ?? 0;
+    final pagesRead = (endPage - startPage).clamp(0, 99999);
 
     final data = await _client
         .from('reading_sessions')
         .update({
           'ended_at': now.toIso8601String(),
           'end_page': endPage,
+          'pages_read': pagesRead,
           'duration_minutes': durationMinutes,
+          'paused_duration_seconds': pausedDurationSeconds,
           'notes': notes,
+          'status': 'finished',
         })
         .eq('id', sessionId)
         .eq('user_id', _userId)
@@ -56,12 +75,21 @@ class SessionRepository {
     return ReadingSession.fromMap(data);
   }
 
+  Future<void> cancelSession({required String sessionId}) async {
+    await _client
+        .from('reading_sessions')
+        .update({'status': 'cancelled'})
+        .eq('id', sessionId)
+        .eq('user_id', _userId);
+  }
+
   Future<List<ReadingSession>> fetchByBook(String bookId) async {
     final data = await _client
         .from('reading_sessions')
         .select()
         .eq('user_id', _userId)
         .eq('book_id', bookId)
+        .neq('status', 'cancelled')
         .order('started_at', ascending: false);
     return (data as List).map((e) => ReadingSession.fromMap(e)).toList();
   }
@@ -73,7 +101,7 @@ class SessionRepository {
         .select('duration_minutes')
         .eq('user_id', _userId)
         .eq('book_id', bookId)
-        .not('ended_at', 'is', null);
+        .eq('status', 'finished');
 
     final list = data as List;
     int totalMinutes = 0;
@@ -95,7 +123,8 @@ class SessionRepository {
   }
 
   Future<int> fetchStreak() async {
-    final data = await _client.rpc('calculate_streak', params: {'p_user_id': _userId});
+    final data = await _client
+        .rpc('calculate_streak', params: {'p_user_id': _userId});
     return (data as int?) ?? 0;
   }
 

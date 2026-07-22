@@ -211,15 +211,7 @@ class _FeedEventContent extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (item.eventType) {
       case FeedEventType.finishedBook:
-        return _EventCard(
-          emoji: '✅',
-          color: AppColors.forestGreen,
-          lines: [
-            'Terminou de ler',
-            if (item.bookTitle != null) item.bookTitle!,
-            if (item.rating != null) '⭐' * item.rating!,
-          ],
-        );
+        return _FinishedBookCard(item: item);
       case FeedEventType.startedBook:
         return _EventCard(
           emoji: '📖',
@@ -259,6 +251,96 @@ class _FeedEventContent extends StatelessWidget {
     }
   }
 }
+
+
+/// Card rico para eventos "terminou de ler" — exibe rating, review e tempo.
+class _FinishedBookCard extends StatelessWidget {
+  final FeedItem item;
+
+  const _FinishedBookCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.forestGreen.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: AppColors.forestGreen.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('✅', style: TextStyle(fontSize: 22)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Terminou de ler',
+                  style: AppTextStyles.bodyMedium,
+                ),
+                if (item.bookTitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    item.bookTitle!,
+                    style: AppTextStyles.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ],
+                if (item.rating != null) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: List.generate(5, (i) {
+                      return Icon(
+                        i < item.rating!
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        size: 16,
+                        color: i < item.rating!
+                            ? AppColors.warmGold
+                            : AppColors.border,
+                      );
+                    }),
+                  ),
+                ],
+                if (item.review != null && item.review!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    '"${item.review!}"',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      fontStyle: FontStyle.italic,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                if (item.readingTimeLabel.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.timer_outlined,
+                          size: 13, color: AppColors.textMuted),
+                      const SizedBox(width: 4),
+                      Text(
+                        item.readingTimeLabel,
+                        style: AppTextStyles.labelMedium,
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 class _EventCard extends StatelessWidget {
   final String emoji;

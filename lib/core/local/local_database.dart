@@ -18,8 +18,9 @@ class LocalDatabase {
 
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -53,9 +54,14 @@ class LocalDatabase {
         started_at TEXT NOT NULL,
         ended_at TEXT,
         duration_minutes INTEGER,
+        paused_duration_seconds INTEGER NOT NULL DEFAULT 0,
         start_page INTEGER,
         end_page INTEGER,
+        pages_read INTEGER,
         notes TEXT,
+        status TEXT NOT NULL DEFAULT 'active',
+        session_goal TEXT,
+        goal_value INTEGER,
         created_at TEXT NOT NULL
       )
     ''');
@@ -108,6 +114,26 @@ class LocalDatabase {
         PRIMARY KEY (user_id, date)
       )
     ''');
+  }
+
+  /// Migração incremental para usuários que já têm o banco na versão 1.
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Adiciona colunas novas de sessão
+      await db.execute(
+          'ALTER TABLE reading_sessions ADD COLUMN paused_duration_seconds INTEGER NOT NULL DEFAULT 0');
+      await db.execute(
+          'ALTER TABLE reading_sessions ADD COLUMN pages_read INTEGER');
+      await db.execute(
+          "ALTER TABLE reading_sessions ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
+      await db.execute(
+          'ALTER TABLE reading_sessions ADD COLUMN session_goal TEXT');
+      await db.execute(
+          'ALTER TABLE reading_sessions ADD COLUMN goal_value INTEGER');
+      // Migra sessões antigas para status correto
+      await db.execute(
+          "UPDATE reading_sessions SET status = 'finished' WHERE ended_at IS NOT NULL");
+    }
   }
 
   Future<void> close() async {

@@ -1,11 +1,18 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/models/reading_session.dart';
 import '../../../../shared/providers/providers.dart';
+import '../widgets/book_review_dialog.dart';
+import '../widgets/book_share_card.dart';
 
 final _bookDetailProvider =
     FutureProvider.autoDispose.family<Book, String>((ref, id) async {
@@ -20,14 +27,21 @@ final _recentSessionsProvider =
   return all.take(3).toList();
 });
 
-class BookDetailScreen extends ConsumerWidget {
+class BookDetailScreen extends ConsumerStatefulWidget {
   final String bookId;
 
   const BookDetailScreen({super.key, required this.bookId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final book = ref.watch(_bookDetailProvider(bookId));
+  ConsumerState<BookDetailScreen> createState() => _BookDetailScreenState();
+}
+
+class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
+  final _screenshotController = ScreenshotController();
+
+  @override
+  Widget build(BuildContext context) {
+    final book = ref.watch(_bookDetailProvider(widget.bookId));
 
     return Scaffold(
       appBar: AppBar(
@@ -35,12 +49,21 @@ class BookDetailScreen extends ConsumerWidget {
           if (book.valueOrNull != null) ...[
             IconButton(
               icon: const Icon(Icons.share_outlined),
-              tooltip: 'Compartilhar',
-              onPressed: () => _shareBook(book.valueOrNull!),
+              tooltip: 'Compartilhar card',
+              onPressed: () => _shareBookCard(context, book.valueOrNull!),
             ),
             IconButton(
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () {},
+              tooltip: 'Editar',
+              onPressed: () async {
+                final updated = await context.push(
+                  '/library/book/${widget.bookId}/edit',
+                  extra: book.valueOrNull!,
+                );
+                if (updated == true) {
+                  ref.invalidate(_bookDetailProvider(widget.bookId));
+                }
+              },
             ),
           ],
         ],
@@ -53,28 +76,35 @@ class BookDetailScreen extends ConsumerWidget {
     );
   }
 
-  void _shareBook(Book book) {
-    final buffer = StringBuffer();
-    buffer.writeln('📚 ${book.title}');
-    if (book.author != null) buffer.writeln('✍️  ${book.author}');
-    buffer.writeln('📖 Status: ${book.status.label}');
-
-    if (book.currentPage != null && book.totalPages != null) {
-      final pct = ((book.currentPage! / book.totalPages!) * 100)
-          .toStringAsFixed(0);
-      buffer.writeln('📊 Progresso: ${book.currentPage}/${book.totalPages} páginas ($pct%)');
-    } else if (book.currentPage != null) {
-      buffer.writeln('📊 Página atual: ${book.currentPage}');
+  Future<void> _shareBookCard(BuildContext context, Book book) async {
+    // Mostra loading enquanto renderiza o card
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gerando card...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
     }
 
-    if (book.rating != null) {
-      final stars = '⭐' * book.rating! + '☆' * (5 - book.rating!);
-      buffer.writeln('$stars (${book.rating}/5)');
-    }
+    final Uint8List imageBytes = await _screenshotController.captureFromLongWidget(
+      BookShareCard(book: book),
+      pixelRatio: 3.0,
+    );
 
-    buffer.writeln('\nRegistrado no ReadLog 📔');
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/readlog_card_${book.id}.png');
+    await file.writeAsBytes(imageBytes);
 
-    SharePlus.instance.share(ShareParams(text: buffer.toString(), subject: book.title));
+    if (!context.mounted) return;
+
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path, mimeType: 'image/png')],
+        subject: book.title,
+        text: '${book.title}${book.author != null ? ' · ${book.author}' : ''} — ReadLog',
+      ),
+    );
   }
 }
 
@@ -346,6 +376,7 @@ class _StatusSelector extends ConsumerWidget {
               label: Text(s.label),
               selected: isSelected,
               onSelected: (_) async {
+                // Salva o novo status (e end_date se necessário)
                 final updates = <String, dynamic>{'status': s.dbValue};
                 if (s == BookStatus.read && book.endDate == null) {
                   updates['end_date'] =
@@ -355,6 +386,19 @@ class _StatusSelector extends ConsumerWidget {
                     .read(bookRepositoryProvider)
                     .update(book.id, updates);
                 ref.invalidate(_bookDetailProvider(book.id));
+
+                // Ao marcar como "Lido", abre o dialog de avaliação
+                if (s == BookStatus.read && context.mounted) {
+                  final updatedBook =
+                      book.copyWith(status: BookStatus.read);
+                  final saved = await showBookReviewDialog(
+                    context,
+                    updatedBook,
+                  );
+                  if (saved == true) {
+                    ref.invalidate(_bookDetailProvider(book.id));
+                  }
+                }
               },
               selectedColor: AppColors.forestGreen,
               labelStyle: TextStyle(

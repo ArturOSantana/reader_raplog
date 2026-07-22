@@ -14,8 +14,9 @@ class SocialFeedRepository {
     final data = await _client
         .from('social_feed')
         .select(
-          'id, user_id, event_type, book_title, book_author, rating, '
-          'streak_days, achievement_name, goal_description, likes_count, created_at, '
+          'id, user_id, event_type, book_title, book_author, rating, review, '
+          'reading_time_minutes, streak_days, achievement_name, goal_description, '
+          'likes_count, created_at, '
           'profile:profiles!social_feed_user_id_fkey(name, avatar_url)',
         )
         .order('created_at', ascending: false)
@@ -47,6 +48,8 @@ class SocialFeedRepository {
     required String bookTitle,
     String? bookAuthor,
     int? rating,
+    String? review,
+    int? readingTimeMinutes,
   }) async {
     await _client.from('social_feed').insert({
       'user_id': _userId,
@@ -54,6 +57,8 @@ class SocialFeedRepository {
       'book_title': bookTitle,
       'book_author': bookAuthor,
       'rating': rating,
+      if (review != null && review.isNotEmpty) 'review': review,
+      if (readingTimeMinutes != null) 'reading_time_minutes': readingTimeMinutes,
     });
   }
 

@@ -7,6 +7,7 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/library/presentation/screens/library_screen.dart';
 import '../../features/library/presentation/screens/book_detail_screen.dart';
 import '../../features/library/presentation/screens/add_book_screen.dart';
+import '../../features/library/presentation/screens/edit_book_screen.dart';
 import '../../features/session/presentation/screens/session_screen.dart';
 import '../../features/session/presentation/screens/session_history_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -103,6 +104,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'book/:id',
                 builder: (_, state) =>
                     BookDetailScreen(bookId: state.pathParameters['id']!),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => EditBookScreen(
+                      book: state.extra as dynamic,
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'add',

@@ -13,11 +13,15 @@ class BookCompletionCard extends StatelessWidget {
   /// Número total de sessões de leitura registradas para o livro.
   final int totalSessions;
 
+  /// Resenha escrita pelo usuário (opcional).
+  final String? review;
+
   const BookCompletionCard({
     super.key,
     required this.book,
     required this.totalMinutes,
     required this.totalSessions,
+    this.review,
   });
 
   String get _timeLabel {
@@ -170,6 +174,33 @@ class BookCompletionCard extends StatelessWidget {
                             : AppColors.darkBorder,
                       );
                     }),
+                  ),
+                ],
+
+                // Resenha
+                if (review != null && review!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.forestGreen.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color: AppColors.forestGreen.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      '"$review"',
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        fontStyle: FontStyle.italic,
+                        height: 1.5,
+                        color: AppColors.darkTextPrimary,
+                      ),
+                    ),
                   ),
                 ],
 

@@ -51,6 +51,8 @@ class FeedItem extends Equatable {
   final String? bookTitle;
   final String? bookAuthor;
   final int? rating;
+  final String? review;
+  final int? readingTimeMinutes;
   final int? streakDays;
   final String? achievementName;
   final String? goalDescription;
@@ -67,6 +69,8 @@ class FeedItem extends Equatable {
     this.bookTitle,
     this.bookAuthor,
     this.rating,
+    this.review,
+    this.readingTimeMinutes,
     this.streakDays,
     this.achievementName,
     this.goalDescription,
@@ -86,6 +90,8 @@ class FeedItem extends Equatable {
       bookTitle: map['book_title'] as String?,
       bookAuthor: map['book_author'] as String?,
       rating: map['rating'] as int?,
+      review: map['review'] as String?,
+      readingTimeMinutes: map['reading_time_minutes'] as int?,
       streakDays: map['streak_days'] as int?,
       achievementName: map['achievement_name'] as String?,
       goalDescription: map['goal_description'] as String?,
@@ -97,4 +103,12 @@ class FeedItem extends Equatable {
 
   @override
   List<Object?> get props => [id, userId, eventType, createdAt];
+
+  String get readingTimeLabel {
+    if (readingTimeMinutes == null || readingTimeMinutes! <= 0) return '';
+    final h = readingTimeMinutes! ~/ 60;
+    final m = readingTimeMinutes! % 60;
+    if (h == 0) return '${m}min';
+    return m == 0 ? '${h}h' : '${h}h ${m}min';
+  }
 }

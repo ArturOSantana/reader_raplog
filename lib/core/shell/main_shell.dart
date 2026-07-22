@@ -250,7 +250,7 @@ class _AppDrawer extends StatelessWidget {
                   ),
                   _DrawerItem(
                     icon: Icons.bar_chart_outlined,
-                    label: 'Dashboard',
+                    label: 'Painel',
                     active: _isActive('/dashboard'),
                     onTap: () => _navigate(context, '/dashboard'),
                   ),

@@ -1,9 +1,15 @@
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:share_plus/share_plus.dart';
+
 import 'package:flutter/material.dart';
 import '../../../../core/shell/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/goal.dart';
 import '../../../../shared/providers/providers.dart';
+import '../widgets/share_stats_sheet.dart';
+import '../../../goals/presentation/widgets/goal_achievement_card.dart';
 
 final _dashboardDataProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final sessionRepo = ref.watch(sessionRepositoryProvider);
@@ -46,7 +52,58 @@ class DashboardScreen extends ConsumerWidget {
     final data = ref.watch(_dashboardDataProvider);
 
     return Scaffold(
-      appBar: AppBar(leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => mainScaffoldKey.currentState?.openDrawer(), tooltip: 'Abrir menu'), title: const Text('Dashboard')),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
+          tooltip: 'Abrir menu',
+        ),
+        title: const Text('Painel'),
+        actions: [
+          if (data.hasValue)
+            IconButton(
+              icon: const Icon(Icons.share_rounded),
+              tooltip: 'Compartilhar estatísticas',
+              onPressed: () {
+                final d = data.value!;
+                final week = d['week'] as Map<String, dynamic>;
+                final month = d['month'] as Map<String, dynamic>;
+                final books = d['books'] as List;
+                final streak = d['streak'] as int;
+
+                final readBooks = books.where((b) {
+                  try {
+                    return (b as dynamic).status.dbValue == 'read';
+                  } catch (_) {
+                    return false;
+                  }
+                }).length;
+
+                final user = ref.read(currentUserProvider);
+                final userName =
+                    (user?.userMetadata?['full_name'] as String?) ??
+                    user?.email ??
+                    '';
+
+                showShareStatsSheet(
+                  context: context,
+                  streak: streak,
+                  weekMinutes:
+                      (week['total_minutes'] as num?)?.toInt() ?? 0,
+                  weekPages:
+                      (week['total_pages'] as num?)?.toInt() ?? 0,
+                  monthMinutes:
+                      (month['total_minutes'] as num?)?.toInt() ?? 0,
+                  monthPages:
+                      (month['total_pages'] as num?)?.toInt() ?? 0,
+                  monthBooks: readBooks,
+                  totalBooks: readBooks,
+                  userName: userName,
+                );
+              },
+            ),
+        ],
+      ),
       body: data.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erro: $e')),
@@ -168,6 +225,7 @@ class _GoalProgressCard extends StatelessWidget {
         final current = _current(goal);
         final target = goal.targetValue;
         final progress = (current / target).clamp(0.0, 1.0);
+        final percent = (progress * 100).round();
         final done = current >= target;
 
         return Container(
@@ -178,23 +236,26 @@ class _GoalProgressCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: done ? AppColors.forestGreen : AppColors.border,
+              width: done ? 1.5 : 1.0,
             ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(goal.type.label, style: AppTextStyles.titleMedium),
-                  Text(
-                    done ? '✓ Concluída' : '$current / $target ${goal.type.unit}',
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: done
-                          ? AppColors.forestGreen
-                          : AppColors.textSecondary,
-                    ),
+                  Expanded(
+                    child: Text(goal.type.label, style: AppTextStyles.titleMedium),
                   ),
+                  if (done)
+                    _ShareGoalButton(goal: goal, currentValue: current)
+                  else
+                    Text(
+                      '$current / $target ${goal.type.unit}',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -205,14 +266,209 @@ class _GoalProgressCard extends StatelessWidget {
                   minHeight: 6,
                   backgroundColor: AppColors.border,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    done ? AppColors.forestGreen : AppColors.forestGreen.withValues(alpha: 0.6),
+                    done
+                        ? AppColors.forestGreen
+                        : AppColors.forestGreen.withValues(alpha: 0.6),
                   ),
                 ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    done ? '✓ Meta concluída!' : '$percent% concluído',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: done ? AppColors.forestGreen : AppColors.textMuted,
+                      fontWeight: done ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  if (!done)
+                    Text(
+                      'Faltam ${target - current} ${goal.type.unit}',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+// ── Botão + sheet de compartilhamento da meta ─────────────────────────────
+
+class _ShareGoalButton extends StatelessWidget {
+  final Goal goal;
+  final int currentValue;
+
+  const _ShareGoalButton({required this.goal, required this.currentValue});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showShareSheet(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.forestGreen.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: AppColors.forestGreen.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle_rounded,
+                size: 14, color: AppColors.forestGreen),
+            const SizedBox(width: 4),
+            Text(
+              'Concluída',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.forestGreen,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Icon(Icons.share_outlined,
+                size: 13, color: AppColors.forestGreen),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showShareSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _GoalShareSheet(goal: goal, currentValue: currentValue),
+    );
+  }
+}
+
+class _GoalShareSheet extends StatefulWidget {
+  final Goal goal;
+  final int currentValue;
+
+  const _GoalShareSheet({required this.goal, required this.currentValue});
+
+  @override
+  State<_GoalShareSheet> createState() => _GoalShareSheetState();
+}
+
+class _GoalShareSheetState extends State<_GoalShareSheet> {
+  final _cardKey = GlobalKey();
+  bool _sharing = false;
+
+  Future<void> _shareAsImage() async {
+    setState(() => _sharing = true);
+    try {
+      final boundary =
+          _cardKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+
+      final pngBytes = byteData.buffer.asUint8List();
+      final xFile = XFile.fromData(
+        pngBytes,
+        name: 'readlog_meta.png',
+        mimeType: 'image/png',
+      );
+
+      final goalLabel = widget.goal.type.label.toLowerCase();
+      final unit = widget.goal.type.unit;
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [xFile],
+          text: '🎯 Atingi minha meta de $goalLabel: '
+              '${widget.currentValue} $unit — registrado no ReadLog!',
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF0F1A14),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.only(top: 16, bottom: 32, left: 16, right: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Alça
+          Container(
+            width: 36,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              color: AppColors.darkBorder,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          const Text(
+            'Compartilhar conquista',
+            style: TextStyle(
+              fontFamily: 'Fraunces',
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: AppColors.darkTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Preview capturável
+          RepaintBoundary(
+            key: _cardKey,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: GoalAchievementCard(
+                goal: widget.goal,
+                currentValue: widget.currentValue,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.forestGreen,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              onPressed: _sharing ? null : _shareAsImage,
+              icon: _sharing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.share_outlined, size: 18),
+              label: Text(
+                  _sharing ? 'Compartilhando…' : 'Compartilhar como imagem'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -15,11 +15,13 @@ class OfflineSessionRepository {
 
   String get _userId => _client.auth.currentUser!.id;
 
-  // ── Start / Finish ────────────────────────────────────────────────────────
+  // ── Start / Finish / Cancel ───────────────────────────────────────────────
 
   Future<ReadingSession> startSession({
     required String bookId,
     required int startPage,
+    SessionGoal? goal,
+    int? goalValue,
   }) async {
     final now = DateTime.now();
     final id = _uuid.v4();
@@ -30,6 +32,10 @@ class OfflineSessionRepository {
       'start_page': startPage,
       'started_at': now.toIso8601String(),
       'created_at': now.toIso8601String(),
+      'status': 'active',
+      'paused_duration_seconds': 0,
+      if (goal != null) 'session_goal': goal.name,
+      if (goalValue != null) 'goal_value': goalValue,
     };
 
     await _local.insert(fields);
@@ -58,18 +64,29 @@ class OfflineSessionRepository {
     required String sessionId,
     required int endPage,
     String? notes,
+    int pausedDurationSeconds = 0,
   }) async {
     final now = DateTime.now();
 
     final localSession = await _local.fetchById(sessionId);
     final startedAt = localSession?.startedAt ?? now;
-    final durationMinutes = now.difference(startedAt).inMinutes;
+
+    final totalSeconds = now.difference(startedAt).inSeconds;
+    final netSeconds =
+        (totalSeconds - pausedDurationSeconds).clamp(0, totalSeconds);
+    final durationMinutes = netSeconds ~/ 60;
+
+    final startPage = localSession?.startPage ?? 0;
+    final pagesRead = (endPage - startPage).clamp(0, 99999);
 
     final updateFields = {
       'ended_at': now.toIso8601String(),
       'end_page': endPage,
+      'pages_read': pagesRead,
       'duration_minutes': durationMinutes,
+      'paused_duration_seconds': pausedDurationSeconds,
       'notes': notes,
+      'status': 'finished',
     };
 
     await _local.update(sessionId, updateFields);
@@ -96,6 +113,27 @@ class OfflineSessionRepository {
     return (await _local.fetchById(sessionId))!;
   }
 
+  Future<void> cancelSession({required String sessionId}) async {
+    await _local.update(sessionId, {'status': 'cancelled'});
+
+    if (_isOnline()) {
+      try {
+        await _client
+            .from('reading_sessions')
+            .update({'status': 'cancelled'})
+            .eq('id', sessionId)
+            .eq('user_id', _userId);
+        return;
+      } catch (_) {}
+    }
+
+    await SyncQueue.instance.enqueue(
+      entity: 'session',
+      operation: 'update',
+      payload: {'id': sessionId, 'status': 'cancelled'},
+    );
+  }
+
   // ── Fetch ─────────────────────────────────────────────────────────────────
 
   Future<List<ReadingSession>> fetchByBook(String bookId) async {
@@ -106,6 +144,7 @@ class OfflineSessionRepository {
             .select()
             .eq('user_id', _userId)
             .eq('book_id', bookId)
+            .neq('status', 'cancelled')
             .order('started_at', ascending: false);
         await _local
             .upsertAll(List<Map<String, dynamic>>.from(data as List));
@@ -193,6 +232,36 @@ class OfflineSessionRepository {
       } catch (_) {}
     }
     return _local.fetchPeriodStats(_userId, fromDate);
+  }
+
+  /// Retorna {total_minutes, total_sessions} somando todas as sessões do livro.
+  Future<Map<String, int>> fetchBookTotalStats(String bookId) async {
+    if (_isOnline()) {
+      try {
+        final data = await _client
+            .from('reading_sessions')
+            .select('duration_minutes')
+            .eq('user_id', _userId)
+            .eq('book_id', bookId)
+            .eq('status', 'finished');
+        final list = data as List;
+        int totalMinutes = 0;
+        for (final row in list) {
+          totalMinutes += (row['duration_minutes'] as int? ?? 0);
+        }
+        return {'total_minutes': totalMinutes, 'total_sessions': list.length};
+      } catch (_) {}
+    }
+    final sessions = await _local.fetchByBook(bookId);
+    int totalMinutes = 0;
+    int count = 0;
+    for (final s in sessions) {
+      if (s.status == SessionStatus.finished && s.durationMinutes != null) {
+        totalMinutes += s.durationMinutes!;
+        count++;
+      }
+    }
+    return {'total_minutes': totalMinutes, 'total_sessions': count};
   }
 
   Future<List<Map<String, dynamic>>> fetchHeatmap({int days = 365}) async {

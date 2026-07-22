@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/local/local_database.dart';
 import 'core/router/app_router.dart';
@@ -17,6 +18,8 @@ Future<void> main() async {
     // ignore: deprecated_member_use
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+
+  await initializeDateFormatting('pt_BR');
 
   // Inicializa banco SQLite antes do runApp
   await LocalDatabase.instance.db;
