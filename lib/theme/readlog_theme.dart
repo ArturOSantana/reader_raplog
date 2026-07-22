@@ -220,6 +220,7 @@ class ReadLogTheme {
         secondary: ReadLogColors.brassLight,
         surface: ReadLogColors.inkAlt,
         onSurface: ReadLogColors.cream,
+        outline: ReadLogColors.cream.withValues(alpha: 0.2),
       ),
       textTheme: ReadLogType.textTheme(ReadLogColors.cream),
       pageTransitionsTheme: _pageTransitions,
@@ -231,6 +232,18 @@ class ReadLogTheme {
         titleTextStyle:
             ReadLogType.display(size: 19, color: ReadLogColors.cream),
       ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: ReadLogColors.stamp,
+          foregroundColor: ReadLogColors.cream,
+          textStyle: ReadLogType.mono(size: 13, weight: FontWeight.w600),
+          padding:
+              const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(3)),
+          elevation: 0,
+        ),
+      ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: ReadLogColors.stamp,
@@ -241,6 +254,18 @@ class ReadLogTheme {
           minimumSize: const Size(double.infinity, 50),
           elevation: 0,
         ),
+      ),
+      cardTheme: CardThemeData(
+        color: ReadLogColors.inkAlt,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(3)),
+        margin: const EdgeInsets.symmetric(vertical: 6),
+      ),
+      dividerTheme: DividerThemeData(
+        color: ReadLogColors.cream.withValues(alpha: 0.12),
+        thickness: 1,
+        space: 1,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -279,6 +304,19 @@ class ReadLogTheme {
         cursorColor: ReadLogColors.brassLight,
         selectionColor: ReadLogColors.brassLight.withValues(alpha: 0.3),
         selectionHandleColor: ReadLogColors.brassLight,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: ReadLogColors.ink,
+        surfaceTintColor: Colors.transparent,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: ReadLogColors.inkAlt,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      ),
+      listTileTheme: ListTileThemeData(
+        iconColor: ReadLogColors.cream.withValues(alpha: 0.65),
+        textColor: ReadLogColors.cream,
       ),
     );
   }

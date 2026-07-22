@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/shell/main_shell.dart';
+import '../../../../core/widgets/widget_manager.dart';
 import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/models/goal.dart';
@@ -19,11 +22,35 @@ final _homeDataProvider = FutureProvider<Map<String, dynamic>>((ref) async {
     goalRepo.fetchAll(),
   ]);
 
+  final daily = results[0] as Map<String, dynamic>;
+  final streak = results[1] as int;
+  final reading = results[2] as List<Book>;
+  final goals = results[3] as List<Goal>;
+
+  // ── Atualiza todos os widgets nativos com os dados frescos ──────────────
+  final currentBook = reading.isNotEmpty ? reading.first : null;
+  final dailyGoalObj = goals.cast<Goal?>().firstWhere(
+    (g) => g!.type == GoalType.dailyPages || g.type == GoalType.dailyMinutes,
+    orElse: () => null,
+  );
+  final todayPages = (daily['total_pages'] as num?)?.toInt() ?? 0;
+
+  unawaited(WidgetManager.updateAll(
+    bookTitle: currentBook?.title,
+    bookAuthor: currentBook?.author,
+    currentPage: currentBook?.currentPage ?? 0,
+    totalPages: currentBook?.totalPages ?? 0,
+    streak: streak,
+    streakRecord: streak, // fallback: recorde = streak atual se não tiver separado
+    dailyGoal: todayPages,
+    dailyGoalTarget: dailyGoalObj?.targetValue,
+  ));
+
   return {
-    'daily': results[0] as Map<String, dynamic>,
-    'streak': results[1] as int,
-    'reading': results[2] as List<Book>,
-    'goals': results[3] as List<Goal>,
+    'daily': daily,
+    'streak': streak,
+    'reading': reading,
+    'goals': goals,
   };
 });
 

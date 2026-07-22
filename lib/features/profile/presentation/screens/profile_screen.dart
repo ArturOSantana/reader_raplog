@@ -1363,6 +1363,7 @@ class _SettingsSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final cs = Theme.of(context).colorScheme;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -1375,7 +1376,7 @@ class _SettingsSheet extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 'Configurações',
-                style: ReadLogType.display(size: 18, color: ReadLogColors.charcoal),
+                style: ReadLogType.display(size: 18, color: cs.onSurface),
               ),
             ),
           ),
@@ -1443,9 +1444,10 @@ class _SettingsSheet extends ConsumerWidget {
     required VoidCallback onTap,
     Widget? trailing,
   }) {
+    final cs = Theme.of(context).colorScheme;
     return ListTile(
-      leading: Icon(icon, size: 20, color: ReadLogColors.charcoal.withValues(alpha: 0.65)),
-      title: Text(label, style: ReadLogType.mono(size: 13, color: ReadLogColors.charcoal)),
+      leading: Icon(icon, size: 20, color: cs.onSurface.withValues(alpha: 0.65)),
+      title: Text(label, style: ReadLogType.mono(size: 13, color: cs.onSurface)),
       trailing: trailing,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
       onTap: onTap,
@@ -1453,27 +1455,27 @@ class _SettingsSheet extends ConsumerWidget {
   }
 
   void _showThemeDialog(BuildContext context, WidgetRef ref, ThemeMode current) {
+    final cs = Theme.of(context).colorScheme;
     showDialog<ThemeMode>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: ReadLogColors.cream,
-        title: Text('Aparência', style: ReadLogType.display(size: 16, color: ReadLogColors.charcoal)),
+        title: Text('Aparência', style: ReadLogType.display(size: 16, color: cs.onSurface)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: ThemeMode.values.map((mode) {
             final label = switch (mode) {
-              ThemeMode.system => 'Sistema (automático)',
-              ThemeMode.light => 'Claro',
-              ThemeMode.dark => 'Escuro',
+              ThemeMode.system => '📱 Seguir sistema',
+              ThemeMode.light => '☀️ Claro',
+              ThemeMode.dark => '🌙 Escuro',
             };
             final selected = mode == current;
             return ListTile(
               leading: Icon(
                 selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
                 size: 20,
-                color: selected ? ReadLogColors.ink : ReadLogColors.charcoal.withValues(alpha: 0.4),
+                color: selected ? ReadLogColors.brass : cs.onSurface.withValues(alpha: 0.4),
               ),
-              title: Text(label, style: ReadLogType.mono(size: 13, color: ReadLogColors.charcoal)),
+              title: Text(label, style: ReadLogType.mono(size: 13, color: cs.onSurface)),
               onTap: () {
                 ref.read(themeModeProvider.notifier).set(mode);
                 Navigator.pop(context);
@@ -1504,19 +1506,19 @@ class _SettingsSheet extends ConsumerWidget {
   }
 
   void _confirmSignOut(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: ReadLogColors.cream,
-        title: Text('Sair', style: ReadLogType.display(size: 16, color: ReadLogColors.charcoal)),
+        title: Text('Sair', style: ReadLogType.display(size: 16, color: cs.onSurface)),
         content: Text(
           'Tem certeza que deseja sair da sua conta?',
-          style: ReadLogType.mono(size: 13, color: ReadLogColors.charcoal),
+          style: ReadLogType.mono(size: 13, color: cs.onSurface),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancelar', style: ReadLogType.mono(size: 13, color: ReadLogColors.charcoal)),
+            child: Text('Cancelar', style: ReadLogType.mono(size: 13, color: cs.onSurface)),
           ),
           TextButton(
             onPressed: () async {
@@ -1539,6 +1541,7 @@ class _ThemeModeChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final label = switch (current) {
       ThemeMode.system => 'Sistema',
       ThemeMode.light => 'Claro',
@@ -1546,7 +1549,7 @@ class _ThemeModeChips extends StatelessWidget {
     };
     return Text(
       label,
-      style: ReadLogType.mono(size: 11, color: ReadLogColors.charcoal.withValues(alpha: 0.5)),
+      style: ReadLogType.mono(size: 11, color: cs.onSurface.withValues(alpha: 0.5)),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:home_widget/home_widget.dart';
 import '../../features/inspiration/data/inspiration_quotes.dart';
 import 'widget_keys.dart';
@@ -21,7 +23,11 @@ import 'widget_updater.dart';
 abstract final class WidgetManager {
   /// Inicializa o plugin. Deve ser chamado uma vez, antes de [runApp].
   static Future<void> init() async {
-    await HomeWidget.setAppGroupId(WidgetKeys.iosAppGroup);
+    // setAppGroupId é exclusivo do iOS (App Groups).
+    // No Android o método não existe e lançaria MissingPluginException.
+    if (Platform.isIOS) {
+      await HomeWidget.setAppGroupId(WidgetKeys.iosAppGroup);
+    }
   }
 
   // ── Ofensiva ──────────────────────────────────────────────────────────────

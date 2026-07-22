@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../theme/theme_mode_storage.dart';
 import '../../core/local/connectivity_provider.dart';
 import '../../core/local/sync_service.dart';
 import '../../features/library/data/offline_book_repository.dart';
@@ -132,29 +132,19 @@ final dailyInspirationServiceProvider = Provider<DailyInspirationService>(
 
 // ── Tema ──────────────────────────────────────────────────────────────────
 
-/// Persiste o ThemeMode escolhido pelo usuário em SharedPreferences.
+/// Persiste o ThemeMode escolhido pelo usuário via [ThemeModeStorage].
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   ThemeModeNotifier() : super(ThemeMode.system) {
     _load();
   }
 
-  static const _key = 'theme_mode';
-
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final value = prefs.getString(_key);
-    if (value != null) {
-      state = ThemeMode.values.firstWhere(
-        (m) => m.name == value,
-        orElse: () => ThemeMode.system,
-      );
-    }
+    state = await ThemeModeStorage.load();
   }
 
   Future<void> set(ThemeMode mode) async {
     state = mode;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, mode.name);
+    await ThemeModeStorage.save(mode);
   }
 }
 

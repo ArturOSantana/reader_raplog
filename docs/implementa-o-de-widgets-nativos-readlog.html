@@ -1,0 +1,135 @@
+
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Widgets Nativos — Readlog</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; background: #ffffff; color: #1f2328; max-width: 760px; margin: 0 auto; padding: 32px 20px; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  h2 { font-size: 15px; font-weight: 600; margin-top: 28px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
+  h3 { font-size: 13px; font-weight: 600; margin-top: 16px; margin-bottom: 6px; color: #3b82d4; }
+  p { margin-bottom: 8px; color: #1f2328; }
+  .subtitle { color: #57606a; font-size: 13px; margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th { background: #f7f8fa; text-align: left; padding: 8px 10px; font-size: 12px; font-weight: 600; color: #57606a; border-bottom: 2px solid #e5e7eb; }
+  td { padding: 7px 10px; font-size: 13px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  code { font-family: "Menlo", "Consolas", monospace; font-size: 12px; background: #f7f8fa; padding: 1px 5px; border-radius: 3px; color: #1f2328; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; }
+  .badge-dart { background: #dbeafe; color: #1d4ed8; }
+  .badge-kotlin { background: #f3e8ff; color: #7c3aed; }
+  .badge-swift { background: #fef3c7; color: #92400e; }
+  .badge-xml { background: #dcfce7; color: #15803d; }
+  .badge-md { background: #f1f5f9; color: #475569; }
+  .step { display: flex; gap: 10px; margin-bottom: 8px; }
+  .step-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: #3b82d4; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .step-text { font-size: 13px; }
+  .arch-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 13px; }
+  .arch-arrow { color: #57606a; }
+  .arch-box { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 4px; padding: 3px 10px; font-size: 12px; }
+  .warn { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 8px 12px; border-radius: 3px; font-size: 13px; margin-bottom: 12px; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 12px; color: #57606a; }
+</style>
+</head>
+<body>
+
+<h1>Widgets Nativos — Readlog</h1>
+<p class="subtitle">Flutter + <code>home_widget</code> · Android App Widgets · iOS WidgetKit</p>
+
+
+<h2>Arquitetura</h2>
+<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+  <div class="arch-row"><div class="arch-box">Feature (sessão / meta / livro / clube / frase)</div><span class="arch-arrow">↓</span></div>
+  <div class="arch-row"><div class="arch-box" style="border-color:#3b82d4;font-weight:600">WidgetManager.updateAll() / updateStreak() / …</div><span class="arch-arrow">↓</span></div>
+  <div class="arch-row"><div class="arch-box">WidgetUpdater.save() → HomeWidget.saveWidgetData()</div><span class="arch-arrow">↓</span></div>
+  <div class="arch-row" style="gap:16px">
+    <div class="arch-box">Android SharedPreferences → AppWidgetProvider</div>
+    <div class="arch-box">iOS UserDefaults (App Group) → TimelineProvider</div>
+  </div>
+</div>
+
+
+<h2>Arquivos Flutter criados / modificados</h2>
+<table>
+  <thead><tr><th>Arquivo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+  <tbody>
+    <tr><td><code>lib/core/widgets/widget_keys.dart</code></td><td><span class="badge badge-dart">Dart</span></td><td>Constantes de chaves compartilhadas entre Flutter e camada nativa.</td></tr>
+    <tr><td><code>lib/core/widgets/widget_updater.dart</code></td><td><span class="badge badge-dart">Dart</span></td><td>Wraper de baixo nível em torno de <code>HomeWidget.saveWidgetData</code> e <code>updateWidget</code>.</td></tr>
+    <tr><td><code>lib/core/widgets/widget_manager.dart</code></td><td><span class="badge badge-dart">Dart</span></td><td>Ponto único de atualização: <code>updateStreak</code>, <code>updateCurrentBook</code>, <code>updateDailyGoal</code>, <code>updateQuote</code>, <code>updateClub</code>, <code>updateAll</code>.</td></tr>
+    <tr><td><code>lib/main.dart</code></td><td><span class="badge badge-dart">Dart</span></td><td>Adicionado <code>WidgetManager.init()</code> antes do <code>runApp</code>.</td></tr>
+    <tr><td><code>pubspec.yaml</code></td><td><span class="badge badge-xml">YAML</span></td><td>Adicionadas dependências <code>home_widget: ^0.6.0</code> e <code>workmanager: ^0.5.2</code>.</td></tr>
+  </tbody>
+</table>
+
+
+<h2>Arquivos Android criados</h2>
+<table>
+  <thead><tr><th>Arquivo</th><th>Tipo</th><th>Widget</th></tr></thead>
+  <tbody>
+    <tr><td><code>…/widgets/StreakWidget.kt</code></td><td><span class="badge badge-kotlin">Kotlin</span></td><td>Ofensiva — exibe streak. Toque → /dashboard.</td></tr>
+    <tr><td><code>…/widgets/CurrentBookWidget.kt</code></td><td><span class="badge badge-kotlin">Kotlin</span></td><td>Livro Atual — título, páginas, progresso. Toque → /session.</td></tr>
+    <tr><td><code>…/widgets/DailyGoalWidget.kt</code></td><td><span class="badge badge-kotlin">Kotlin</span></td><td>Meta Diária — current/target + barra. Toque → /session.</td></tr>
+    <tr><td><code>…/widgets/QuoteWidget.kt</code></td><td><span class="badge badge-kotlin">Kotlin</span></td><td>Frase do Dia — texto + autor. Toque → /home.</td></tr>
+    <tr><td><code>…/widgets/ClubWidget.kt</code></td><td><span class="badge badge-kotlin">Kotlin</span></td><td>Clube — nome, livro, próximo encontro. Toque → /clubs.</td></tr>
+    <tr><td><code>…/widgets/ReaderDashboardWidget.kt</code></td><td><span class="badge badge-kotlin">Kotlin</span></td><td>Painel — livro + ofensiva + meta + frase + clube. Toque → /home.</td></tr>
+    <tr><td><code>res/layout/widget_*.xml</code></td><td><span class="badge badge-xml">XML</span></td><td>6 layouts RemoteViews responsivos.</td></tr>
+    <tr><td><code>res/xml/*_widget_info.xml</code></td><td><span class="badge badge-xml">XML</span></td><td>6 arquivos <code>appwidget-provider</code> com tamanhos e update period.</td></tr>
+    <tr><td><code>res/drawable/widget_background.xml</code></td><td><span class="badge badge-xml">XML</span></td><td>Shape rounded com <code>@color/widget_background</code>.</td></tr>
+    <tr><td><code>res/values/widget_colors.xml</code></td><td><span class="badge badge-xml">XML</span></td><td>Paleta tema claro.</td></tr>
+    <tr><td><code>res/values-night/widget_colors.xml</code></td><td><span class="badge badge-xml">XML</span></td><td>Paleta tema escuro.</td></tr>
+    <tr><td><code>AndroidManifest.xml</code></td><td><span class="badge badge-xml">XML</span></td><td>6 receivers <code>AppWidgetProvider</code> registrados.</td></tr>
+  </tbody>
+</table>
+
+
+<h2>Arquivos iOS criados</h2>
+<table>
+  <thead><tr><th>Arquivo</th><th>Tipo</th><th>Conteúdo</th></tr></thead>
+  <tbody>
+    <tr><td><code>ios/ReadlogWidgets/ReadlogWidgets.swift</code></td><td><span class="badge badge-swift">Swift</span></td><td>Bundle com os 6 widgets. Cada um tem <code>TimelineProvider</code>, <code>Entry</code>, <code>View</code> e <code>Widget</code>. Lê dados via <code>UserDefaults(suiteName: appGroupId)</code>.</td></tr>
+    <tr><td><code>ios/ReadlogWidgets/Info.plist</code></td><td><span class="badge badge-xml">plist</span></td><td>Metadados da Widget Extension (NSExtensionPointIdentifier).</td></tr>
+    <tr><td><code>docs/widgets_setup.md</code></td><td><span class="badge badge-md">MD</span></td><td>Guia completo de configuração do Xcode e App Groups.</td></tr>
+  </tbody>
+</table>
+
+
+<h2>Widgets — Tamanhos e Navegação</h2>
+<table>
+  <thead><tr><th>Widget</th><th>Android</th><th>iOS</th><th>Toque abre</th></tr></thead>
+  <tbody>
+    <tr><td>🔥 Ofensiva</td><td>Small · Medium</td><td>Small · Medium</td><td><code>/dashboard</code></td></tr>
+    <tr><td>📖 Livro Atual</td><td>Medium · Large</td><td>Small · Medium · Large</td><td><code>/session</code></td></tr>
+    <tr><td>🎯 Meta Diária</td><td>Small · Medium</td><td>Small · Medium</td><td><code>/session</code></td></tr>
+    <tr><td>💬 Frase do Dia</td><td>Medium · Large</td><td>Small · Medium · Large</td><td><code>/home</code></td></tr>
+    <tr><td>📚 Clube</td><td>Medium</td><td>Small · Medium</td><td><code>/clubs</code></td></tr>
+    <tr><td>🗂 Painel do Leitor</td><td>Large (4×4)</td><td>Medium · Large</td><td><code>/home</code></td></tr>
+  </tbody>
+</table>
+
+
+<h2>Quando chamar WidgetManager</h2>
+<table>
+  <thead><tr><th>Evento</th><th>Método</th></tr></thead>
+  <tbody>
+    <tr><td>Sessão finalizada</td><td><code>WidgetManager.updateAll(bookTitle:, currentPage:, totalPages:, streak:, dailyGoal:, …)</code></td></tr>
+    <tr><td>Meta concluída / progresso atualizado</td><td><code>WidgetManager.updateDailyGoal(current:, target:)</code></td></tr>
+    <tr><td>Ofensiva alterada</td><td><code>WidgetManager.updateStreak(streak:, streakRecord:)</code></td></tr>
+    <tr><td>Livro alterado / concluído</td><td><code>WidgetManager.updateCurrentBook(title:, currentPage:, totalPages:)</code></td></tr>
+    <tr><td>Clube / encontro atualizado</td><td><code>WidgetManager.updateClub(clubName:, nextMeeting:)</code></td></tr>
+    <tr><td>Frase do dia (meia-noite)</td><td><code>WidgetManager.updateQuote(quote)</code></td></tr>
+  </tbody>
+</table>
+
+
+<h2>Configuração iOS obrigatória (Xcode)</h2>
+<div class="warn">A Widget Extension não pode ser criada via CLI — é necessário o Xcode.</div>
+<div class="step"><div class="step-num">1</div><div class="step-text">Abrir <code>ios/Runner.xcworkspace</code>. <b>File → New → Target → Widget Extension</b>. Nome: <code>ReadlogWidgets</code>.</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-text">Substituir o conteúdo gerado pelo arquivo <code>ios/ReadlogWidgets/ReadlogWidgets.swift</code>.</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-text">Em <b>Runner</b> e <b>ReadlogWidgets</b>: Signing &amp; Capabilities → <b>+ App Groups</b> → <code>group.com.readlog.readlog</code>.</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-text">Adicionar target no <code>ios/Podfile</code> e rodar <code>pod install</code>.</div></div>
+<div class="step"><div class="step-num">5</div><div class="step-text">Ver <code>docs/widgets_setup.md</code> para detalhes completos.</div></div>
+
+<footer>Made with IBM Bob</footer>
+</body>
+</html>

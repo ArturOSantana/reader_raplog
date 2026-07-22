@@ -100,7 +100,11 @@ class _ClubDetailBody extends ConsumerWidget {
           ref.invalidate(_clubHistoryProvider(clubId));
           ref.invalidate(_clubPollsProvider(clubId));
         },
-        child: ListView(
+        child: Builder(builder: (context) {
+          final cs = Theme.of(context).colorScheme;
+          final sectionStyle = AppTextStyles.headlineMedium
+              .copyWith(color: cs.onSurface);
+          return ListView(
           padding: const EdgeInsets.all(20),
           children: [
             // ── Status banner ────────────────────────────────────────────
@@ -124,18 +128,18 @@ class _ClubDetailBody extends ConsumerWidget {
             ],
             // ── Encontros ────────────────────────────────────────────────
             if (!club.isClosed) ...[
-              Text('Encontros', style: AppTextStyles.headlineMedium),
+              Text('Encontros', style: sectionStyle),
               const SizedBox(height: 12),
               _MeetingsList(clubId: clubId),
               const SizedBox(height: 24),
             ],
             // ── Membros ──────────────────────────────────────────────────
-            Text('Membros', style: AppTextStyles.headlineMedium),
+            Text('Membros', style: sectionStyle),
             const SizedBox(height: 12),
             _MembersList(club: club, clubId: clubId),
             const SizedBox(height: 24),
             // ── Histórico de livros ──────────────────────────────────────
-            Text('Histórico de leituras', style: AppTextStyles.headlineMedium),
+            Text('Histórico de leituras', style: sectionStyle),
             const SizedBox(height: 12),
             _BookHistoryList(clubId: clubId),
             const SizedBox(height: 24),
@@ -149,7 +153,8 @@ class _ClubDetailBody extends ConsumerWidget {
               _DeleteClubButton(club: club, clubId: clubId),
             const SizedBox(height: 8),
           ],
-        ),
+        );
+        }),
       ),
     );
   }
@@ -412,33 +417,33 @@ class _InviteCodeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final accentColor = AppColors.warmGold;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.forestGreen.withValues(alpha: 0.06),
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border:
-            Border.all(color: AppColors.forestGreen.withValues(alpha: 0.2)),
+        border: Border.all(color: accentColor.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.vpn_key_outlined,
-              color: AppColors.forestGreen, size: 18),
+          Icon(Icons.vpn_key_outlined, color: accentColor, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Código de convite',
+                Text('Código de convite',
                     style: TextStyle(
-                        fontSize: 12, color: AppColors.textMuted)),
+                        fontSize: 12, color: cs.onSurfaceVariant)),
                 const SizedBox(height: 2),
                 Text(
                   inviteCode,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.forestGreen,
+                    color: accentColor,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -446,8 +451,7 @@ class _InviteCodeCard extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.copy_outlined,
-                color: AppColors.forestGreen, size: 18),
+            icon: Icon(Icons.copy_outlined, color: accentColor, size: 18),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: inviteCode));
               ScaffoldMessenger.of(context).showSnackBar(
@@ -471,41 +475,46 @@ class _ClubHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final iconBg = club.isClosed
+        ? cs.surfaceContainerHighest
+        : club.isOnVacation
+            ? AppColors.warmGold.withValues(alpha: isDark ? 0.18 : 0.1)
+            : AppColors.warmGold.withValues(alpha: isDark ? 0.18 : 0.1);
+    final iconFg = club.isClosed
+        ? cs.onSurfaceVariant
+        : club.isOnVacation
+            ? AppColors.warmGold
+            : cs.onSurface;
+
     return Row(
       children: [
         Container(
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            color: club.isClosed
-                ? AppColors.surfaceVariant
-                : club.isOnVacation
-                    ? AppColors.warmGold.withValues(alpha: 0.1)
-                    : AppColors.forestGreen.withValues(alpha: 0.1),
+            color: iconBg,
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Icon(
-            Icons.groups,
-            color: club.isClosed
-                ? AppColors.textMuted
-                : club.isOnVacation
-                    ? AppColors.warmGold
-                    : AppColors.forestGreen,
-            size: 36,
-          ),
+          child: Icon(Icons.groups, color: iconFg, size: 36),
         ),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(club.name, style: AppTextStyles.headlineMedium),
+              Text(club.name,
+                  style: AppTextStyles.headlineMedium
+                      .copyWith(color: cs.onSurface)),
               if (club.description != null && club.description!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
                     club.description!,
-                    style: AppTextStyles.bodyMedium,
+                    style: AppTextStyles.bodyMedium
+                        .copyWith(color: cs.onSurfaceVariant),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -513,12 +522,13 @@ class _ClubHeader extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(Icons.person_outline,
-                      size: 13, color: AppColors.textMuted),
+                  Icon(Icons.person_outline,
+                      size: 13, color: cs.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Text(
                     '${club.memberCount} ${club.memberCount == 1 ? 'membro' : 'membros'}',
-                    style: AppTextStyles.labelMedium,
+                    style: AppTextStyles.labelMedium
+                        .copyWith(color: cs.onSurfaceVariant),
                   ),
                   const SizedBox(width: 10),
                   _statusChip(club),
@@ -536,18 +546,18 @@ class _ClubHeader extends StatelessWidget {
     late final IconData icon;
     switch (c.status) {
       case ClubStatus.active:
-        bg = AppColors.success.withValues(alpha: 0.12);
+        bg = AppColors.success.withValues(alpha: 0.22);
         fg = AppColors.success;
         icon = Icons.circle;
         break;
       case ClubStatus.onVacation:
-        bg = AppColors.warmGold.withValues(alpha: 0.12);
+        bg = AppColors.warmGold.withValues(alpha: 0.22);
         fg = AppColors.warmGold;
         icon = Icons.beach_access_outlined;
         break;
       case ClubStatus.closed:
-        bg = AppColors.surfaceVariant;
-        fg = AppColors.textMuted;
+        bg = Colors.white.withValues(alpha: 0.12);
+        fg = Colors.white70;
         icon = Icons.lock_outline;
         break;
     }
@@ -577,19 +587,18 @@ class _CurrentBookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final hasBook = club.currentBookTitle != null;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: hasBook
-            ? AppColors.forestGreen.withValues(alpha: 0.06)
-            : AppColors.surfaceVariant,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: hasBook
-              ? AppColors.forestGreen.withValues(alpha: 0.3)
-              : AppColors.border,
+              ? AppColors.warmGold.withValues(alpha: 0.4)
+              : cs.outlineVariant,
         ),
       ),
       child: Row(
@@ -599,13 +608,13 @@ class _CurrentBookCard extends StatelessWidget {
             height: 60,
             decoration: BoxDecoration(
               color: hasBook
-                  ? AppColors.forestGreen.withValues(alpha: 0.15)
-                  : AppColors.border,
+                  ? AppColors.warmGold.withValues(alpha: 0.18)
+                  : cs.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Icon(
               Icons.menu_book_outlined,
-              color: hasBook ? AppColors.forestGreen : AppColors.textMuted,
+              color: hasBook ? AppColors.warmGold : cs.onSurfaceVariant,
             ),
           ),
           const SizedBox(width: 14),
@@ -615,14 +624,14 @@ class _CurrentBookCard extends StatelessWidget {
               children: [
                 Text(
                   'Leitura atual',
-                  style: AppTextStyles.labelMedium,
+                  style: AppTextStyles.labelMedium
+                      .copyWith(color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   hasBook ? club.currentBookTitle! : 'Nenhum livro definido',
                   style: AppTextStyles.titleMedium.copyWith(
-                    color:
-                        hasBook ? AppColors.textPrimary : AppColors.textMuted,
+                    color: hasBook ? cs.onSurface : cs.onSurfaceVariant,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -630,7 +639,8 @@ class _CurrentBookCard extends StatelessWidget {
                 if (club.currentBookAuthor != null)
                   Text(
                     club.currentBookAuthor!,
-                    style: AppTextStyles.bodyMedium,
+                    style: AppTextStyles.bodyMedium
+                        .copyWith(color: cs.onSurfaceVariant),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -652,27 +662,29 @@ class _MeetingsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final meetingsAsync = ref.watch(_clubMeetingsProvider(clubId));
 
     return meetingsAsync.when(
       loading: () =>
           const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      error: (e, _) => Text('Erro: $e', style: AppTextStyles.bodyMedium),
+      error: (e, _) => Text('Erro: $e',
+          style: AppTextStyles.bodyMedium.copyWith(color: cs.onSurface)),
       data: (meetings) {
         if (meetings.isEmpty) {
           return Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
+              color: cs.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(Icons.event_outlined,
-                    color: AppColors.textMuted, size: 20),
-                SizedBox(width: 10),
+                    color: cs.onSurfaceVariant, size: 20),
+                const SizedBox(width: 10),
                 Text('Nenhum encontro agendado',
-                    style: TextStyle(color: AppColors.textMuted)),
+                    style: TextStyle(color: cs.onSurfaceVariant)),
               ],
             ),
           );
@@ -695,6 +707,7 @@ class _MeetingTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final fmt = DateFormat("d MMM 'às' HH:mm", 'pt_BR');
     final isUpcoming = meeting.isUpcoming;
 
@@ -702,12 +715,12 @@ class _MeetingTile extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isUpcoming
               ? AppColors.warmGold.withValues(alpha: 0.4)
-              : AppColors.border,
+              : cs.outlineVariant,
         ),
       ),
       child: Column(
@@ -716,14 +729,16 @@ class _MeetingTile extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Text(meeting.title, style: AppTextStyles.titleMedium),
+                child: Text(meeting.title,
+                    style: AppTextStyles.titleMedium
+                        .copyWith(color: cs.onSurface)),
               ),
               if (isUpcoming)
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.warmGold.withValues(alpha: 0.15),
+                    color: AppColors.warmGold.withValues(alpha: 0.22),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text('Em breve',
@@ -737,19 +752,21 @@ class _MeetingTile extends ConsumerWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined,
-                  size: 13, color: AppColors.textMuted),
+              Icon(Icons.calendar_today_outlined,
+                  size: 13, color: cs.onSurfaceVariant),
               const SizedBox(width: 4),
               Text(fmt.format(meeting.scheduledAt),
-                  style: AppTextStyles.labelMedium),
+                  style: AppTextStyles.labelMedium
+                      .copyWith(color: cs.onSurfaceVariant)),
               if (meeting.location != null) ...[
                 const SizedBox(width: 12),
-                const Icon(Icons.place_outlined,
-                    size: 13, color: AppColors.textMuted),
+                Icon(Icons.place_outlined,
+                    size: 13, color: cs.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(meeting.location!,
-                      style: AppTextStyles.labelMedium,
+                      style: AppTextStyles.labelMedium
+                          .copyWith(color: cs.onSurfaceVariant),
                       overflow: TextOverflow.ellipsis),
                 ),
               ],
@@ -759,7 +776,8 @@ class _MeetingTile extends ConsumerWidget {
           Row(
             children: [
               Text('✅ ${meeting.goingCount}  🤔 ${meeting.maybeCount}',
-                  style: AppTextStyles.labelMedium),
+                  style: AppTextStyles.labelMedium
+                      .copyWith(color: cs.onSurfaceVariant)),
               const Spacer(),
               if (isUpcoming) _RsvpButtons(meeting: meeting, clubId: clubId),
             ],
@@ -896,6 +914,7 @@ class _MemberTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final canActOnMember = club.isOwner ||
         (club.isAdmin && !member.canManage);
 
@@ -903,7 +922,7 @@ class _MemberTile extends ConsumerWidget {
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
         radius: 18,
-        backgroundColor: AppColors.forestGreen.withValues(alpha: 0.1),
+        backgroundColor: AppColors.warmGold.withValues(alpha: 0.18),
         child: member.avatarUrl != null
             ? ClipOval(
                 child: Image.network(
@@ -916,7 +935,8 @@ class _MemberTile extends ConsumerWidget {
               )
             : _initials(member.name ?? '?'),
       ),
-      title: Text(member.name ?? 'Usuário', style: AppTextStyles.titleMedium),
+      title: Text(member.name ?? 'Usuário',
+          style: AppTextStyles.titleMedium.copyWith(color: cs.onSurface)),
       subtitle: null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -927,8 +947,8 @@ class _MemberTile extends ConsumerWidget {
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: member.isAdmin
-                    ? AppColors.forestGreen.withValues(alpha: 0.12)
-                    : AppColors.surfaceVariant,
+                    ? AppColors.warmGold.withValues(alpha: 0.22)
+                    : cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -937,8 +957,8 @@ class _MemberTile extends ConsumerWidget {
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: member.isAdmin
-                      ? AppColors.forestGreen
-                      : AppColors.textMuted,
+                      ? AppColors.warmGold
+                      : cs.onSurfaceVariant,
                 ),
               ),
             )
@@ -947,7 +967,7 @@ class _MemberTile extends ConsumerWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.warmGold.withValues(alpha: 0.12),
+                color: AppColors.warmGold.withValues(alpha: 0.22),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Text(
@@ -961,8 +981,8 @@ class _MemberTile extends ConsumerWidget {
             ),
           if (canActOnMember && !club.isClosed)
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert,
-                  size: 18, color: AppColors.textMuted),
+              icon: Icon(Icons.more_vert,
+                  size: 18, color: cs.onSurfaceVariant),
               onSelected: (v) =>
                   _onMemberAction(context, ref, v),
               itemBuilder: (_) => _memberMenuItems(),
@@ -1117,7 +1137,7 @@ class _MemberTile extends ConsumerWidget {
             : '?';
     return Text(text,
         style: const TextStyle(
-          color: AppColors.forestGreen,
+          color: AppColors.warmGold,
           fontWeight: FontWeight.w600,
           fontSize: 13,
         ));
@@ -1133,26 +1153,28 @@ class _BookHistoryList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final historyAsync = ref.watch(_clubHistoryProvider(clubId));
 
     return historyAsync.when(
       loading: () =>
           const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      error: (e, _) => Text('Erro: $e', style: AppTextStyles.bodyMedium),
+      error: (e, _) => Text('Erro: $e',
+          style: AppTextStyles.bodyMedium.copyWith(color: cs.onSurface)),
       data: (history) {
         if (history.isEmpty) {
           return Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
+              color: cs.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.history, color: AppColors.textMuted, size: 20),
-                SizedBox(width: 10),
+                Icon(Icons.history, color: cs.onSurfaceVariant, size: 20),
+                const SizedBox(width: 10),
                 Text('Nenhum livro no histórico ainda.',
-                    style: TextStyle(color: AppColors.textMuted)),
+                    style: TextStyle(color: cs.onSurfaceVariant)),
               ],
             ),
           );
@@ -1172,6 +1194,7 @@ class _HistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final dateFmt = DateFormat('MMM/yyyy', 'pt_BR');
     final period = entry.isFinished
         ? '${dateFmt.format(entry.startedAt)} → ${dateFmt.format(entry.endedAt!)}'
@@ -1181,9 +1204,9 @@ class _HistoryTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Row(
         children: [
@@ -1191,24 +1214,28 @@ class _HistoryTile extends StatelessWidget {
             width: 36,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.forestGreen.withValues(alpha: 0.08),
+              color: AppColors.warmGold.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Icon(Icons.menu_book_outlined,
-                color: AppColors.forestGreen, size: 18),
+            child: Icon(Icons.menu_book_outlined,
+                color: AppColors.warmGold, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(entry.bookTitle, style: AppTextStyles.titleMedium),
+                Text(entry.bookTitle,
+                    style: AppTextStyles.titleMedium
+                        .copyWith(color: cs.onSurface)),
                 if (entry.bookAuthor != null)
-                  Text(entry.bookAuthor!, style: AppTextStyles.bodyMedium),
+                  Text(entry.bookAuthor!,
+                      style: AppTextStyles.bodyMedium
+                          .copyWith(color: cs.onSurfaceVariant)),
                 const SizedBox(height: 2),
                 Text(period,
                     style: AppTextStyles.labelMedium
-                        .copyWith(color: AppColors.textMuted)),
+                        .copyWith(color: cs.onSurfaceVariant)),
               ],
             ),
           ),
@@ -1217,15 +1244,15 @@ class _HistoryTile extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.forestGreen.withValues(alpha: 0.08),
+                color: AppColors.warmGold.withValues(alpha: 0.22),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 '${entry.meetingCount} encontros',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.forestGreen,
+                  color: AppColors.warmGold,
                 ),
               ),
             ),
@@ -1430,6 +1457,7 @@ class _BookPollSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final pollsAsync = ref.watch(_clubPollsProvider(clubId));
 
     return Column(
@@ -1439,7 +1467,8 @@ class _BookPollSection extends ConsumerWidget {
           children: [
             Expanded(
               child: Text('Votação de livro',
-                  style: AppTextStyles.headlineMedium),
+                  style: AppTextStyles.headlineMedium
+                      .copyWith(color: cs.onSurface)),
             ),
             if (club.canManage)
               TextButton.icon(
@@ -1462,15 +1491,15 @@ class _BookPollSection extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(
                     vertical: 24, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: cs.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: cs.outlineVariant),
                 ),
                 child: Center(
                   child: Text(
                     'Nenhuma votação criada.',
                     style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.textMuted),
+                        .copyWith(color: cs.onSurfaceVariant),
                   ),
                 ),
               );

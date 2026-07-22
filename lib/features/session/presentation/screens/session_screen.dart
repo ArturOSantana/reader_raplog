@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/shell/main_shell.dart';
+import '../../../../core/widgets/widget_manager.dart';
 import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/achievement.dart';
 import '../../../../shared/models/book.dart';
@@ -165,6 +166,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
     ref.read(homeRefreshTriggerProvider.notifier).state++;
 
+    // ── Atualiza widgets nativos com o novo estado do livro ───────────────
+    final book = _selectedBook;
+    if (book != null) {
+      unawaited(WidgetManager.updateCurrentBook(
+        title: book.title,
+        author: book.author,
+        currentPage: endPage,
+        totalPages: book.totalPages ?? 0,
+      ));
+    }
+
     // Próxima sessão começa na página que parou
     if (endPage > 0 && mounted) {
       _startPageController.text = '$endPage';
@@ -212,6 +224,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         ? InspirationContext.longSession
         : DailyInspirationService.contextForSessionTime(sessionStartedAt);
     final quote = await service.pick(ctx);
+
+    // Atualiza o widget de frase do dia com a frase exibida pós-sessão
+    unawaited(WidgetManager.updateQuote(quote));
+
     if (!mounted) return;
     final (title, closing) = _labelsForSessionContext(ctx, durationMinutes);
     InspirationBottomSheet.show(
