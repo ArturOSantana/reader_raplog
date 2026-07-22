@@ -14,15 +14,6 @@ import 'theme/readlog_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Modo imersivo: status bar transparente com ícones claros/escuros
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark,
-    statusBarBrightness: Brightness.light,
-    systemNavigationBarColor: Colors.transparent,
-    systemNavigationBarIconBrightness: Brightness.dark,
-  ));
-
   // Bloqueia orientação em portrait (padrão para apps de leitura)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
