@@ -8,8 +8,10 @@ import 'core/local/local_database.dart';
 import 'core/router/app_router.dart';
 import 'core/router/route_persistence.dart';
 import 'core/widgets/widget_manager.dart';
-import 'shared/providers/providers.dart';
 import 'theme/readlog_theme.dart';
+
+// O app segue sempre o tema do sistema operacional (ThemeMode.system).
+// Para alterar os tokens de cor ou tipografia, edite lib/theme/readlog_theme.dart.
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,13 +54,11 @@ class ReadlogApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
-    final themeMode = ref.watch(themeModeProvider);
 
-    // Adapta ícones da status bar conforme o tema ativo.
-    final isDark = themeMode == ThemeMode.dark ||
-        (themeMode == ThemeMode.system &&
-            WidgetsBinding.instance.platformDispatcher.platformBrightness ==
-                Brightness.dark);
+    // Adapta ícones da status bar conforme o tema do sistema.
+    final isDark =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark;
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -74,7 +74,7 @@ class ReadlogApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: ReadLogTheme.light(),
       darkTheme: ReadLogTheme.dark(),
-      themeMode: themeMode,
+      themeMode: ThemeMode.system,
       routerConfig: router,
     );
   }

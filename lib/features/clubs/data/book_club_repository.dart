@@ -106,6 +106,7 @@ class BookClubRepository {
     final clubData = await _client
         .from('book_clubs')
         .insert({
+          'admin_id': _userId,
           'name': name,
           'description': description,
           'cover_url': coverUrl,

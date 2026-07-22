@@ -1362,7 +1362,6 @@ class _SettingsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
     final cs = Theme.of(context).colorScheme;
 
     return SingleChildScrollView(
@@ -1395,13 +1394,6 @@ class _SettingsSheet extends ConsumerWidget {
               context.push('/notifications/settings');
             },
           ),
-          _settingsTile(
-            context,
-            icon: Icons.palette_outlined,
-            label: 'Aparência',
-            trailing: _ThemeModeChips(current: themeMode),
-            onTap: () => _showThemeDialog(context, ref, themeMode),
-          ),
           const Divider(height: 1, indent: 20, endIndent: 20),
           const SizedBox(height: 8),
           ListTile(
@@ -1424,51 +1416,13 @@ class _SettingsSheet extends ConsumerWidget {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-    Widget? trailing,
   }) {
     final cs = Theme.of(context).colorScheme;
     return ListTile(
       leading: Icon(icon, size: 20, color: cs.onSurface),
       title: Text(label, style: ReadLogType.mono(size: 13, color: cs.onSurface)),
-      trailing: trailing,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
       onTap: onTap,
-    );
-  }
-
-  void _showThemeDialog(BuildContext context, WidgetRef ref, ThemeMode current) {
-    final cs = Theme.of(context).colorScheme;
-    // Capture the notifier before opening the dialog to avoid using `ref`
-    // after this widget is disposed (e.g. when the settings sheet closes).
-    final themeNotifier = ref.read(themeModeProvider.notifier);
-    showDialog<ThemeMode>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Aparência', style: ReadLogType.display(size: 16, color: cs.onSurface)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ThemeMode.values.map((mode) {
-            final label = switch (mode) {
-              ThemeMode.system => 'Seguir sistema',
-              ThemeMode.light => 'Claro',
-              ThemeMode.dark => 'Escuro',
-            };
-            final selected = mode == current;
-            return ListTile(
-              leading: Icon(
-                selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                size: 20,
-                color: selected ? ReadLogColors.brass : cs.onSurface.withValues(alpha: 0.7),
-              ),
-              title: Text(label, style: ReadLogType.mono(size: 13, color: cs.onSurface)),
-              onTap: () {
-                themeNotifier.set(mode);
-                Navigator.pop(dialogContext);
-              },
-            );
-          }).toList(),
-        ),
-      ),
     );
   }
 
@@ -1497,26 +1451,6 @@ class _SettingsSheet extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ThemeModeChips extends StatelessWidget {
-  final ThemeMode current;
-
-  const _ThemeModeChips({required this.current});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final label = switch (current) {
-      ThemeMode.system => 'Sistema',
-      ThemeMode.light => 'Claro',
-      ThemeMode.dark => 'Escuro',
-    };
-    return Text(
-      label,
-      style: ReadLogType.mono(size: 11, color: cs.onSurface.withValues(alpha: 0.5)),
     );
   }
 }

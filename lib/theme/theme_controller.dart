@@ -1,10 +1,5 @@
-// theme_controller.dart — Controlador de tema do ReadLog.
+// theme_controller.dart — Ponto de re-exportação do tema do ReadLog.
 //
-// Centraliza toda troca de tema: alterar, carregar e salvar preferência,
-// notificando a interface sem reiniciar o aplicativo.
-//
-// Uso via Riverpod: ref.watch(themeModeProvider) / ref.read(themeModeProvider.notifier).set(mode)
-// O provider está declarado em lib/shared/providers/providers.dart.
-
-export 'theme_mode_storage.dart';
+// O app segue sempre ThemeMode.system (definido em main.dart).
+// Para customizar tokens de cor ou tipografia, edite readlog_theme.dart.
 export 'readlog_theme.dart';

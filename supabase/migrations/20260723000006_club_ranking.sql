@@ -11,12 +11,12 @@ CREATE OR REPLACE FUNCTION club_ranking(
   p_criteria TEXT DEFAULT 'xp'      -- 'pages' | 'minutes' | 'sessions' | 'xp'
 )
 RETURNS TABLE (
-  position    INTEGER,
-  user_id     UUID,
-  user_name   TEXT,
-  avatar_url  TEXT,
-  score       NUMERIC,
-  total_pages BIGINT,
+  rank          INTEGER,
+  user_id       UUID,
+  user_name     TEXT,
+  avatar_url    TEXT,
+  score         NUMERIC,
+  total_pages   BIGINT,
   total_minutes BIGINT,
   total_sessions BIGINT
 )
@@ -74,7 +74,7 @@ BEGIN
     FROM raw
   )
   SELECT
-    ROW_NUMBER() OVER (ORDER BY score DESC, user_name ASC)::INTEGER AS position,
+    ROW_NUMBER() OVER (ORDER BY score DESC, user_name ASC)::INTEGER AS rank,
     scored.user_id,
     scored.user_name,
     scored.avatar_url,

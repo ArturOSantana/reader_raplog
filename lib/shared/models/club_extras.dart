@@ -39,7 +39,7 @@ class ClubRankingEntry extends Equatable {
   }
 
   factory ClubRankingEntry.fromMap(Map<String, dynamic> map) => ClubRankingEntry(
-        position: (map['position'] as num).toInt(),
+        position: (map['rank'] as num).toInt(),
         userId: map['user_id'] as String,
         userName: map['user_name'] as String?,
         avatarUrl: map['avatar_url'] as String?,

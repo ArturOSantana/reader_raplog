@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../theme/theme_mode_storage.dart';
 import '../../core/local/connectivity_provider.dart';
 import '../../core/local/sync_service.dart';
 import '../../features/library/data/offline_book_repository.dart';
@@ -130,25 +128,3 @@ final dailyInspirationServiceProvider = Provider<DailyInspirationService>(
   (_) => DailyInspirationService(),
 );
 
-// ── Tema ──────────────────────────────────────────────────────────────────
-
-/// Persiste o ThemeMode escolhido pelo usuário via [ThemeModeStorage].
-class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier() : super(ThemeMode.system) {
-    _load();
-  }
-
-  Future<void> _load() async {
-    state = await ThemeModeStorage.load();
-  }
-
-  Future<void> set(ThemeMode mode) async {
-    state = mode;
-    await ThemeModeStorage.save(mode);
-  }
-}
-
-final themeModeProvider =
-    StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
-  (_) => ThemeModeNotifier(),
-);
