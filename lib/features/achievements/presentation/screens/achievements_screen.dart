@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/shell/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/achievement.dart';
 import '../../../../shared/providers/providers.dart';
 
@@ -17,9 +17,24 @@ class AchievementsScreen extends ConsumerWidget {
     final achievements = ref.watch(_achievementsProvider);
 
     return Scaffold(
-      appBar: AppBar(leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => mainScaffoldKey.currentState?.openDrawer(), tooltip: 'Abrir menu'), title: const Text('Conquistas')),
+      backgroundColor: ReadLogColors.paperAlt,
+      appBar: AppBar(
+        backgroundColor: ReadLogColors.paperAlt,
+        foregroundColor: ReadLogColors.charcoal,
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
+          tooltip: 'Abrir menu',
+        ),
+        title: Text(
+          'Conquistas',
+          style: ReadLogType.display(size: 19, color: ReadLogColors.charcoal),
+        ),
+      ),
       body: achievements.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: ReadLogColors.brass),
+        ),
         error: (e, _) => Center(child: Text('Erro: $e')),
         data: (list) {
           final unlocked = list.where((a) => a.isUnlocked).toList();
@@ -28,23 +43,50 @@ class AchievementsScreen extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              // Resumo: "X de Y carimbadas"
               Text(
-                '${unlocked.length} de ${list.length} conquistadas',
-                style: AppTextStyles.bodyMedium,
+                '${unlocked.length} de ${list.length} carimbadas',
+                style: ReadLogType.mono(
+                    size: 11,
+                    color: ReadLogColors.charcoal.withValues(alpha: 0.6)),
               ),
-              const SizedBox(height: 16),
-              _LinearProgress(value: list.isEmpty ? 0 : unlocked.length / list.length),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(
+                  value: list.isEmpty
+                      ? 0
+                      : unlocked.length / list.length,
+                  minHeight: 5,
+                  backgroundColor: ReadLogColors.paperDeep,
+                  color: ReadLogColors.stamp,
+                ),
+              ),
               const SizedBox(height: 28),
+
+              // Grid de conquistas desbloqueadas
               if (unlocked.isNotEmpty) ...[
-                Text('Conquistadas', style: AppTextStyles.headlineMedium),
-                const SizedBox(height: 12),
-                ...unlocked.map((a) => _AchievementTile(achievement: a)),
+                Text(
+                  'Conquistadas',
+                  style: ReadLogType.display(
+                      size: 17, color: ReadLogColors.charcoal),
+                ),
+                const SizedBox(height: 14),
+                _AchievementsGrid(items: unlocked, unlocked: true),
                 const SizedBox(height: 24),
               ],
+
+              // Grid de conquistas bloqueadas
               if (locked.isNotEmpty) ...[
-                Text('Bloqueadas', style: AppTextStyles.headlineMedium),
-                const SizedBox(height: 12),
-                ...locked.map((a) => _AchievementTile(achievement: a)),
+                Text(
+                  'Bloqueadas',
+                  style: ReadLogType.display(
+                      size: 17,
+                      color:
+                          ReadLogColors.charcoal.withValues(alpha: 0.5)),
+                ),
+                const SizedBox(height: 14),
+                _AchievementsGrid(items: locked, unlocked: false),
               ],
             ],
           );
@@ -54,96 +96,66 @@ class AchievementsScreen extends ConsumerWidget {
   }
 }
 
-class _LinearProgress extends StatelessWidget {
-  final double value;
+class _AchievementsGrid extends StatelessWidget {
+  final List<Achievement> items;
+  final bool unlocked;
 
-  const _LinearProgress({required this.value});
+  const _AchievementsGrid({required this.items, required this.unlocked});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: value,
-            minHeight: 8,
-            backgroundColor: AppColors.border,
-            valueColor:
-                const AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
-          ),
-        ),
-      ],
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.85,
+      ),
+      itemBuilder: (context, i) =>
+          _AchievementSlot(achievement: items[i], unlocked: unlocked),
     );
   }
 }
 
-class _AchievementTile extends StatelessWidget {
+class _AchievementSlot extends StatelessWidget {
   final Achievement achievement;
+  final bool unlocked;
 
-  const _AchievementTile({required this.achievement});
+  const _AchievementSlot(
+      {required this.achievement, required this.unlocked});
 
   @override
   Widget build(BuildContext context) {
-    final unlocked = achievement.isUnlocked;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: unlocked ? AppColors.surface : AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: unlocked ? AppColors.forestGreen.withValues(alpha: 0.3) : AppColors.border,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Carimbo de conquista — desbloqueado em stamp, bloqueado em transparente
+        ReadLogStamp(
+          value: '+${achievement.xpReward}',
+          label: 'xp',
+          color: unlocked
+              ? ReadLogColors.stamp
+              : ReadLogColors.charcoal.withValues(alpha: 0.25),
+          size: 64,
+          rotationDeg: unlocked ? -6 : 0,
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: unlocked
-                  ? AppColors.forestGreen.withValues(alpha: 0.1)
-                  : AppColors.border,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              unlocked ? Icons.military_tech : Icons.lock_outline,
-              color: unlocked ? AppColors.forestGreen : AppColors.textMuted,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  achievement.name,
-                  style: AppTextStyles.titleMedium.copyWith(
-                    color: unlocked ? AppColors.textPrimary : AppColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  achievement.description,
-                  style: AppTextStyles.bodyMedium,
-                  maxLines: 2,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '+${achievement.xpReward} XP',
-            style: AppTextStyles.labelMedium.copyWith(
-              color: unlocked ? AppColors.warmGold : AppColors.textMuted,
-            ),
-          ),
-        ],
-      ),
+        const SizedBox(height: 6),
+        Text(
+          achievement.name,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: ReadLogType.mono(
+            size: 9,
+            color: unlocked
+                ? ReadLogColors.charcoal
+                : ReadLogColors.charcoal.withValues(alpha: 0.4),
+          ).copyWith(letterSpacing: 0.3),
+        ),
+      ],
     );
   }
 }

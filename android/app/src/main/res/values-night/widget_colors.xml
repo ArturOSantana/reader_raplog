@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cores do tema ESCURO para os widgets (values-night). -->
+<resources>
+    <color name="widget_background">#FF1C1B18</color>
+    <color name="widget_text_primary">#FFF5F1EC</color>
+    <color name="widget_text_secondary">#FF9E9790</color>
+    <color name="widget_accent">#FF5B9BF0</color>
+    <color name="widget_progress_bg">#FF2E2C29</color>
+    <color name="widget_divider">#FF2E2C29</color>
+</resources>

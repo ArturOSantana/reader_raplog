@@ -7,13 +7,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/shell/main_shell.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/achievement.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/models/reading_session.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../achievements/data/achievement_service.dart';
 import '../../../home/presentation/screens/home_screen.dart';
+import '../../../inspiration/data/inspiration_quotes.dart';
+import '../../../inspiration/data/inspiration_service.dart';
+import '../../../inspiration/presentation/widgets/inspiration_card.dart';
 import '../notifiers/session_notifier.dart';
 import '../widgets/book_completion_card.dart';
 
@@ -111,7 +114,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-                backgroundColor: AppColors.error),
+                backgroundColor: ReadLogColors.stamp),
             child: const Text('Sim, excluir'),
           ),
         ],
@@ -188,6 +191,86 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         const SnackBar(content: Text('Sessão registrada com sucesso!')),
       );
     }
+
+    // Mostra inspiração baseada no horário da sessão
+    if (mounted) {
+      _showSessionInspiration(
+        sessionStartedAt: session.startedAt,
+        durationMinutes: elapsed ~/ 60,
+      );
+    }
+  }
+
+  // ── Inspiração pós-sessão ─────────────────────────────────────────────────
+
+  Future<void> _showSessionInspiration({
+    required DateTime sessionStartedAt,
+    required int durationMinutes,
+  }) async {
+    final service = ref.read(dailyInspirationServiceProvider);
+    final ctx = durationMinutes >= 60
+        ? InspirationContext.longSession
+        : DailyInspirationService.contextForSessionTime(sessionStartedAt);
+    final quote = await service.pick(ctx);
+    if (!mounted) return;
+    final (title, closing) = _labelsForSessionContext(ctx, durationMinutes);
+    InspirationBottomSheet.show(
+      context,
+      quote: quote,
+      title: title,
+      closing: closing,
+    );
+  }
+
+  static (String, String?) _labelsForSessionContext(
+    InspirationContext ctx,
+    int durationMinutes,
+  ) {
+    switch (ctx) {
+      case InspirationContext.morningReading:
+        return ('☀️ BOM DIA, LEITOR', 'Que o dia seja produtivo.');
+      case InspirationContext.eveningReading:
+        return ('🌙 LEITURA NOTURNA', 'Descanse bem.');
+      case InspirationContext.longSession:
+        return (
+          '📖 ${durationMinutes}min DE LEITURA',
+          'Uma hora investida em você.',
+        );
+      default:
+        return ('📖 SESSÃO REGISTRADA', null);
+    }
+  }
+
+  // ── Inspiração pós-conquista ──────────────────────────────────────────────
+
+  Future<void> _showAchievementInspiration(Achievement achievement) async {
+    final service = ref.read(dailyInspirationServiceProvider);
+    final quote = await service.pick(InspirationContext.achievementUnlocked);
+    if (!mounted) return;
+    InspirationBottomSheet.show(
+      context,
+      quote: quote,
+      title: '🏆 CONQUISTA DESBLOQUEADA',
+      subtitle: achievement.name,
+      closing: 'Continue assim.',
+    );
+  }
+
+  // ── Inspiração livro concluído ────────────────────────────────────────────
+
+  Future<void> _showBookCompletionInspiration(String bookTitle) async {
+    final service = ref.read(dailyInspirationServiceProvider);
+    final quote = await service.pick(InspirationContext.bookCompleted);
+    if (!mounted) return;
+    InspirationBottomSheet.show(
+      context,
+      quote: quote,
+      title: '📚 LIVRO CONCLUÍDO',
+      subtitle: bookTitle,
+      closing: 'Seu próximo livro já está esperando por você.',
+    );
+    // Aguarda o usuário fechar o bottom-sheet antes de abrir o card de compartilhamento
+    await Future<void>.delayed(const Duration(milliseconds: 300));
   }
 
   // ── Concluir livro ────────────────────────────────────────────────────────
@@ -226,6 +309,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 sessionStartedAt: DateTime.now(),
               );
               if (mounted) {
+                await _showBookCompletionInspiration(book.title);
+              }
+              if (mounted) {
                 _showShareBottomSheet(book.copyWith(
                   status: BookStatus.read,
                   endDate: DateTime.now(),
@@ -239,19 +325,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
-  final GlobalKey _cardRepaintKey = GlobalKey();
-
   void _showShareBottomSheet(Book completedBook) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: ReadLogColors.ink,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => _ShareCompletionSheet(
         book: completedBook,
-        cardRepaintKey: _cardRepaintKey,
         sessionRepository: ref.read(sessionRepositoryProvider),
       ),
     );
@@ -283,32 +366,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       );
     }).then((unlocked) {
       if (!mounted || unlocked.isEmpty) return;
-      for (final a in unlocked) {
-        _showAchievementSnackBar(a);
-      }
+      // Mostra a inspiração apenas para a primeira conquista nova da sessão
+      _showAchievementInspiration(unlocked.first);
     }).catchError((_) {});
-  }
-
-  void _showAchievementSnackBar(Achievement achievement) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.military_tech, color: Colors.white),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Conquista: ${achievement.name}!',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppColors.warmGold,
-        duration: const Duration(seconds: 4),
-      ),
-    );
   }
 
   @override
@@ -327,13 +387,24 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final elapsed = sessionState.elapsedSeconds;
 
     return Scaffold(
+      backgroundColor:
+          isRunning ? ReadLogColors.ink : ReadLogColors.paper,
       appBar: AppBar(
+        backgroundColor:
+            isRunning ? ReadLogColors.ink : ReadLogColors.paper,
+        foregroundColor:
+            isRunning ? ReadLogColors.cream : ReadLogColors.charcoal,
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
           tooltip: 'Abrir menu',
         ),
-        title: const Text('Leitura'),
+        title: Text(
+          'Leitura',
+          style: ReadLogType.display(
+              size: 19,
+              color: isRunning ? ReadLogColors.cream : ReadLogColors.charcoal),
+        ),
         actions: [
           if (isRunning)
             IconButton(
@@ -404,12 +475,13 @@ class _StartSessionView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Livro', style: AppTextStyles.titleMedium),
+          Text('Livro',
+              style: ReadLogType.display(size: 15, color: ReadLogColors.charcoal)),
           const SizedBox(height: 8),
           if (readingBooks.isEmpty)
             Text(
               'Nenhum livro em leitura. Adicione um na biblioteca.',
-              style: AppTextStyles.bodyMedium,
+              style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.6)),
             )
           else
             DropdownButtonFormField<Book>(
@@ -433,7 +505,8 @@ class _StartSessionView extends StatelessWidget {
           ),
 
           const SizedBox(height: 24),
-          Text('Objetivo da sessão', style: AppTextStyles.titleMedium),
+          Text('Objetivo da sessão',
+              style: ReadLogType.display(size: 15, color: ReadLogColors.charcoal)),
           const SizedBox(height: 12),
           _GoalPicker(
             selected: selectedGoal,
@@ -545,7 +618,7 @@ class _GoalChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color =
-        isSelected ? AppColors.forestGreen : AppColors.textMuted;
+        isSelected ? ReadLogColors.stamp : ReadLogColors.charcoal.withValues(alpha: 0.5);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -554,13 +627,13 @@ class _GoalChip extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.forestGreen.withValues(alpha: 0.12)
-              : AppColors.surface,
-          borderRadius: BorderRadius.circular(10),
+              ? ReadLogColors.stamp.withValues(alpha: 0.1)
+              : ReadLogColors.cream,
+          borderRadius: BorderRadius.circular(3),
           border: Border.all(
             color: isSelected
-                ? AppColors.forestGreen
-                : AppColors.border,
+                ? ReadLogColors.stamp
+                : ReadLogColors.paperDeep,
           ),
         ),
         child: Row(
@@ -569,7 +642,7 @@ class _GoalChip extends StatelessWidget {
             Icon(icon, size: 16, color: color),
             const SizedBox(width: 6),
             Text(label,
-                style: AppTextStyles.labelMedium.copyWith(color: color)),
+                style: ReadLogType.mono(size: 11, color: color)),
           ],
         ),
       ),
@@ -631,7 +704,8 @@ class _ActiveSessionView extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             sessionState.bookTitle,
-            style: AppTextStyles.headlineMedium,
+            style: ReadLogType.display(size: 20,
+                italic: true, color: ReadLogColors.brassLight),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -643,32 +717,29 @@ class _ActiveSessionView extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.warmGold.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
+                color: ReadLogColors.brass.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(3),
                 border: Border.all(
-                    color: AppColors.warmGold.withValues(alpha: 0.4)),
+                    color: ReadLogColors.brass.withValues(alpha: 0.5)),
               ),
               child: Text(
                 'PAUSADO',
-                style: AppTextStyles.labelMedium.copyWith(
-                    color: AppColors.warmGold,
-                    fontWeight: FontWeight.w700),
+                style: ReadLogType.mono(
+                    size: 11,
+                    color: ReadLogColors.brassLight,
+                    weight: FontWeight.w600),
               ),
             ),
 
           const SizedBox(height: 32),
 
-          // Cronômetro principal
+          // Cronômetro principal — IBM Plex Mono 52px
           Text(
             _formatTime(elapsed),
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 64,
-              fontWeight: FontWeight.w200,
-              letterSpacing: -3,
-              color: isPaused
-                  ? AppColors.warmGold
-                  : AppColors.forestGreen,
+            style: ReadLogType.mono(
+              size: 52,
+              weight: FontWeight.w500,
+              color: isPaused ? ReadLogColors.brassLight : ReadLogColors.cream,
             ),
           ),
 
@@ -676,7 +747,9 @@ class _ActiveSessionView extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'desde a página ${sessionState.session!.startPage}',
-              style: AppTextStyles.bodyMedium,
+              style: ReadLogType.mono(
+                  size: 11,
+                  color: ReadLogColors.cream.withValues(alpha: 0.5)),
             ),
           ],
 
@@ -706,9 +779,9 @@ class _ActiveSessionView extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: onFinish,
                   icon: const Icon(Icons.stop),
-                  label: const Text('Finalizar'),
+                  label: const Text('Encerrar leitura'),
                   style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.error),
+                      backgroundColor: ReadLogColors.stamp),
                 ),
               ),
             ],
@@ -738,8 +811,14 @@ class _GoalProgressBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Objetivo', style: AppTextStyles.labelMedium),
-            Text(label, style: AppTextStyles.labelMedium),
+            Text('Objetivo',
+                style: ReadLogType.mono(
+                    size: 11,
+                    color: ReadLogColors.charcoal.withValues(alpha: 0.6))),
+            Text(label,
+                style: ReadLogType.mono(
+                    size: 11,
+                    color: ReadLogColors.charcoal.withValues(alpha: 0.6))),
           ],
         ),
         if (progress != null) ...[
@@ -749,9 +828,8 @@ class _GoalProgressBar extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
-              backgroundColor: AppColors.border,
-              valueColor:
-                  const AlwaysStoppedAnimation(AppColors.forestGreen),
+              backgroundColor: ReadLogColors.paperDeep,
+              color: ReadLogColors.stamp,
             ),
           ),
         ],
@@ -843,17 +921,20 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: ReadLogColors.paperDeep,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
 
           Text('Você terminou sua leitura?',
-              style: AppTextStyles.headlineMedium),
+              style: ReadLogType.display(
+                  size: 20, color: ReadLogColors.charcoal)),
           const SizedBox(height: 6),
           Text('Página inicial: $startPage',
-              style: AppTextStyles.bodyMedium),
+              style: ReadLogType.mono(
+                  size: 12,
+                  color: ReadLogColors.charcoal.withValues(alpha: 0.6))),
 
           const SizedBox(height: 20),
           TextFormField(
@@ -877,9 +958,9 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              color: ReadLogColors.cream,
+              borderRadius: BorderRadius.circular(3),
+              border: Border.all(color: ReadLogColors.paperDeep),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -921,9 +1002,14 @@ class _SummaryItem extends StatelessWidget {
     return Column(
       children: [
         Text(value,
-            style: AppTextStyles.titleMedium
-                .copyWith(color: AppColors.forestGreen)),
-        Text(label, style: AppTextStyles.labelMedium),
+            style: ReadLogType.mono(
+                size: 15,
+                weight: FontWeight.w600,
+                color: ReadLogColors.stamp)),
+        Text(label,
+            style: ReadLogType.mono(
+                size: 10,
+                color: ReadLogColors.charcoal.withValues(alpha: 0.6))),
       ],
     );
   }
@@ -935,12 +1021,10 @@ class _SummaryItem extends StatelessWidget {
 
 class _ShareCompletionSheet extends StatefulWidget {
   final Book book;
-  final GlobalKey cardRepaintKey;
   final dynamic sessionRepository;
 
   const _ShareCompletionSheet({
     required this.book,
-    required this.cardRepaintKey,
     required this.sessionRepository,
   });
 
@@ -950,6 +1034,7 @@ class _ShareCompletionSheet extends StatefulWidget {
 }
 
 class _ShareCompletionSheetState extends State<_ShareCompletionSheet> {
+  final _cardRepaintKey = GlobalKey();
   int _totalMinutes = 0;
   int _totalSessions = 0;
   bool _loading = true;
@@ -987,7 +1072,7 @@ class _ShareCompletionSheetState extends State<_ShareCompletionSheet> {
   Future<void> _shareAsImage() async {
     setState(() => _sharing = true);
     try {
-      final boundary = widget.cardRepaintKey.currentContext
+      final boundary = _cardRepaintKey.currentContext
           ?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return;
 
@@ -1044,23 +1129,24 @@ class _ShareCompletionSheetState extends State<_ShareCompletionSheet> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: AppColors.darkBorder,
+                color: ReadLogColors.brassLight.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           Text('Compartilhar conquista',
-              style: AppTextStyles.headlineMedium
-                  .copyWith(color: AppColors.darkTextPrimary)),
+              style: ReadLogType.display(
+                  size: 20, color: ReadLogColors.cream)),
           const SizedBox(height: 4),
           Text(widget.book.title,
-              style: AppTextStyles.bodyMedium
-                  .copyWith(color: AppColors.darkTextSecondary)),
+              style: ReadLogType.mono(
+                  size: 12,
+                  color: ReadLogColors.cream.withValues(alpha: 0.6))),
           const SizedBox(height: 20),
 
           // Card preview
           RepaintBoundary(
-            key: widget.cardRepaintKey,
+            key: _cardRepaintKey,
             child: BookCompletionCard(
               book: widget.book,
               totalMinutes: _totalMinutes,
@@ -1075,20 +1161,23 @@ class _ShareCompletionSheetState extends State<_ShareCompletionSheet> {
           TextField(
             controller: _reviewController,
             maxLines: 3,
-            style: const TextStyle(color: AppColors.darkTextPrimary),
+            style: ReadLogType.mono(size: 13, color: ReadLogColors.cream),
             decoration: InputDecoration(
               hintText: 'Adicione uma resenha (opcional)...',
-              hintStyle:
-                  const TextStyle(color: AppColors.darkTextSecondary),
+              hintStyle: ReadLogType.mono(
+                  size: 12,
+                  color: ReadLogColors.cream.withValues(alpha: 0.4)),
               filled: true,
-              fillColor: AppColors.darkSurface,
+              fillColor: ReadLogColors.inkAlt,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.darkBorder),
+                borderRadius: BorderRadius.circular(3),
+                borderSide: const BorderSide(
+                    color: ReadLogColors.brassLight),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.darkBorder),
+                borderRadius: BorderRadius.circular(3),
+                borderSide: const BorderSide(
+                    color: ReadLogColors.brassLight),
               ),
             ),
             onChanged: (_) => setState(() {}),

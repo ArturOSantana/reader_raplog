@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/local/connectivity_provider.dart';
 import '../../core/local/sync_service.dart';
@@ -13,6 +15,10 @@ import '../../features/highlights/data/highlight_repository.dart';
 import '../../features/friends/data/friends_repository.dart';
 import '../../features/clubs/data/book_club_repository.dart';
 import '../../features/social/data/social_feed_repository.dart';
+import '../../features/notifications/data/notification_models.dart';
+import '../../features/notifications/data/notification_repository.dart';
+import '../../features/notifications/presentation/notification_notifier.dart';
+import '../../features/inspiration/data/inspiration_service.dart';
 
 export '../../core/local/connectivity_provider.dart';
 
@@ -101,4 +107,58 @@ final bookClubRepositoryProvider = Provider<BookClubRepository>(
 
 final socialFeedRepositoryProvider = Provider<SocialFeedRepository>(
   (ref) => SocialFeedRepository(ref.watch(supabaseClientProvider)),
+);
+
+final notificationRepositoryProvider = Provider<NotificationRepository>(
+  (ref) => NotificationRepository(ref.watch(supabaseClientProvider)),
+);
+
+final notificationInboxProvider =
+    StateNotifierProvider<NotificationInboxNotifier, NotificationInboxState>(
+  (ref) => NotificationInboxNotifier(ref.watch(notificationRepositoryProvider)),
+);
+
+final notificationPrefsProvider = StateNotifierProvider<
+    NotificationPrefsNotifier, AsyncValue<NotificationPrefs>>(
+  (ref) =>
+      NotificationPrefsNotifier(ref.watch(notificationRepositoryProvider)),
+);
+
+// ── Inspiração do Dia ─────────────────────────────────────────────────────
+
+final dailyInspirationServiceProvider = Provider<DailyInspirationService>(
+  (_) => DailyInspirationService(),
+);
+
+// ── Tema ──────────────────────────────────────────────────────────────────
+
+/// Persiste o ThemeMode escolhido pelo usuário em SharedPreferences.
+class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  ThemeModeNotifier() : super(ThemeMode.system) {
+    _load();
+  }
+
+  static const _key = 'theme_mode';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final value = prefs.getString(_key);
+    if (value != null) {
+      state = ThemeMode.values.firstWhere(
+        (m) => m.name == value,
+        orElse: () => ThemeMode.system,
+      );
+    }
+  }
+
+  Future<void> set(ThemeMode mode) async {
+    state = mode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, mode.name);
+  }
+}
+
+final themeModeProvider =
+    StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
+  (_) => ThemeModeNotifier(),
 );

@@ -20,11 +20,16 @@ import '../../features/highlights/presentation/screens/highlights_screen.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
 import '../../features/friends/presentation/screens/friends_screen.dart';
 import '../../features/friends/presentation/screens/public_profile_screen.dart';
+import '../../features/friends/presentation/screens/friend_profile_screen.dart';
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
 import '../../features/clubs/presentation/screens/book_clubs_screen.dart';
 import '../../features/clubs/presentation/screens/book_club_detail_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
+import '../../features/notifications/presentation/screens/notification_settings_screen.dart';
+import '../../features/notifications/presentation/screens/reading_schedule_screen.dart';
+import '../../features/notifications/data/notification_models.dart';
 import '../shell/main_shell.dart';
 import 'route_persistence.dart';
 
@@ -43,17 +48,13 @@ class _AuthNotifier extends ChangeNotifier {
 }
 
 /// Provider que carrega (e cacheia) se o usuário já completou o onboarding.
+/// Lê via repositório offline-first para refletir o estado mesmo sem rede.
 /// Exposto fora do router para que o SplashScreen possa invalidar após login.
 final onboardingCompletedProvider = FutureProvider<bool>((ref) async {
-  final client = ref.watch(supabaseClientProvider);
-  final userId = client.auth.currentUser?.id;
+  final userId = ref.read(supabaseClientProvider).auth.currentUser?.id;
   if (userId == null) return true; // não logado → não bloqueia
-  final data = await client
-      .from('profiles')
-      .select('onboarding_completed')
-      .eq('id', userId)
-      .maybeSingle();
-  return data?['onboarding_completed'] as bool? ?? false;
+  final profile = await ref.read(profileRepositoryProvider).fetch();
+  return profile?.onboardingCompleted ?? false;
 });
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -173,6 +174,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                   userId: state.pathParameters['userId']!,
                 ),
               ),
+              GoRoute(
+                path: 'view/:userId',
+                builder: (_, state) => FriendProfileScreen(
+                  userId: state.pathParameters['userId']!,
+                ),
+              ),
             ],
           ),
           // ── Novas rotas ────────────────────────────────────────────────
@@ -195,6 +202,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ),
               ),
             ],
+          ),
+          GoRoute(
+            path: '/notifications',
+            builder: (_, __) => const NotificationsScreen(),
+          ),
+          GoRoute(
+            path: '/notifications/settings',
+            builder: (_, __) => const NotificationSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/notifications/schedule',
+            builder: (_, state) => ReadingScheduleScreen(
+              existing: state.extra as ReadingSchedule?,
+            ),
           ),
         ],
       ),

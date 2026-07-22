@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/shell/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/providers/providers.dart';
 
@@ -22,9 +22,19 @@ class LibraryScreen extends ConsumerWidget {
     final books = ref.watch(_booksProvider);
 
     return Scaffold(
+      backgroundColor: ReadLogColors.paper,
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => mainScaffoldKey.currentState?.openDrawer(), tooltip: 'Abrir menu'),
-        title: const Text('Biblioteca'),
+        backgroundColor: ReadLogColors.paper,
+        foregroundColor: ReadLogColors.charcoal,
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
+          tooltip: 'Abrir menu',
+        ),
+        title: Text(
+          'Biblioteca',
+          style: ReadLogType.display(size: 19, color: ReadLogColors.charcoal),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -37,7 +47,9 @@ class LibraryScreen extends ConsumerWidget {
           _StatusFilterBar(selected: selectedStatus),
           Expanded(
             child: books.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: ReadLogColors.brass),
+              ),
               error: (e, _) => Center(child: Text('Erro: $e')),
               data: (list) {
                 if (list.isEmpty) {
@@ -45,23 +57,29 @@ class LibraryScreen extends ConsumerWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.library_books_outlined,
-                            size: 48, color: AppColors.textMuted),
+                        Icon(Icons.library_books_outlined,
+                            size: 48,
+                            color:
+                                ReadLogColors.charcoal.withValues(alpha: 0.3)),
                         const SizedBox(height: 12),
                         Text(
                           'Nenhum livro aqui ainda',
-                          style: AppTextStyles.bodyMedium,
+                          style: ReadLogType.mono(
+                              size: 13,
+                              color: ReadLogColors.charcoal
+                                  .withValues(alpha: 0.5)),
                         ),
                       ],
                     ),
                   );
                 }
                 return RefreshIndicator(
+                  color: ReadLogColors.brass,
                   onRefresh: () => ref.refresh(_booksProvider.future),
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: list.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, __) => const SizedBox(height: 2),
                     itemBuilder: (_, i) => _BookTile(book: list[i]),
                   ),
                 );
@@ -74,6 +92,7 @@ class LibraryScreen extends ConsumerWidget {
   }
 }
 
+/// Barra de filtros no estilo "chips de catálogo" — borda fina, texto mono
 class _StatusFilterBar extends ConsumerWidget {
   final BookStatus? selected;
 
@@ -89,35 +108,70 @@ class _StatusFilterBar extends ConsumerWidget {
       (BookStatus.abandoned, 'Abandonados'),
     ];
 
-    return SizedBox(
-      height: 48,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: options.map((opt) {
-          final isSelected = selected == opt.$1;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
-            child: FilterChip(
-              label: Text(opt.$2),
-              selected: isSelected,
-              onSelected: (_) =>
-                  ref.read(_selectedStatusProvider.notifier).state = opt.$1,
-              selectedColor: AppColors.forestGreen,
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-                fontSize: 13,
+    return Container(
+      color: ReadLogColors.paperAlt,
+      child: SizedBox(
+        height: 46,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          children: options.map((opt) {
+            final isSelected = selected == opt.$1;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () => ref
+                    .read(_selectedStatusProvider.notifier)
+                    .state = opt.$1,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? ReadLogColors.charcoal
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(2),
+                    border: Border.all(
+                      color: isSelected
+                          ? ReadLogColors.charcoal
+                          : ReadLogColors.charcoal.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Text(
+                    opt.$2.toUpperCase(),
+                    style: ReadLogType.mono(
+                      size: 10,
+                      color: isSelected
+                          ? ReadLogColors.paper
+                          : ReadLogColors.charcoal.withValues(alpha: 0.65),
+                    ).copyWith(letterSpacing: 0.5),
+                  ),
+                ),
               ),
-              checkmarkColor: Colors.white,
-              side: BorderSide(
-                color: isSelected ? AppColors.forestGreen : AppColors.border,
-              ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
+}
+
+Color _tabColorForStatus(BookStatus status) {
+  switch (status) {
+    case BookStatus.reading:
+      return ReadLogColors.brass;
+    case BookStatus.wantToRead:
+      return ReadLogColors.sage;
+    case BookStatus.read:
+      return ReadLogColors.stamp;
+    case BookStatus.abandoned:
+      return ReadLogColors.charcoal.withValues(alpha: 0.3);
+  }
+}
+
+double _progressForBook(Book b) {
+  if (b.totalPages == null || b.totalPages == 0) return 0;
+  return ((b.currentPage ?? 0) / b.totalPages!).clamp(0.0, 1.0);
 }
 
 class _BookTile extends StatelessWidget {
@@ -127,85 +181,12 @@ class _BookTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return ReadLogCatalogCard(
+      title: book.title,
+      author: book.author ?? '',
+      progress: _progressForBook(book),
+      tabColor: _tabColorForStatus(book.status),
       onTap: () => context.push('/library/book/${book.id}'),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 60,
-              decoration: BoxDecoration(
-                color: AppColors.forestGreen.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(Icons.menu_book_outlined,
-                  color: AppColors.forestGreen, size: 22),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(book.title,
-                      style: AppTextStyles.titleMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis),
-                  if (book.author != null) ...[
-                    const SizedBox(height: 2),
-                    Text(book.author!,
-                        style: AppTextStyles.bodyMedium, maxLines: 1),
-                  ],
-                  const SizedBox(height: 6),
-                  _StatusBadge(status: book.status),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right,
-                color: AppColors.textMuted, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  final BookStatus status;
-
-  const _StatusBadge({required this.status});
-
-  Color get _color {
-    switch (status) {
-      case BookStatus.reading:
-        return AppColors.forestGreen;
-      case BookStatus.wantToRead:
-        return AppColors.warmGold;
-      case BookStatus.read:
-        return AppColors.success;
-      case BookStatus.abandoned:
-        return AppColors.textMuted;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        status.label,
-        style: AppTextStyles.labelMedium.copyWith(color: _color),
-      ),
     );
   }
 }

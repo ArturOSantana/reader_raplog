@@ -18,7 +18,7 @@ class LocalDatabase {
 
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -88,6 +88,9 @@ class LocalDatabase {
         avatar_url TEXT,
         yearly_goal INTEGER,
         favorite_genre TEXT,
+        favorite_authors TEXT,
+        favorite_book TEXT,
+        onboarding_completed INTEGER NOT NULL DEFAULT 0,
         updated_at TEXT NOT NULL
       )
     ''');
@@ -116,10 +119,9 @@ class LocalDatabase {
     ''');
   }
 
-  /// Migração incremental para usuários que já têm o banco na versão 1.
+  /// Migração incremental para usuários que já têm o banco em versões anteriores.
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      // Adiciona colunas novas de sessão
       await db.execute(
           'ALTER TABLE reading_sessions ADD COLUMN paused_duration_seconds INTEGER NOT NULL DEFAULT 0');
       await db.execute(
@@ -130,9 +132,15 @@ class LocalDatabase {
           'ALTER TABLE reading_sessions ADD COLUMN session_goal TEXT');
       await db.execute(
           'ALTER TABLE reading_sessions ADD COLUMN goal_value INTEGER');
-      // Migra sessões antigas para status correto
       await db.execute(
           "UPDATE reading_sessions SET status = 'finished' WHERE ended_at IS NOT NULL");
+    }
+    if (oldVersion < 3) {
+      // Adiciona colunas faltantes na tabela profile
+      await db.execute('ALTER TABLE profile ADD COLUMN favorite_authors TEXT');
+      await db.execute('ALTER TABLE profile ADD COLUMN favorite_book TEXT');
+      await db.execute(
+          'ALTER TABLE profile ADD COLUMN onboarding_completed INTEGER NOT NULL DEFAULT 0');
     }
   }
 

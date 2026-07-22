@@ -1,0 +1,936 @@
+
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ReadLog — Design System</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    background: #f7f8fa;
+    color: #1f2328;
+  }
+
+  .wrapper {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 64px;
+  }
+
+  /* ── Typography ── */
+  h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  h2 { font-size: 18px; font-weight: 700; margin: 40px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 6px; }
+  h3 { font-size: 14px; font-weight: 700; margin: 24px 0 8px; color: #3b82d4; letter-spacing: 0.5px; text-transform: uppercase; }
+  p  { margin-bottom: 10px; color: #1f2328; }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12px;
+    background: #eef2ff;
+    color: #3b3b8a;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .subtitle { color: #57606a; font-size: 13px; margin-bottom: 32px; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; background: #e5e7eb; color: #57606a; margin-right: 4px; }
+  .tag.dark { background: #17241c; color: #f4eedd; }
+  .tag.light { background: #e9e1cc; color: #241c14; border: 1px solid #cfc29d; }
+
+  /* ── Callout ── */
+  .callout {
+    background: #fff8e7;
+    border-left: 4px solid #B08D4F;
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 0;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  .callout.danger {
+    background: #fff0ee;
+    border-left-color: #9C3B29;
+  }
+  .callout.info {
+    background: #eef4ff;
+    border-left-color: #3b82d4;
+  }
+
+  /* ── Color Palette ── */
+  .palette { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+  .swatch {
+    width: 100px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+  }
+  .swatch-color { height: 52px; }
+  .swatch-info { padding: 6px 8px; background: #fff; }
+  .swatch-name { font-weight: 700; font-size: 11px; display: block; }
+  .swatch-hex  { font-family: monospace; font-size: 10px; color: #57606a; }
+  .swatch-desc { font-size: 10px; color: #57606a; display: block; margin-top: 2px; line-height: 1.3; }
+
+  /* ── Font specimens ── */
+  .font-specimen {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+  }
+  .font-label { font-size: 11px; font-weight: 600; color: #57606a; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .fraunces { font-family: Georgia, "Times New Roman", serif; font-weight: 600; }
+  .mono     { font-family: "SFMono-Regular", Consolas, monospace; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; background: #f0f1f3; font-weight: 600; border-bottom: 2px solid #e5e7eb; }
+  td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+
+  /* ── Component previews ── */
+  .preview-box {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .preview-header {
+    background: #f0f1f3;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #57606a;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .preview-body { padding: 20px; }
+  .preview-dark  { background: #17241C; }
+  .preview-light { background: #E9E1CC; }
+
+  /* SVG Stamp */
+  .stamp-demo { display: inline-flex; align-items: center; justify-content: center; }
+
+  /* Nav bar preview */
+  .spine-nav {
+    display: flex;
+    height: 56px;
+    background: #241C14;
+    border-radius: 14px;
+    padding: 5px 5px 0;
+    gap: 2px;
+    max-width: 320px;
+  }
+  .spine-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px 8px 0 0;
+    font-size: 18px;
+    color: rgba(244,238,221,0.55);
+    position: relative;
+  }
+  .spine-item.active { background: #B08D4F; color: #241C14; }
+  .bookmark-tip {
+    position: absolute;
+    top: -6px;
+    width: 14px;
+    height: 10px;
+  }
+
+  /* Catalog card preview */
+  .catalog-card {
+    display: flex;
+    border-radius: 3px;
+    background: #E9E1CC;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.18);
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .catalog-tab { width: 6px; flex-shrink: 0; }
+  .catalog-body { padding: 10px 12px; flex: 1; }
+  .catalog-title { font-family: Georgia, serif; font-size: 14px; font-weight: 600; color: #241C14; }
+  .catalog-author { font-family: monospace; font-size: 10px; color: rgba(36,28,20,0.6); margin-top: 2px; }
+  .progress-bar { height: 4px; border-radius: 2px; background: #CFC29D; margin-top: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #9C3B29; border-radius: 2px; }
+
+  /* Stat tile */
+  .stat-tile {
+    display: flex;
+    align-items: center;
+    background: #20301F;
+    border: 1px solid rgba(244,238,221,0.1);
+    border-radius: 3px;
+    padding: 9px 12px;
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+  .stat-label { font-family: monospace; font-size: 10px; color: #6F8768; flex: 1; }
+  .stat-value { font-family: monospace; font-size: 15px; font-weight: 600; color: #D2B57C; }
+  .stat-unit  { font-family: monospace; font-size: 10px; color: rgba(244,238,221,0.45); }
+
+  /* Goal chip */
+  .goal-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    border: 1px solid #CFC29D;
+    background: #F4EEDD;
+    color: rgba(36,28,20,0.5);
+  }
+  .goal-chip.active {
+    background: rgba(156,59,41,0.1);
+    border-color: #9C3B29;
+    color: #9C3B29;
+  }
+
+  /* Leader row */
+  .leader-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    padding: 4px 0;
+  }
+  .leader-label { font-family: monospace; font-size: 12px; color: #241C14; white-space: nowrap; }
+  .leader-dots  { flex: 1; border-bottom: 2px dotted rgba(36,28,20,0.35); margin-bottom: 3px; }
+  .leader-value { font-family: monospace; font-size: 12px; font-weight: 700; color: #241C14; white-space: nowrap; }
+
+  /* Filter chips */
+  .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+  .filter-chip {
+    font-family: monospace;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    border: 1px solid rgba(36,28,20,0.4);
+    color: rgba(36,28,20,0.65);
+    background: transparent;
+  }
+  .filter-chip.active {
+    background: #241C14;
+    color: #E9E1CC;
+    border-color: #241C14;
+  }
+
+  /* Drawer preview */
+  .drawer-header {
+    background: #17241C;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 20px;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 700; font-size: 14px;
+  }
+  .drawer-name  { color: white; font-weight: 600; font-size: 13px; }
+  .drawer-email { color: rgba(255,255,255,0.6); font-size: 11px; }
+  .drawer-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    color: rgba(36,28,20,0.7);
+    font-size: 13px;
+    font-family: Georgia, serif;
+    border-radius: 3px;
+    margin: 1px 4px;
+  }
+  .drawer-item.active {
+    background: rgba(176,141,79,0.15);
+    color: #241C14;
+    font-weight: 600;
+  }
+  .drawer-icon { font-size: 16px; }
+
+  /* Pill badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; font-family: monospace; }
+  .badge-stamp  { background: rgba(156,59,41,0.1); color: #9C3B29; border: 1px solid #9C3B29; }
+  .badge-brass  { background: rgba(176,141,79,0.15); color: #B08D4F; border: 1px solid #B08D4F; }
+  .badge-sage   { background: rgba(111,135,104,0.15); color: #6F8768; border: 1px solid #6F8768; }
+
+  /* Screen layout diagram */
+  .screen-diagram {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    max-width: 220px;
+    font-size: 11px;
+    text-align: center;
+    margin: 0 auto 16px;
+  }
+  .sd-appbar  { background: #f0f1f3; padding: 8px; font-weight: 700; border-bottom: 1px solid #e5e7eb; }
+  .sd-offline { background: #B08D4F; color: white; padding: 3px; font-size: 10px; }
+  .sd-body    { padding: 20px 10px; background: white; min-height: 80px; color: #57606a; font-size: 11px; }
+  .sd-nav     { background: #241C14; color: #f4eedd; padding: 10px; font-size: 10px; border-radius: 10px; margin: 6px; }
+
+  /* Rule */
+  hr { border: none; border-top: 1px solid #e5e7eb; margin: 32px 0; }
+
+  /* Screen-by-screen */
+  .screen-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
+  }
+  .screen-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .screen-card .bg-pill {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1px solid #e5e7eb;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+
+  footer {
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 12px;
+    color: #57606a;
+    margin-top: 48px;
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <h1>ReadLog — Design System</h1>
+  <p class="subtitle">
+    Referência oficial do layout, tokens visuais, componentes e padrões de tela.<br />
+    <strong>Todo novo código de UI deve seguir este documento.</strong>
+     <span class="tag dark">dark</span><span class="tag light">light</span>
+  </p>
+
+  
+  <h2>1 · Identidade Visual</h2>
+  
+
+  <p>
+    O ReadLog usa a metáfora de <strong>"ficha de biblioteca"</strong>: papel envelhecido, carimbos de tinta, réguas de sumário e lombadas de livro.
+    A linguagem visual é <em>analógica, silenciosa e literária</em> — sem gradientes, sombras excessivas ou animações decorativas.
+  </p>
+
+  <div class="callout">
+    <strong>Princípio central:</strong> cada tela deve parecer uma página de caderno de leitura, não um aplicativo de redes sociais.
+    Cor deve ser usada com parcimônia; o vermelho-carimbo (<code>stamp</code>) é reservado para ações primárias e conquistas.
+  </div>
+
+  
+  <h2>2 · Tokens de Cor — <code>ReadLogColors</code></h2>
+  
+
+  <h3>Paleta Principal</h3>
+  <div class="palette">
+    <div class="swatch">
+      <div class="swatch-color" style="background:#17241C"></div>
+      <div class="swatch-info">
+        <span class="swatch-name">ink</span>
+        <span class="swatch-hex">#17241C</span>
+        <span class="swatch-desc">Fundo escuro — capa de livro. Telas Home e Sessão ativa.</span>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#20301F"></div>
+      <div class="swatch-info">
+        <span class="swatch-name">inkAlt</span>
+        <span class="swatch-hex">#20301F</span>
+        <span class="swatch-desc">Cards e tiles sobre fundo dark.</span>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#E9E1CC;border-bottom:1px solid #e5e7eb"></div>
+      <div class="swatch-info">
+        <span class="swatch-name">paper</span>
+        <span class="swatch-hex">#E9E1CC</span>
+        <span class="swatch-desc">Papel envelhecido — fundo de Biblioteca, Painel, Sessão inativa.</span>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#DDD2B4;border-bottom:1px solid #e5e7eb"></div>
+      <div class="swatch-info">
+        <span class="swatch-name">paperAlt</span>
+        <span class="swatch-hex">#DDD2B4</span>
+        <span class="swatch-desc">Barra de filtros, fundo de Conquistas.</span>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#CFC29D;border-bottom:1px solid #e5e7eb"></div>
+      <div class="swatch-info">
+        <span class="swatch-name">paperDeep</span>
+        <span class="swatch-hex">#CFC29D</span>
+        <span class="swatch-desc">Bordas de inputs, fundo de barras de progresso (light).</span>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#B08D4F"></div>
+      <div class="swatch-info">
+        <span class="swatch-name">brass</span>
+        <span class="swatch-hex">#B08D4F</span>
+        <span class="swatch-desc">Latão — destaque neutro. Nav ativa, tab de livro em leitura.</span>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#D2B57C"></div>
+      <div class="swatch-info">
+        <span class="swatch-name">brassLight</span>
+        <span class="swatch-hex">#D2B57C</span>
+        <span class="swatch-desc">Valores numéricos no modo dark, título de livro na sessão.</span>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#9C3B29"></div>
+      <div class="swatch-info">
+        <span class="swatch-name">stamp</span>
+        <span class="swatch-hex">#9C3B29</span>
+        <span class="swatch-desc">Vermelho-carimbo — <em>único acento quente</em>. Botão primário, conquistas, barras de progresso.</span>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#6F8768"></div>
+      <div class="swatch-info">
+        <span class="swatch-name">sage</span>
+        <span class="swatch-hex">#6F8768</span>
+        <span class="swatch-desc">Verde sálvia — estados secundários, labels no dark, meta atingida.</span>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#F4EEDD;border-bottom:1px solid #e5e7eb"></div>
+      <div class="swatch-info">
+        <span class="swatch-name">cream</span>
+        <span class="swatch-hex">#F4EEDD</span>
+        <span class="swatch-desc">Creme — texto principal e ícones sobre fundo dark.</span>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#241C14"></div>
+      <div class="swatch-info">
+        <span class="swatch-name">charcoal</span>
+        <span class="swatch-hex">#241C14</span>
+        <span class="swatch-desc">Texto principal sobre papel. Nav bar background.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Regras de Uso de Cor</h3>
+  <table>
+    <tr><th>Contexto</th><th>Background</th><th>Texto principal</th><th>Destaque</th></tr>
+    <tr><td>Tela dark (Home, Sessão ativa)</td><td><code>ink</code></td><td><code>cream</code></td><td><code>brassLight</code></td></tr>
+    <tr><td>Tela light (Biblioteca, Painel, Sessão inativa)</td><td><code>paper</code></td><td><code>charcoal</code></td><td><code>stamp</code></td></tr>
+    <tr><td>Tela light-alt (Conquistas)</td><td><code>paperAlt</code></td><td><code>charcoal</code></td><td><code>stamp</code></td></tr>
+    <tr><td>Drawer / Menu lateral</td><td><code>paper</code></td><td><code>charcoal</code></td><td><code>brass</code></td></tr>
+    <tr><td>AppBar dark</td><td><code>ink</code></td><td><code>cream</code></td><td>—</td></tr>
+    <tr><td>AppBar light</td><td><code>paper</code> ou <code>paperAlt</code></td><td><code>charcoal</code></td><td>—</td></tr>
+    <tr><td>Nav bar (todas as telas)</td><td><code>charcoal</code></td><td><code>cream</code> 55% alpha</td><td><code>brass</code> (ativo)</td></tr>
+  </table>
+
+  <div class="callout danger">
+    <strong>Nunca usar</strong> <code>stamp</code> como cor de fundo de área grande. É reservado somente para botões primários, barras de progresso e carimbos de conquista.
+  </div>
+
+  
+  <h2>3 · Tipografia — <code>ReadLogType</code></h2>
+  
+
+  <div class="font-specimen">
+    <div class="font-label">Display — Fraunces (fonte serif literária)</div>
+    <p class="fraunces" style="font-size:24px;color:#241C14">Biblioteca de leitura</p>
+    <p class="fraunces" style="font-size:19px;color:#241C14">Título de AppBar</p>
+    <p class="fraunces" style="font-size:17px;color:#241C14">Cabeçalhos de seção</p>
+    <p class="fraunces" style="font-size:15px;color:#241C14;font-style:italic">Título de livro na sessão (itálico)</p>
+    <p style="color:#57606a;font-size:12px;margin-top:8px">Método: <code>ReadLogType.display(size, color, weight, italic)</code></p>
+  </div>
+
+  <div class="font-specimen">
+    <div class="font-label">Mono — IBM Plex Mono (dados, labels, textos de interface)</div>
+    <p class="mono" style="font-size:14px;color:#241C14">00:42:07   278 páginas   14/30 dias</p>
+    <p class="mono" style="font-size:52px;font-weight:600;color:#17241C;line-height:1">24:07</p>
+    <p class="mono" style="font-size:11px;color:#6F8768;letter-spacing:0.5px">META: MINUTOS DIÁRIOS</p>
+    <p style="color:#57606a;font-size:12px;margin-top:8px">Método: <code>ReadLogType.mono(size, weight, color)</code></p>
+  </div>
+
+  <h3>Escala de Tamanhos</h3>
+  <table>
+    <tr><th>Papel</th><th>Fonte</th><th>Size</th><th>Weight</th><th>Uso</th></tr>
+    <tr><td>AppBar title</td><td>Fraunces</td><td>19px</td><td>w600</td><td>Título de todas as telas</td></tr>
+    <tr><td>Seção / título de grupo</td><td>Fraunces</td><td>17–18px</td><td>w600</td><td>Cabeçalhos de seção no body</td></tr>
+    <tr><td>Título de card / livro</td><td>Fraunces</td><td>15px</td><td>w600</td><td><code>ReadLogCatalogCard</code></td></tr>
+    <tr><td>Label de rótulo</td><td>Fraunces</td><td>15px</td><td>w400</td><td>Sub-títulos, seção "Livro" na sessão</td></tr>
+    <tr><td>Cronômetro principal</td><td>IBM Plex Mono</td><td>52px</td><td>w500</td><td>Sessão ativa</td></tr>
+    <tr><td>Valor de stat</td><td>IBM Plex Mono</td><td>16px</td><td>w600</td><td>Tiles de estatística no Home</td></tr>
+    <tr><td>Autor / label de dados</td><td>IBM Plex Mono</td><td>10–12px</td><td>w500</td><td>Autor no card, labels de stat</td></tr>
+    <tr><td>Drawer item</td><td>Fraunces</td><td>14px</td><td>w400 / w600 (ativo)</td><td>Itens do menu lateral</td></tr>
+    <tr><td>Botão primário</td><td>IBM Plex Mono</td><td>13px</td><td>w600</td><td><code>FilledButton</code>, <code>ElevatedButton</code></td></tr>
+  </table>
+
+  
+  <h2>4 · Layout Geral — <code>MainShell</code></h2>
+  
+
+  <p>Toda tela interna é servida pelo <code>MainShell</code>, que fornece:</p>
+
+  <div class="screen-diagram">
+    <div class="sd-appbar">AppBar da tela filha</div>
+    <div class="sd-offline" style="display:none">⚠ Sem conexão</div>
+    <div class="sd-body">
+      <em>Conteúdo da tela</em>
+      <br /><br />(OfflineBanner aparece<br />se sem rede)
+    </div>
+    <div class="sd-nav">● ◦ ◦ ◦ ◦   SpineNavBar</div>
+  </div>
+
+  <table>
+    <tr><th>Elemento</th><th>Classe / Widget</th><th>Notas</th></tr>
+    <tr><td>Menu lateral</td><td><code>Drawer</code> (<code>_AppDrawer</code>)</td><td>Abre via <code>mainScaffoldKey.currentState?.openDrawer()</code>. Background <code>paper</code>.</td></tr>
+    <tr><td>Banner offline</td><td><code>OfflineBanner</code></td><td>Aparece automaticamente. Cor <code>brass</code>.</td></tr>
+    <tr><td>Conteúdo</td><td><code>widget.child</code></td><td>Expandido dentro de <code>Column</code>.</td></tr>
+    <tr><td>Nav bar</td><td><code>ReadLogSpineNavBar</code></td><td>5 abas. Flutuante sobre o scaffold com <code>margin</code> lateral de 12px.</td></tr>
+  </table>
+
+  <h3>Abas da Navegação</h3>
+  <table>
+    <tr><th>Índice</th><th>Ícone</th><th>Rota</th><th>Grupo de rotas</th></tr>
+    <tr><td>0 — Home</td><td><code>home_outlined</code></td><td><code>/home</code></td><td>—</td></tr>
+    <tr><td>1 — Biblioteca</td><td><code>menu_book_outlined</code></td><td><code>/library</code></td><td>Todas que começam com <code>/library</code></td></tr>
+    <tr><td>2 — Sessão</td><td><code>timer_outlined</code></td><td><code>/session</code></td><td>—</td></tr>
+    <tr><td>3 — Conquistas</td><td><code>emoji_events_outlined</code></td><td><code>/achievements</code></td><td>—</td></tr>
+    <tr><td>4 — Perfil</td><td><code>person_outline</code></td><td><code>/profile</code></td><td><code>/goals /wishlist /dashboard /calendar /social /friends /clubs</code></td></tr>
+  </table>
+
+  <h3>Padrão de AppBar (todas as telas)</h3>
+  <div class="callout info">
+    Toda tela dentro do <code>MainShell</code> deve ter um <strong>botão hambúrguer</strong> no <code>leading</code> que chama <code>mainScaffoldKey.currentState?.openDrawer()</code>.<br />
+    Nunca usar <code>centerTitle: true</code>. O título fica alinhado à esquerda.
+  </div>
+
+  <table>
+    <tr><th>Propriedade</th><th>Tela dark</th><th>Tela light</th></tr>
+    <tr><td><code>backgroundColor</code></td><td><code>ReadLogColors.ink</code></td><td><code>ReadLogColors.paper</code> (ou <code>paperAlt</code>)</td></tr>
+    <tr><td><code>foregroundColor</code></td><td><code>ReadLogColors.cream</code></td><td><code>ReadLogColors.charcoal</code></td></tr>
+    <tr><td><code>title</code> style</td><td><code>ReadLogType.display(size:19, color:cream)</code></td><td><code>ReadLogType.display(size:19, color:charcoal)</code></td></tr>
+    <tr><td><code>elevation</code></td><td>0</td><td>0</td></tr>
+    <tr><td>leading</td><td>Botão hambúrguer <code>Icons.menu</code></td><td>Botão hambúrguer <code>Icons.menu</code></td></tr>
+  </table>
+
+  
+  <h2>5 · Componentes do Design System</h2>
+  
+
+  
+  <h3>5.1 ReadLogSpineNavBar</h3>
+  <p>Nav bar que imita lombadas de livros lado a lado. A aba ativa ganha fundo <code>brass</code> e um marcador triangular vermelho (<code>stamp</code>) no topo.</p>
+
+  <div class="preview-box">
+    <div class="preview-header">Pré-visualização</div>
+    <div class="preview-body" style="background:#f0f1f3;display:flex;justify-content:center;padding:16px">
+      <div class="spine-nav">
+        <div class="spine-item active">🏠
+          <svg class="bookmark-tip" fill="#9C3B29"><polygon points="0,0 16,0 16,10 8,6 0,10"></polygon></svg>
+        </div>
+        <div class="spine-item">📚</div>
+        <div class="spine-item">⏱</div>
+        <div class="spine-item">🏆</div>
+        <div class="spine-item">👤</div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Propriedade</th><th>Valor</th></tr>
+    <tr><td>Height</td><td>68px</td></tr>
+    <tr><td>Margin</td><td><code>fromLTRB(12, 0, 12, 10)</code> — flutuante, não full-width</td></tr>
+    <tr><td>Background</td><td><code>charcoal</code></td></tr>
+    <tr><td>Border radius</td><td>16px</td></tr>
+    <tr><td>Aba ativa</td><td>Background <code>brass</code>, ícone <code>charcoal</code>, marcador <code>stamp</code> no topo</td></tr>
+    <tr><td>Aba inativa</td><td>Transparente, ícone <code>cream</code> 55% alpha</td></tr>
+    <tr><td>Ícone size</td><td>20px</td></tr>
+  </table>
+
+  
+  <h3>5.2 ReadLogCatalogCard</h3>
+  <p>Card de livro com aba lateral colorida por status. Usado na Home e na Biblioteca.</p>
+
+  <div class="preview-box">
+    <div class="preview-header">Pré-visualização</div>
+    <div class="preview-body" style="background:#E9E1CC">
+      <div class="catalog-card">
+        <div class="catalog-tab" style="background:#B08D4F"></div>
+        <div class="catalog-body">
+          <div class="catalog-title">O Senhor dos Anéis</div>
+          <div class="catalog-author">J.R.R. Tolkien</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div>
+        </div>
+      </div>
+      <div class="catalog-card">
+        <div class="catalog-tab" style="background:#6F8768"></div>
+        <div class="catalog-body">
+          <div class="catalog-title">Cem Anos de Solidão</div>
+          <div class="catalog-author">Gabriel García Márquez</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="catalog-card">
+        <div class="catalog-tab" style="background:#9C3B29"></div>
+        <div class="catalog-body">
+          <div class="catalog-title">Dom Casmurro</div>
+          <div class="catalog-author">Machado de Assis</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Status</th><th>Cor da aba (<code>tabColor</code>)</th></tr>
+    <tr><td>reading (Lendo)</td><td><code>brass</code> #B08D4F</td></tr>
+    <tr><td>wantToRead (Quero Ler)</td><td><code>sage</code> #6F8768</td></tr>
+    <tr><td>read (Lido)</td><td><code>stamp</code> #9C3B29</td></tr>
+    <tr><td>abandoned (Abandonado)</td><td><code>charcoal</code> 30% alpha</td></tr>
+  </table>
+
+  <table>
+    <tr><th>Detalhe</th><th>Valor</th></tr>
+    <tr><td>Background do card</td><td><code>paper</code></td></tr>
+    <tr><td>Border radius</td><td>3px</td></tr>
+    <tr><td>Sombra</td><td><code>rgba(0,0,0,0.18)</code> blur 8, offset (0,4)</td></tr>
+    <tr><td>Tab width</td><td>6px, height 64px</td></tr>
+    <tr><td>Progress bar</td><td>4px, radius 2, bg <code>paperDeep</code>, fill <code>stamp</code></td></tr>
+    <tr><td>Margin vertical</td><td>5px (via <code>Container.margin</code>)</td></tr>
+  </table>
+
+  
+  <h3>5.3 ReadLogStamp</h3>
+  <p>O <em>único elemento "ousado"</em> da identidade. Círculo duplo com valor e label, levemente rotacionado.</p>
+
+  <div class="preview-box">
+    <div class="preview-header">Pré-visualização</div>
+    <div class="preview-body" style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;background:#E9E1CC">
+      <svg width="84" height="84" style="transform:rotate(-8deg)">
+        <circle cx="42" cy="42" r="40.5" fill="none" stroke="#9C3B29" stroke-width="2.5"></circle>
+        <circle cx="42" cy="42" r="33" fill="none" stroke="rgba(156,59,41,0.5)" stroke-width="1"></circle>
+        <text x="42" y="46" text-anchor="middle" font-family="monospace" font-size="22" font-weight="700" fill="#9C3B29">7</text>
+        <text x="42" y="58" text-anchor="middle" font-family="monospace" font-size="8" fill="#9C3B29">DIAS</text>
+      </svg>
+      <svg width="64" height="64" style="transform:rotate(-6deg)">
+        <circle cx="32" cy="32" r="30.5" fill="none" stroke="#9C3B29" stroke-width="2.5"></circle>
+        <circle cx="32" cy="32" r="24" fill="none" stroke="rgba(156,59,41,0.5)" stroke-width="1"></circle>
+        <text x="32" y="35" text-anchor="middle" font-family="monospace" font-size="14" font-weight="700" fill="#9C3B29">+50</text>
+        <text x="32" y="45" text-anchor="middle" font-family="monospace" font-size="6" fill="#9C3B29">XP</text>
+      </svg>
+      <svg width="64" height="64" style="opacity:0.4">
+        <circle cx="32" cy="32" r="30.5" fill="none" stroke="#241C14" stroke-width="2.5"></circle>
+        <circle cx="32" cy="32" r="24" fill="none" stroke="rgba(36,28,20,0.5)" stroke-width="1"></circle>
+        <text x="32" y="35" text-anchor="middle" font-family="monospace" font-size="14" font-weight="700" fill="#241C14">+25</text>
+        <text x="32" y="45" text-anchor="middle" font-family="monospace" font-size="6" fill="#241C14">XP</text>
+      </svg>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Parâmetro</th><th>Default</th><th>Notas</th></tr>
+    <tr><td><code>value</code></td><td>—</td><td>Texto grande centralizado (número ou "+XP")</td></tr>
+    <tr><td><code>label</code></td><td>—</td><td>Texto pequeno abaixo, uppercase + letterSpacing</td></tr>
+    <tr><td><code>color</code></td><td><code>stamp</code></td><td>Cor das duas circunferências e dos textos</td></tr>
+    <tr><td><code>size</code></td><td>96px</td><td>84px no Home, 64px na grade de Conquistas</td></tr>
+    <tr><td><code>rotationDeg</code></td><td>-8°</td><td>Conquista desbloqueada: -6°; bloqueada: 0°</td></tr>
+  </table>
+
+  <div class="callout danger">
+    <strong>Regra de uso:</strong> usar o carimbo em <em>no máximo um lugar por tela</em>. Nunca repetir como elemento decorativo.
+  </div>
+
+  
+  <h3>5.4 ReadLogLeaderRow</h3>
+  <p>Linha de sumário inspirada em índice de livro: rótulo à esquerda, linha pontilhada, valor à direita.</p>
+
+  <div class="preview-box">
+    <div class="preview-header">Pré-visualização</div>
+    <div class="preview-body" style="background:#E9E1CC">
+      <div class="leader-row"><span class="leader-label">Total de páginas</span><div class="leader-dots"></div><span class="leader-value">1.842</span></div>
+      <div class="leader-row"><span class="leader-label">Horas de leitura</span><div class="leader-dots"></div><span class="leader-value">127h</span></div>
+      <div class="leader-row"><span class="leader-label">Livros concluídos</span><div class="leader-dots"></div><span class="leader-value">14</span></div>
+    </div>
+  </div>
+
+  <p>Usar em: seções de resumo/estatísticas nas telas de Painel e Perfil. Fonte: <code>IBM Plex Mono 13px</code>.</p>
+
+  
+  <h3>5.5 _StatTile (Home)</h3>
+  <p>Tile horizontal de estatística do dia, usado no bloco de streak da Home.</p>
+
+  <div class="preview-box">
+    <div class="preview-header">Pré-visualização (fundo dark)</div>
+    <div class="preview-body preview-dark">
+      <div class="stat-tile"><span class="stat-label">Hoje</span><span class="stat-value">1h 24min</span><span class="stat-unit">lidos</span></div>
+      <div class="stat-tile"><span class="stat-label">Páginas</span><span class="stat-value">32</span><span class="stat-unit">hoje</span></div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Detalhe</th><th>Valor</th></tr>
+    <tr><td>Background</td><td><code>inkAlt</code></td></tr>
+    <tr><td>Border</td><td><code>cream</code> 10% alpha</td></tr>
+    <tr><td>Border radius</td><td>3px</td></tr>
+    <tr><td>Padding</td><td>10px v · 14px h</td></tr>
+    <tr><td>Label</td><td>Mono 10px, <code>sage</code></td></tr>
+    <tr><td>Valor</td><td>Mono 16px w600, <code>brassLight</code></td></tr>
+    <tr><td>Unidade</td><td>Mono 10px, <code>cream</code> 45% alpha</td></tr>
+  </table>
+
+  
+  <h3>5.6 _GoalChip (Sessão)</h3>
+  <p>Chip de seleção de objetivo de sessão. Animação de 180ms.</p>
+
+  <div class="preview-box">
+    <div class="preview-header">Pré-visualização</div>
+    <div class="preview-body" style="background:#E9E1CC">
+      <span class="goal-chip active">▶ Leitura livre</span>
+      <span class="goal-chip">⏱ Por tempo</span>
+      <span class="goal-chip">🔖 Até uma página</span>
+      <span class="goal-chip">🚩 Meta diária</span>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Estado</th><th>Background</th><th>Border</th><th>Cor do texto/ícone</th></tr>
+    <tr><td>Selecionado</td><td><code>stamp</code> 10% alpha</td><td><code>stamp</code></td><td><code>stamp</code></td></tr>
+    <tr><td>Normal</td><td><code>cream</code></td><td><code>paperDeep</code></td><td><code>charcoal</code> 50% alpha</td></tr>
+  </table>
+
+  
+  <h3>5.7 _StatusFilterBar (Biblioteca)</h3>
+  <p>Barra horizontal de chips de catálogo para filtrar por status.</p>
+
+  <div class="preview-box">
+    <div class="preview-header">Pré-visualização</div>
+    <div class="preview-body" style="background:#DDD2B4;padding:8px 16px">
+      <div class="filter-bar">
+        <span class="filter-chip active">TODOS</span>
+        <span class="filter-chip">LENDO</span>
+        <span class="filter-chip">QUERO LER</span>
+        <span class="filter-chip">LIDOS</span>
+        <span class="filter-chip">ABANDONADOS</span>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Detalhe</th><th>Valor</th></tr>
+    <tr><td>Container background</td><td><code>paperAlt</code></td></tr>
+    <tr><td>Height</td><td>46px</td></tr>
+    <tr><td>Chip ativo</td><td>Background <code>charcoal</code>, texto <code>paper</code></td></tr>
+    <tr><td>Chip inativo</td><td>Transparent, border <code>charcoal</code> 40% alpha, texto 65% alpha</td></tr>
+    <tr><td>Texto</td><td>Mono 10px uppercase letterSpacing 0.5</td></tr>
+    <tr><td>Border radius</td><td>2px</td></tr>
+  </table>
+
+  
+  <h3>5.8 _AppDrawer (Menu lateral)</h3>
+
+  <div class="preview-box">
+    <div class="preview-header">Pré-visualização</div>
+    <div class="preview-body" style="padding:0;max-width:240px;background:#E9E1CC">
+      <div class="drawer-header">
+        <div class="avatar">AR</div>
+        <div>
+          <div class="drawer-name">Artur Santana</div>
+          <div class="drawer-email">artur@email.com</div>
+        </div>
+      </div>
+      <div class="drawer-item active"><span class="drawer-icon">🏠</span>Início</div>
+      <div class="drawer-item"><span class="drawer-icon">📚</span>Biblioteca</div>
+      <div class="drawer-item"><span class="drawer-icon">⏱</span>Sessão de leitura</div>
+      <div class="drawer-item"><span class="drawer-icon">📊</span>Painel</div>
+      <hr style="margin:4px 16px;border-top:1px solid #CFC29D" />
+      <div class="drawer-item"><span class="drawer-icon">🚩</span>Metas</div>
+      <div class="drawer-item"><span class="drawer-icon">🏆</span>Conquistas</div>
+      <div class="drawer-item"><span class="drawer-icon">🔖</span>Lista de desejos</div>
+      <hr style="margin:4px 16px;border-top:1px solid #CFC29D" />
+      <div class="drawer-item"><span class="drawer-icon">📅</span>Calendário</div>
+      <div class="drawer-item"><span class="drawer-icon">📡</span>Feed social</div>
+      <div class="drawer-item"><span class="drawer-icon">👥</span>Amigos</div>
+      <div class="drawer-item"><span class="drawer-icon">👓</span>Clubes de leitura</div>
+      <hr style="margin:4px 16px;border-top:1px solid #CFC29D" />
+      <div class="drawer-item" style="color:#9C3B29"><span class="drawer-icon">🚪</span>Sair</div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Elemento</th><th>Valor</th></tr>
+    <tr><td>Cabeçalho background</td><td><code>ink</code></td></tr>
+    <tr><td>Avatar (sem foto)</td><td>Iniciais, CircleAvatar radius 26, bg <code>white24</code></td></tr>
+    <tr><td>Nome</td><td>Branco w600 15px</td></tr>
+    <tr><td>E-mail</td><td><code>white70</code> 12px</td></tr>
+    <tr><td>Item ativo</td><td>BG <code>brass</code> 15% alpha, ícone <code>brass</code>, texto <code>charcoal</code> w600</td></tr>
+    <tr><td>Item inativo</td><td>Transparent, ícone <code>charcoal</code> 55% alpha, texto w400 70% alpha</td></tr>
+    <tr><td>Item "Sair"</td><td>Ícone e texto <code>stamp</code></td></tr>
+    <tr><td>Font dos itens</td><td>Fraunces 14px via <code>ReadLogType.display</code></td></tr>
+    <tr><td>Divisores</td><td><code>Divider</code> indent 16, endIndent 16, cor <code>paperDeep</code></td></tr>
+  </table>
+
+  
+  <h2>6 · Padrões por Tela</h2>
+  
+
+  <div class="screen-card">
+    <h4><span class="bg-pill" style="background:#17241C;border-color:#17241C"></span> Home (<code>/home</code>)</h4>
+    <p><strong>Modo:</strong> dark · <strong>Background:</strong> <code>ink</code> · <strong>AppBar:</strong> dark</p>
+    <p><strong>Estrutura:</strong> <code>ListView</code> com padding <code>fromLTRB(20,16,20,24)</code>.</p>
+    <p><strong>Bloco principal:</strong> <code>_StreakRow</code> (carimbo + 2 stat tiles) → metas diárias (se houver) → título "Lendo agora" → lista de <code>ReadLogCatalogCard</code> → botão "Iniciar leitura".</p>
+    <p><strong>Loading:</strong> <code>CircularProgressIndicator(color: brass)</code> centralizado.</p>
+  </div>
+
+  <div class="screen-card">
+    <h4><span class="bg-pill" style="background:#E9E1CC"></span> Biblioteca (<code>/library</code>)</h4>
+    <p><strong>Modo:</strong> light · <strong>Background:</strong> <code>paper</code> · <strong>AppBar:</strong> light + ícone <code>add</code></p>
+    <p><strong>Estrutura:</strong> <code>_StatusFilterBar</code> (background <code>paperAlt</code>, h=46px) + <code>ListView.separated</code>.</p>
+    <p><strong>Separador:</strong> <code>SizedBox(height: 2)</code>. Cada item é um <code>ReadLogCatalogCard</code>.</p>
+    <p><strong>Estado vazio:</strong> ícone <code>library_books_outlined</code> 48px + texto mono cinza.</p>
+  </div>
+
+  <div class="screen-card">
+    <h4><span class="bg-pill" style="background:#E9E1CC"></span><span class="bg-pill" style="background:#17241C;border-color:#17241C"></span> Sessão de Leitura (<code>/session</code>)</h4>
+    <p><strong>Modo:</strong> dinâmico — light quando sem sessão ativa, dark durante sessão.</p>
+    <p><strong>Estado inativo (paper):</strong> formulário com <code>DropdownButtonFormField</code>, <code>TextFormField</code>, <code>_GoalPicker</code> (chips), e <code>FilledButton</code> "Iniciar".</p>
+    <p><strong>Estado ativo (ink):</strong> título do livro em Fraunces 20px itálico <code>brassLight</code>, cronômetro IBM Plex Mono 52px, tag "PAUSADO" (brass), barra de progresso do objetivo, botões Pausar/Encerrar.</p>
+    <p><strong>Sheet de encerramento:</strong> <code>BottomSheet</code> com resumo da sessão (ReadLogLeaderRow), campo de página final e notas.</p>
+  </div>
+
+  <div class="screen-card">
+    <h4><span class="bg-pill" style="background:#DDD2B4"></span> Conquistas (<code>/achievements</code>)</h4>
+    <p><strong>Modo:</strong> light · <strong>Background:</strong> <code>paperAlt</code></p>
+    <p><strong>Estrutura:</strong> barra de progresso geral (5px, <code>stamp</code>) + 2 grades 3 colunas: "Conquistadas" e "Bloqueadas".</p>
+    <p><strong>Cada slot:</strong> <code>ReadLogStamp</code> 64px + nome mono 9px. Desbloqueado: <code>stamp</code>, rotação -6°. Bloqueado: <code>charcoal</code> 25% alpha, rotação 0°.</p>
+  </div>
+
+  <div class="screen-card">
+    <h4><span class="bg-pill" style="background:#E9E1CC"></span> Painel (<code>/dashboard</code>)</h4>
+    <p><strong>Modo:</strong> light · <strong>Background:</strong> <code>paper</code> · <strong>AppBar:</strong> light + ícone share</p>
+    <p><strong>Estrutura:</strong> <code>ListView</code> com <code>padding fromLTRB(20,16,20,32)</code>. Seções separadas por <code>_SectionLabel</code> + <code>SizedBox(height:28)</code>.</p>
+    <p><strong>Seções:</strong> Hoje (grid 2×2) → Metas → Esta semana → Este mês → Este ano → Calendário de leitura → Atividade (heatmap) → Destaques.</p>
+    <p><strong><code>_SectionLabel</code>:</strong> Fraunces + linha pontilhada (<code>_DottedLinePainter</code>) até a borda direita.</p>
+  </div>
+
+  
+  <h2>7 · Botões</h2>
+  
+
+  <table>
+    <tr><th>Tipo</th><th>Background</th><th>Foreground</th><th>Shape</th><th>Uso</th></tr>
+    <tr><td><code>FilledButton</code></td><td><code>stamp</code></td><td><code>cream</code></td><td>radius 3px</td><td>Ação primária da tela (CTA principal)</td></tr>
+    <tr><td><code>ElevatedButton</code></td><td><code>stamp</code></td><td><code>cream</code></td><td>radius 3px</td><td>Alternativa ao FilledButton</td></tr>
+    <tr><td><code>OutlinedButton</code></td><td>Transparente</td><td>Variável</td><td>radius 3px</td><td>Ação secundária (ex: Pausar na sessão)</td></tr>
+    <tr><td><code>TextButton</code></td><td>Transparente</td><td>Variável</td><td>—</td><td>Links discretos (ex: "Adicionar livro")</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>Tamanho padrão do FilledButton:</strong> <code>minimumSize: Size(double.infinity, 50)</code>. Texto: IBM Plex Mono 13px w600.
+  </div>
+
+  
+  <h2>8 · Inputs de Formulário</h2>
+  
+
+  <table>
+    <tr><th>Propriedade</th><th>Valor</th></tr>
+    <tr><td><code>fillColor</code></td><td><code>cream</code></td></tr>
+    <tr><td>Border normal</td><td>1px <code>paperDeep</code>, radius 3px</td></tr>
+    <tr><td>Border focused</td><td>2px <code>brass</code>, radius 3px</td></tr>
+    <tr><td>Label style</td><td>IBM Plex Mono 12px, <code>charcoal</code> 60% alpha</td></tr>
+    <tr><td>Hint style</td><td>IBM Plex Mono 12px, <code>charcoal</code> 40% alpha</td></tr>
+    <tr><td>Content padding</td><td>horizontal 14, vertical 12</td></tr>
+  </table>
+
+  
+  <h2>9 · Barras de Progresso</h2>
+  
+
+  <table>
+    <tr><th>Contexto</th><th>Height</th><th>Background</th><th>Fill</th><th>Border radius</th></tr>
+    <tr><td>Livro em leitura (CatalogCard)</td><td>4px</td><td><code>paperDeep</code></td><td><code>stamp</code></td><td>2px</td></tr>
+    <tr><td>Meta diária (Home)</td><td>4px</td><td><code>cream</code> 10% alpha</td><td><code>brass</code> / <code>sage</code> (atingida)</td><td>2px</td></tr>
+    <tr><td>Objetivo de sessão ativa</td><td>8px</td><td><code>cream</code> 10% alpha</td><td><code>brass</code></td><td>4px</td></tr>
+    <tr><td>Progresso geral de conquistas</td><td>5px</td><td><code>paperDeep</code></td><td><code>stamp</code></td><td>2px</td></tr>
+  </table>
+
+  
+  <h2>10 · Cards e Containers Genéricos</h2>
+  
+
+  <table>
+    <tr><th>Tipo</th><th>Background</th><th>Border</th><th>Radius</th><th>Notas</th></tr>
+    <tr><td>Card sobre dark (<code>inkAlt</code>)</td><td><code>inkAlt</code></td><td><code>cream</code> 10% alpha</td><td>3px</td><td>Stat tiles, meta diária, estado vazio na home</td></tr>
+    <tr><td>Card sobre light (<code>paper</code>)</td><td><code>cream</code> ou <code>paper</code></td><td><code>paperDeep</code></td><td>3px</td><td>Metas, cartões do painel</td></tr>
+    <tr><td><code>CardTheme</code> padrão (light)</td><td><code>cream</code></td><td>—</td><td>3px</td><td>elevation 3, shadow black 25% alpha</td></tr>
+    <tr><td>Badge/pill de estado</td><td>Cor 10–15% alpha</td><td>cor sólida 1px</td><td>3px</td><td>IBM Plex Mono 11px w600</td></tr>
+  </table>
+
+  <div class="preview-box">
+    <div class="preview-header">Exemplos de badges</div>
+    <div class="preview-body">
+      <span class="badge badge-stamp">CONCLUÍDO</span>
+      <span class="badge badge-brass">LENDO</span>
+      <span class="badge badge-sage">META ATINGIDA</span>
+    </div>
+  </div>
+
+  
+  <h2>11 · Espaçamentos e Raios</h2>
+  
+
+  <table>
+    <tr><th>Uso</th><th>Valor</th></tr>
+    <tr><td>Padding de tela (sides)</td><td>20px horizontal</td></tr>
+    <tr><td>Padding de lista</td><td><code>EdgeInsets.all(16)</code> ou <code>fromLTRB(20,16,20,24)</code></td></tr>
+    <tr><td>Espaço entre seções</td><td>28px</td></tr>
+    <tr><td>Espaço entre título e conteúdo</td><td>12px</td></tr>
+    <tr><td>Espaço entre cards de lista</td><td>2px (separator) ou 5px (margin)</td></tr>
+    <tr><td>Border radius padrão</td><td>3px (todos os cards, inputs, botões)</td></tr>
+    <tr><td>Border radius nav bar</td><td>16px (container) · 6px (aba ativa)</td></tr>
+    <tr><td>Border radius modal/sheet</td><td>16px no topo</td></tr>
+    <tr><td>Border radius CircleAvatar</td><td>26px de radius</td></tr>
+  </table>
+
+  <div class="callout info">
+    <strong>Regra do radius 3px:</strong> É a assinatura visual do ReadLog. Toda superfície retangular — cards, inputs, botões, chips, containers — usa 3px. Use valores maiores <em>apenas</em> para a nav bar e modais/sheets.
+  </div>
+
+  
+  <h2>12 · Regras Adicionais de Qualidade</h2>
+  
+
+  <ul style="padding-left:20px;line-height:2">
+    <li>Usar sempre <code>ReadLogColors.*</code> e <code>ReadLogType.*</code> — nunca hardcodar cor ou estilo de texto.</li>
+    <li>O tema <code>ReadLogTheme.light()</code> / <code>dark()</code> é aplicado em <code>main.dart</code>. Telas devem usar <code>Scaffold.backgroundColor</code> diretamente para controle fino (algumas telas são dark em modo light do sistema).</li>
+    <li>Nunca usar <code>Icons.circle</code> ou emojis como marcadores visuais — usar o carimbo (<code>ReadLogStamp</code>) ou badges.</li>
+    <li><code>RefreshIndicator</code> sempre com <code>color: ReadLogColors.brass</code>.</li>
+    <li>Loading sempre com <code>CircularProgressIndicator(color: ReadLogColors.brass)</code>.</li>
+    <li>Estados vazios: ícone <code>outlined</code> ~48px em <code>charcoal</code> 30% alpha + texto mono 12–13px 50% alpha.</li>
+    <li>Divisores: <code>Divider(indent: 16, endIndent: 16)</code>, cor <code>paperDeep</code>.</li>
+    <li>Sombras: somente no <code>ReadLogCatalogCard</code>. Outros containers não usam elevação.</li>
+    <li>Animações: somente transições funcionais (chips de objetivo: 180ms). Sem efeitos decorativos.</li>
+  </ul>
+
+  <footer>
+    Made with IBM Bob
+  </footer>
+</div>
+</body>
+</html>

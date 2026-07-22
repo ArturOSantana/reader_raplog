@@ -110,7 +110,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       autofocus: true,
                       decoration: const InputDecoration(
                         labelText: 'Seu nome',
-                        hintText: 'Ex.: Maria Silva',
                       ),
                       onFieldSubmitted: (_) => _nextPage(),
                     ),
@@ -130,7 +129,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       autofocus: true,
                       decoration: const InputDecoration(
                         labelText: 'Meta anual (opcional)',
-                        hintText: 'Ex.: 12',
                         suffixText: 'livros',
                       ),
                       onFieldSubmitted: (_) => _nextPage(),
@@ -148,7 +146,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       autofocus: true,
                       decoration: const InputDecoration(
                         labelText: 'Gênero favorito (opcional)',
-                        hintText: 'Ex.: Fantasia, Ficção Científica…',
                       ),
                       onFieldSubmitted: (_) => _nextPage(),
                     ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/shell/main_shell.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/models/goal.dart';
 import '../../../../shared/providers/providers.dart';
@@ -38,17 +38,28 @@ class HomeScreen extends ConsumerWidget {
     final data = ref.watch(_homeDataProvider);
 
     return Scaffold(
+      backgroundColor: ReadLogColors.ink,
       appBar: AppBar(
+        backgroundColor: ReadLogColors.ink,
+        foregroundColor: ReadLogColors.cream,
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
           tooltip: 'Abrir menu',
         ),
-        title: const Text('Readlog'),
+        title: Text(
+          'Readlog',
+          style: ReadLogType.display(size: 19, color: ReadLogColors.brassLight),
+        ),
       ),
       body: data.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Erro: $e')),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: ReadLogColors.brass),
+        ),
+        error: (e, _) => Center(
+          child: Text('Erro: $e',
+              style: ReadLogType.mono(color: ReadLogColors.cream)),
+        ),
         data: (d) {
           final daily = d['daily'] as Map<String, dynamic>;
           final streak = d['streak'] as int;
@@ -58,27 +69,29 @@ class HomeScreen extends ConsumerWidget {
           final todayMinutes = (daily['total_minutes'] as num?)?.toInt() ?? 0;
           final todayPages = (daily['total_pages'] as num?)?.toInt() ?? 0;
 
-          // Filtra apenas metas diárias para exibir na Home
-          final dailyGoals = goals.where((g) =>
-              g.type == GoalType.dailyMinutes ||
-              g.type == GoalType.dailyPages).toList();
+          final dailyGoals = goals
+              .where((g) =>
+                  g.type == GoalType.dailyMinutes ||
+                  g.type == GoalType.dailyPages)
+              .toList();
 
           return RefreshIndicator(
+            color: ReadLogColors.brass,
             onRefresh: () async {
               ref.invalidate(_homeDataProvider);
               await ref.read(_homeDataProvider.future);
             },
             child: ListView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               children: [
-                _StreakCard(streak: streak),
-                const SizedBox(height: 16),
-                _DailyStatsCard(
+                // Streak + stats em linha
+                _StreakRow(
+                  streak: streak,
                   minutes: todayMinutes,
                   pages: todayPages,
                 ),
                 if (dailyGoals.isNotEmpty) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   _DailyGoalRow(
                     goals: dailyGoals,
                     todayMinutes: todayMinutes,
@@ -86,23 +99,37 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ],
                 const SizedBox(height: 24),
-                Text('Lendo agora', style: AppTextStyles.headlineMedium),
+                Text(
+                  'Lendo agora',
+                  style: ReadLogType.display(
+                      size: 18, color: ReadLogColors.cream),
+                ),
                 const SizedBox(height: 12),
                 if (reading.isEmpty)
                   _EmptyReadingCard()
                 else
-                  ...reading.map((b) => _CurrentBookCard(book: b)),
+                  ...reading.map((b) => ReadLogCatalogCard(
+                        title: b.title,
+                        author: b.author ?? '',
+                        progress: _progress(b),
+                        tabColor: ReadLogColors.brass,
+                        onTap: () =>
+                            context.push('/library/book/${b.id}'),
+                      )),
                 const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: () {
-                    if (reading.isNotEmpty) {
-                      context.go('/session?bookId=${reading.first.id}');
-                    } else {
-                      context.go('/session');
-                    }
-                  },
-                  icon: const Icon(Icons.timer_outlined),
-                  label: const Text('Iniciar leitura'),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      if (reading.isNotEmpty) {
+                        context.go('/session?bookId=${reading.first.id}');
+                      } else {
+                        context.go('/session');
+                      }
+                    },
+                    icon: const Icon(Icons.timer_outlined),
+                    label: const Text('Iniciar leitura'),
+                  ),
                 ),
               ],
             ),
@@ -111,54 +138,27 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
-}
 
-class _StreakCard extends StatelessWidget {
-  final int streak;
-
-  const _StreakCard({required this.streak});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.forestGreen,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Sequencia',
-                  style: AppTextStyles.labelMedium
-                      .copyWith(color: Colors.white70),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$streak ${streak == 1 ? 'dia' : 'dias'}',
-                  style: AppTextStyles.displayMedium
-                      .copyWith(color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.local_fire_department,
-              color: AppColors.warmGoldLight, size: 40),
-        ],
-      ),
-    );
+  static double _progress(Book b) {
+    if (b.totalPages == null || b.totalPages == 0) return 0;
+    final current = b.currentPage ?? 0;
+    return (current / b.totalPages!).clamp(0.0, 1.0);
   }
 }
 
-class _DailyStatsCard extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Linha de cabeçalho: carimbo de streak + duas stat tiles
+class _StreakRow extends StatelessWidget {
+  final int streak;
   final int minutes;
   final int pages;
 
-  const _DailyStatsCard({required this.minutes, required this.pages});
+  const _StreakRow({
+    required this.streak,
+    required this.minutes,
+    required this.pages,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -167,13 +167,24 @@ class _DailyStatsCard extends StatelessWidget {
     final timeLabel = hours > 0 ? '${hours}h ${mins}min' : '${mins}min';
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: _StatTile(label: 'Hoje', value: timeLabel, sub: 'lidos'),
+        // Carimbo de streak — único "elemento ousado" da tela
+        ReadLogStamp(
+          value: '$streak',
+          label: streak == 1 ? 'dia' : 'dias',
+          color: streak > 0 ? ReadLogColors.stamp : ReadLogColors.sage,
+          size: 84,
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         Expanded(
-          child: _StatTile(label: 'Paginas', value: '$pages', sub: 'hoje'),
+          child: Column(
+            children: [
+              _StatTile(label: 'Hoje', value: timeLabel, sub: 'lidos'),
+              const SizedBox(height: 10),
+              _StatTile(label: 'Páginas', value: '$pages', sub: 'hoje'),
+            ],
+          ),
         ),
       ],
     );
@@ -191,73 +202,34 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        color: ReadLogColors.inkAlt,
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(
+            color: ReadLogColors.cream.withValues(alpha: 0.1)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(label, style: AppTextStyles.labelMedium),
-          const SizedBox(height: 4),
-          Text(value, style: AppTextStyles.displayMedium),
-          Text(sub, style: AppTextStyles.bodyMedium),
+          Text(label,
+              style: ReadLogType.mono(
+                  size: 10,
+                  color: ReadLogColors.sage)),
+          const Spacer(),
+          Text(
+            value,
+            style: ReadLogType.mono(
+                size: 16,
+                weight: FontWeight.w600,
+                color: ReadLogColors.brassLight),
+          ),
+          const SizedBox(width: 4),
+          Text(sub,
+              style: ReadLogType.mono(
+                  size: 10,
+                  color: ReadLogColors.cream.withValues(alpha: 0.45))),
         ],
-      ),
-    );
-  }
-}
-
-class _CurrentBookCard extends ConsumerWidget {
-  final Book book;
-
-  const _CurrentBookCard({required this.book});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return GestureDetector(
-      onTap: () => context.push('/library/book/${book.id}'),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 60,
-              decoration: BoxDecoration(
-                color: AppColors.forestGreen.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(Icons.menu_book_outlined,
-                  color: AppColors.forestGreen),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(book.title,
-                      style: AppTextStyles.titleMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis),
-                  if (book.author != null)
-                    Text(book.author!,
-                        style: AppTextStyles.bodyMedium, maxLines: 1),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right,
-                color: AppColors.textMuted, size: 20),
-          ],
-        ),
       ),
     );
   }
@@ -269,22 +241,32 @@ class _EmptyReadingCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        color: ReadLogColors.inkAlt,
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(
+            color: ReadLogColors.cream.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
-          const Icon(Icons.menu_book_outlined,
-              size: 40, color: AppColors.textMuted),
+          Icon(Icons.menu_book_outlined,
+              size: 40,
+              color: ReadLogColors.cream.withValues(alpha: 0.3)),
           const SizedBox(height: 8),
-          Text('Nenhum livro em leitura',
-              style: AppTextStyles.bodyMedium,
-              textAlign: TextAlign.center),
+          Text(
+            'Nenhum livro em leitura',
+            style: ReadLogType.mono(
+                size: 12,
+                color: ReadLogColors.cream.withValues(alpha: 0.5)),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 8),
           TextButton(
             onPressed: () => GoRouter.of(context).go('/library/add'),
-            child: const Text('Adicionar livro'),
+            child: Text(
+              'Adicionar livro',
+              style: ReadLogType.mono(
+                  size: 12, color: ReadLogColors.brassLight),
+            ),
           ),
         ],
       ),
@@ -292,7 +274,6 @@ class _EmptyReadingCard extends StatelessWidget {
   }
 }
 
-/// Linha compacta de progresso das metas diárias — exibida na Home.
 class _DailyGoalRow extends StatelessWidget {
   final List<Goal> goals;
   final int todayMinutes;
@@ -320,12 +301,14 @@ class _DailyGoalRow extends StatelessWidget {
 
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
+            color: ReadLogColors.inkAlt,
+            borderRadius: BorderRadius.circular(3),
             border: Border.all(
-              color: done ? AppColors.forestGreen : AppColors.border,
+              color: done
+                  ? ReadLogColors.sage.withValues(alpha: 0.5)
+                  : ReadLogColors.cream.withValues(alpha: 0.1),
             ),
           ),
           child: Column(
@@ -336,32 +319,32 @@ class _DailyGoalRow extends StatelessWidget {
                 children: [
                   Text(
                     'Meta: ${goal.type.label}',
-                    style: AppTextStyles.labelMedium,
+                    style: ReadLogType.mono(
+                        size: 10, color: ReadLogColors.sage),
                   ),
                   Text(
                     done
                         ? '✓ Meta atingida!'
                         : '$current / $target ${goal.type.unit}',
-                    style: AppTextStyles.labelMedium.copyWith(
+                    style: ReadLogType.mono(
+                      size: 10,
                       color: done
-                          ? AppColors.forestGreen
-                          : AppColors.textSecondary,
+                          ? ReadLogColors.sage
+                          : ReadLogColors.cream.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(2),
                 child: LinearProgressIndicator(
                   value: progress,
-                  minHeight: 5,
-                  backgroundColor: AppColors.border,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    done
-                        ? AppColors.forestGreen
-                        : AppColors.forestGreen.withValues(alpha: 0.55),
-                  ),
+                  minHeight: 4,
+                  backgroundColor: ReadLogColors.cream.withValues(alpha: 0.1),
+                  color: done
+                      ? ReadLogColors.sage
+                      : ReadLogColors.brass,
                 ),
               ),
             ],

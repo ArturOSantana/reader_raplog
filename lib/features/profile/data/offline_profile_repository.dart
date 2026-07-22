@@ -78,6 +78,9 @@ class OfflineProfileRepository {
       avatarUrl: fields['avatar_url'] as String?,
       yearlyGoal: fields['yearly_goal'] as int?,
       favoriteGenre: fields['favorite_genre'] as String?,
+      favoriteAuthors: fields['favorite_authors'] as String?,
+      favoriteBook: fields['favorite_book'] as String?,
+      onboardingCompleted: fields['onboarding_completed'] as bool? ?? false,
       updatedAt: DateTime.now(),
     );
   }

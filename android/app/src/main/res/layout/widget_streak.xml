@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Layout do Widget de Ofensiva.
+  Tamanhos: Small (2×2), Medium (4×2).
+  Suporta tema claro/escuro via @color/widget_*.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_streak_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp"
+    android:background="@drawable/widget_background">
+
+    <TextView
+        android:id="@+id/tv_streak_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🔥"
+        android:textSize="32sp"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/tv_streak_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@color/widget_text_primary"
+        android:gravity="center"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:id="@+id/tv_streak_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="dias"
+        android:textSize="13sp"
+        android:textColor="@color/widget_text_secondary"
+        android:gravity="center" />
+
+</LinearLayout>

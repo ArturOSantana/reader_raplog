@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/goal.dart';
 
-/// Card escuro (400×500) capturável como PNG ao atingir uma meta.
-/// Segue o mesmo estilo visual do [BookCompletionCard].
+/// Card capturado como PNG ao atingir uma meta.
+/// Segue a identidade "ficha de biblioteca" do ReadLog.
 class GoalAchievementCard extends StatelessWidget {
   final Goal goal;
   final int currentValue;
@@ -41,129 +41,127 @@ class GoalAchievementCard extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Fundo escuro
-          Container(color: const Color(0xFF0F1A14)),
+          // ── Fundo ink ───────────────────────────────────────────
+          Container(color: ReadLogColors.ink),
 
-          // Círculo decorativo superior direito
+          // ── Faixa lateral — cor sage para metas ──────────────────
           Positioned(
-            top: -60,
-            right: -60,
+            left: 0,
+            top: 0,
+            bottom: 0,
             child: Container(
-              width: 220,
-              height: 220,
+              width: 8,
+              color: ReadLogColors.sage,
+            ),
+          ),
+
+          // ── Borda interna discreta ────────────────────────────────
+          Positioned.fill(
+            child: Container(
+              margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.warmGold.withValues(alpha: 0.15),
+                border: Border.all(
+                  color: ReadLogColors.cream.withValues(alpha: 0.06),
+                  width: 1,
+                ),
               ),
             ),
           ),
 
-          // Círculo decorativo inferior esquerdo
-          Positioned(
-            bottom: -40,
-            left: -40,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.forestGreen.withValues(alpha: 0.25),
-              ),
-            ),
-          ),
-
-          // Conteúdo
+          // ── Conteúdo ──────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+            padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header badge + marca
+                // Header: badge + marca
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 5),
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.forestGreen.withValues(alpha: 0.35),
-                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color:
-                                AppColors.forestGreen.withValues(alpha: 0.7)),
+                            color: ReadLogColors.sage.withValues(alpha: 0.7)),
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      child: const Text(
-                        '🎯  Meta atingida!',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF7DD4A0),
-                          letterSpacing: 0.4,
-                        ),
+                      child: Text(
+                        'META ATINGIDA',
+                        style: ReadLogType.mono(
+                          size: 9,
+                          weight: FontWeight.w600,
+                          color: ReadLogColors.sage,
+                        ).copyWith(letterSpacing: 1.4),
                       ),
                     ),
                     const Spacer(),
-                    const Text(
-                      'ReadLog',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.darkTextSecondary,
-                        letterSpacing: 0.6,
+                    Transform.rotate(
+                      angle: -0.12,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'ReadLog',
+                            style: ReadLogType.display(
+                              size: 11,
+                              color: ReadLogColors.brassLight
+                                  .withValues(alpha: 0.6),
+                            ).copyWith(letterSpacing: 1.6),
+                          ),
+                          Container(
+                            width: 44,
+                            height: 1,
+                            color: ReadLogColors.brassLight
+                                .withValues(alpha: 0.3),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 36),
 
-                // Tipo de meta
+                // Tipo de meta — mono pequeno
                 Text(
-                  goal.type.label,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.darkTextSecondary,
-                    letterSpacing: 0.6,
-                  ),
+                  goal.type.label.toUpperCase(),
+                  style: ReadLogType.mono(
+                    size: 10,
+                    color: ReadLogColors.sage,
+                  ).copyWith(letterSpacing: 1.6),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
 
-                // Valor atual em destaque
+                // Valor em destaque — Fraunces grande
                 Text(
                   '$currentValue',
-                  style: const TextStyle(
-                    fontFamily: 'Fraunces',
-                    fontSize: 64,
-                    fontWeight: FontWeight.w700,
-                    height: 1.0,
-                    color: AppColors.darkTextPrimary,
-                  ),
+                  style: ReadLogType.display(
+                    size: 72,
+                    weight: FontWeight.w600,
+                    color: ReadLogColors.cream,
+                  ).copyWith(height: 0.9),
                 ),
 
                 Text(
                   '${goal.type.unit} $_periodLabel',
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 16,
-                    color: AppColors.darkTextSecondary,
-                    height: 1.4,
+                  style: ReadLogType.mono(
+                    size: 14,
+                    color: ReadLogColors.cream.withValues(alpha: 0.55),
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
 
-                // Barra de progresso 100 %
+                // Barra de progresso 100% — stamp
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(2),
                   child: LinearProgressIndicator(
                     value: 1.0,
-                    minHeight: 8,
-                    backgroundColor: AppColors.darkBorder,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF4CAF50)),
+                    minHeight: 5,
+                    backgroundColor:
+                        ReadLogColors.cream.withValues(alpha: 0.1),
+                    color: ReadLogColors.stamp,
                   ),
                 ),
 
@@ -174,19 +172,17 @@ class GoalAchievementCard extends StatelessWidget {
                   children: [
                     Text(
                       'Meta: ${goal.targetValue} ${goal.type.unit}',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        color: AppColors.darkTextSecondary,
+                      style: ReadLogType.mono(
+                        size: 10,
+                        color: ReadLogColors.cream.withValues(alpha: 0.4),
                       ),
                     ),
-                    const Text(
-                      '100 %',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF4CAF50),
+                    Text(
+                      '100%',
+                      style: ReadLogType.mono(
+                        size: 10,
+                        weight: FontWeight.w600,
+                        color: ReadLogColors.stamp,
                       ),
                     ),
                   ],
@@ -194,16 +190,17 @@ class GoalAchievementCard extends StatelessWidget {
 
                 const Spacer(),
 
-                // Divisória
-                Container(height: 1, color: AppColors.darkBorder),
+                // Divisória tracejada
+                _DashedDivider(
+                    color: ReadLogColors.cream.withValues(alpha: 0.15)),
                 const SizedBox(height: 16),
 
+                // Data de conclusão
                 Text(
                   'Concluída em $_dateLabel',
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 11,
-                    color: AppColors.darkTextSecondary,
+                  style: ReadLogType.mono(
+                    size: 10,
+                    color: ReadLogColors.cream.withValues(alpha: 0.35),
                   ),
                 ),
               ],
@@ -213,4 +210,37 @@ class GoalAchievementCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DashedDivider extends StatelessWidget {
+  final Color color;
+  const _DashedDivider({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _DotsPainter(color: color),
+      size: const Size(double.infinity, 1),
+    );
+  }
+}
+
+class _DotsPainter extends CustomPainter {
+  final Color color;
+  _DotsPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, 0), Offset(x + 2, 0), paint);
+      x += 5;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DotsPainter old) => old.color != color;
 }

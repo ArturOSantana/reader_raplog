@@ -34,7 +34,11 @@ class UserProfile extends Equatable {
         favoriteGenre: map['favorite_genre'] as String?,
         favoriteAuthors: map['favorite_authors'] as String?,
         favoriteBook: map['favorite_book'] as String?,
-        onboardingCompleted: map['onboarding_completed'] as bool? ?? false,
+        onboardingCompleted: switch (map['onboarding_completed']) {
+          bool b => b,
+          int i => i != 0,
+          _ => false,
+        },
         updatedAt: DateTime.parse(map['updated_at'] as String),
       );
 
@@ -46,7 +50,7 @@ class UserProfile extends Equatable {
         'favorite_genre': favoriteGenre,
         'favorite_authors': favoriteAuthors,
         'favorite_book': favoriteBook,
-        'onboarding_completed': onboardingCompleted,
+        'onboarding_completed': onboardingCompleted ? 1 : 0,
       };
 
   UserProfile copyWith({

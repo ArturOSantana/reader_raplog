@@ -1,13 +1,27 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/book.dart';
 
-/// Card gerado em memória (via ScreenshotController) para compartilhamento.
-/// Sempre renderizado com tema claro, independente do tema do sistema.
+/// Card PNG de compartilhamento de livro.
+/// Visual "ficha de catálogo": fundo paper envelhecido, aba lateral colorida
+/// por status, tipografia Fraunces + IBM Plex Mono, progresso em stamp.
 class BookShareCard extends StatelessWidget {
   final Book book;
 
   const BookShareCard({super.key, required this.book});
+
+  Color get _tabColor {
+    switch (book.status) {
+      case BookStatus.reading:
+        return ReadLogColors.brass;
+      case BookStatus.wantToRead:
+        return ReadLogColors.sage;
+      case BookStatus.read:
+        return ReadLogColors.stamp;
+      case BookStatus.abandoned:
+        return ReadLogColors.charcoal.withValues(alpha: 0.4);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,87 +31,155 @@ class BookShareCard extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      child: Container(
+      child: SizedBox(
         width: 360,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.forestGreen,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            // Header: capa + título + autor
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _CoverBox(book: book),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        book.title,
-                        style: const TextStyle(
-                          fontFamily: 'Fraunces',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          height: 1.3,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (book.author != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          book.author!,
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                            color: Color(0xFFB8D4C0),
-                            height: 1.4,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                      const SizedBox(height: 10),
-                      _StatusChip(status: book.status),
-                      if (book.rating != null) ...[
-                        const SizedBox(height: 8),
-                        _StarRow(rating: book.rating!),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
+            // ── Fundo paper ─────────────────────────────────────────
+            Container(
+              decoration: const BoxDecoration(
+                color: ReadLogColors.paper,
+              ),
             ),
 
-            // Barra de progresso
-            if (progress != null) ...[
-              const SizedBox(height: 20),
-              _ProgressSection(
-                current: book.currentPage!,
-                total: book.totalPages!,
-                progress: progress,
-              ),
-            ],
+            // ── Aba lateral colorida por status ──────────────────────
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Container(width: 8, color: _tabColor),
+            ),
 
-            // Rodapé
-            const SizedBox(height: 20),
-            const Divider(color: Color(0xFF2D5442), thickness: 1),
-            const SizedBox(height: 10),
-            const Text(
-              'ReadLog',
-              style: TextStyle(
-                fontFamily: 'Fraunces',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.warmGoldLight,
-                letterSpacing: 1.2,
+            // ── Conteúdo ─────────────────────────────────────────────
+            Padding(
+              padding:
+                  const EdgeInsets.fromLTRB(24, 24, 24, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header: capa + info
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _CoverBox(book: book),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Status chip
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color:
+                                        _tabColor.withValues(alpha: 0.7)),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                              child: Text(
+                                book.status.label.toUpperCase(),
+                                style: ReadLogType.mono(
+                                  size: 8,
+                                  weight: FontWeight.w600,
+                                  color: _tabColor,
+                                ).copyWith(letterSpacing: 1.2),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Título
+                            Text(
+                              book.title,
+                              style: ReadLogType.display(
+                                size: 17,
+                                weight: FontWeight.w600,
+                                color: ReadLogColors.charcoal,
+                              ).copyWith(height: 1.25),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+
+                            if (book.author != null) ...[
+                              const SizedBox(height: 5),
+                              Text(
+                                book.author!,
+                                style: ReadLogType.mono(
+                                  size: 11,
+                                  color: ReadLogColors.charcoal
+                                      .withValues(alpha: 0.5),
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+
+                            // Estrelas
+                            if (book.rating != null) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: List.generate(5, (i) {
+                                  final filled = i < book.rating!;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 2),
+                                    child: Icon(
+                                      filled
+                                          ? Icons.star_rounded
+                                          : Icons.star_outline_rounded,
+                                      size: 15,
+                                      color: filled
+                                          ? ReadLogColors.brass
+                                          : ReadLogColors.charcoal
+                                              .withValues(alpha: 0.2),
+                                    ),
+                                  );
+                                }),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Barra de progresso com régua de sumário
+                  if (progress != null) ...[
+                    const SizedBox(height: 18),
+                    _ProgressSection(
+                      current: book.currentPage!,
+                      total: book.totalPages!,
+                      progress: progress,
+                    ),
+                  ],
+
+                  // Rodapé
+                  const SizedBox(height: 18),
+                  _DashedDivider(
+                      color: ReadLogColors.charcoal.withValues(alpha: 0.15)),
+                  const SizedBox(height: 10),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'ReadLog',
+                        style: ReadLogType.display(
+                          size: 12,
+                          color: ReadLogColors.brass,
+                        ).copyWith(letterSpacing: 1.4),
+                      ),
+                      Text(
+                        _today(),
+                        style: ReadLogType.mono(
+                          size: 10,
+                          color: ReadLogColors.charcoal
+                              .withValues(alpha: 0.35),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -105,11 +187,16 @@ class BookShareCard extends StatelessWidget {
       ),
     );
   }
+
+  static String _today() {
+    final d = DateTime.now();
+    String p(int n) => n.toString().padLeft(2, '0');
+    return '${p(d.day)}/${p(d.month)}/${d.year}';
+  }
 }
 
 class _CoverBox extends StatelessWidget {
   final Book book;
-
   const _CoverBox({required this.book});
 
   @override
@@ -118,76 +205,36 @@ class _CoverBox extends StatelessWidget {
       width: 72,
       height: 100,
       decoration: BoxDecoration(
-        color: const Color(0xFF2D5442),
-        borderRadius: BorderRadius.circular(8),
+        color: ReadLogColors.paperDeep,
+        borderRadius: BorderRadius.circular(2),
+        border: Border.all(
+            color: ReadLogColors.charcoal.withValues(alpha: 0.12)),
       ),
       child: book.coverUrl != null && book.coverUrl!.isNotEmpty
           ? ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(1),
               child: Image.network(
                 book.coverUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _FallbackCoverIcon(),
+                errorBuilder: (_, __, ___) => const _FallbackCover(),
               ),
             )
-          : const _FallbackCoverIcon(),
+          : const _FallbackCover(),
     );
   }
 }
 
-class _FallbackCoverIcon extends StatelessWidget {
-  const _FallbackCoverIcon();
+class _FallbackCover extends StatelessWidget {
+  const _FallbackCover();
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Icon(Icons.menu_book_outlined, color: Color(0xFF7FAF95), size: 32),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  final BookStatus status;
-
-  const _StatusChip({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.warmGold.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(6),
+    return Center(
+      child: Icon(
+        Icons.menu_book_outlined,
+        color: ReadLogColors.charcoal.withValues(alpha: 0.3),
+        size: 28,
       ),
-      child: Text(
-        status.label,
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: AppColors.warmGoldLight,
-          letterSpacing: 0.3,
-        ),
-      ),
-    );
-  }
-}
-
-class _StarRow extends StatelessWidget {
-  final int rating;
-
-  const _StarRow({required this.rating});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(5, (i) {
-        return Icon(
-          i < rating ? Icons.star_rounded : Icons.star_outline_rounded,
-          size: 16,
-          color: i < rating ? AppColors.warmGoldLight : const Color(0xFF4A7A5E),
-        );
-      }),
     );
   }
 }
@@ -206,43 +253,86 @@ class _ProgressSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final percent = (progress * 100).toStringAsFixed(0);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Régua de sumário
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            const Text(
+            Text(
               'Progresso',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                color: Color(0xFF8FC4A8),
+              style: ReadLogType.mono(
+                size: 10,
+                color: ReadLogColors.charcoal.withValues(alpha: 0.5),
               ),
             ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 3),
+                child: CustomPaint(
+                  painter: _DotsPainter(
+                      color: ReadLogColors.charcoal.withValues(alpha: 0.18)),
+                  size: const Size(double.infinity, 1),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
             Text(
-              '$current / $total pág. · $percent%',
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+              '$current / $total · $percent%',
+              style: ReadLogType.mono(
+                size: 11,
+                weight: FontWeight.w600,
+                color: ReadLogColors.charcoal.withValues(alpha: 0.75),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(2),
           child: LinearProgressIndicator(
             value: progress,
-            minHeight: 5,
-            backgroundColor: const Color(0xFF2D5442),
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.warmGoldLight),
+            minHeight: 4,
+            backgroundColor: ReadLogColors.paperDeep,
+            color: ReadLogColors.stamp,
           ),
         ),
       ],
     );
   }
+}
+
+class _DashedDivider extends StatelessWidget {
+  final Color color;
+  const _DashedDivider({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _DotsPainter(color: color),
+      size: const Size(double.infinity, 1),
+    );
+  }
+}
+
+class _DotsPainter extends CustomPainter {
+  final Color color;
+  _DotsPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, 0), Offset(x + 2, 0), paint);
+      x += 5;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DotsPainter old) => old.color != color;
 }

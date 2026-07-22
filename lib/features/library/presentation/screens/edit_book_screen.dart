@@ -194,7 +194,6 @@ class _EditBookScreenState extends ConsumerState<EditBookScreen> {
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'Avaliação (1–5)',
-                hintText: 'Ex: 4',
               ),
               validator: (v) {
                 if (v == null || v.isEmpty) return null;

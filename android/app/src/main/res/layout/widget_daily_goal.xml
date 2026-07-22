@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Layout do Widget Meta Diária.
+  Tamanhos: Small (2×2), Medium (4×2).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_goal_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp"
+    android:background="@drawable/widget_background">
+
+    <TextView
+        android:id="@+id/tv_goal_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Meta diária"
+        android:textSize="12sp"
+        android:textColor="@color/widget_text_secondary" />
+
+    <TextView
+        android:id="@+id/tv_goal_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0 / 0 páginas"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/widget_text_primary"
+        android:layout_marginTop="4dp" />
+
+    <ProgressBar
+        android:id="@+id/pb_goal_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="8dp"
+        android:max="100"
+        android:progress="0"
+        android:progressTint="@color/widget_accent"
+        android:progressBackgroundTint="@color/widget_progress_bg" />
+
+</LinearLayout>

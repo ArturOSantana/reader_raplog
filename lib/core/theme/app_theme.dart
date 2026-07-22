@@ -1,35 +1,51 @@
+// app_theme.dart — Aliases de compatibilidade para ReadLog Design System.
+// Mapeia as cores do legado (AppColors.*) para os tokens atuais de ReadLogColors,
+// garantindo que todas as telas existentes continuem compilando sem alteração.
+
 import 'package:flutter/material.dart';
+import '../../theme/readlog_theme.dart';
+
+export '../../theme/readlog_theme.dart';
 
 class AppColors {
-  static const forestGreen = Color(0xFF1E3A2F);
-  static const forestGreenLight = Color(0xFF2D5442);
-  static const warmGold = Color(0xFFB8860B);
-  static const warmGoldLight = Color(0xFFD4A017);
+  AppColors._();
 
-  static const offWhite = Color(0xFFF4F3F0);
-  static const surface = Color(0xFFFFFFFF);
-  static const surfaceVariant = Color(0xFFEFEEEB);
-  static const border = Color(0xFFDDDCDA);
+  // ── Primárias ──────────────────────────────────────────────────────────────
+  static const forestGreen = ReadLogColors.ink;
+  static const forestGreenLight = ReadLogColors.inkAlt;
+  static const warmGold = ReadLogColors.brass;
+  static const warmGoldLight = ReadLogColors.brassLight;
 
-  static const textPrimary = Color(0xFF1A1A18);
-  static const textSecondary = Color(0xFF5C5C58);
-  static const textMuted = Color(0xFF9C9C98);
+  // ── Superfícies ────────────────────────────────────────────────────────────
+  static const offWhite = ReadLogColors.paper;
+  static const surface = ReadLogColors.cream;
+  static const surfaceVariant = ReadLogColors.paperAlt;
+  static const border = ReadLogColors.paperDeep;
 
-  static const success = Color(0xFF2D6A4F);
-  static const error = Color(0xFFC0392B);
-  static const warning = Color(0xFFD4A017);
+  // ── Texto ──────────────────────────────────────────────────────────────────
+  static const textPrimary = ReadLogColors.charcoal;
+  static const textSecondary = Color(0xFF5C5C4A); // tom compatível com charcoal
+  static const textMuted = Color(0xFF9C9C8A);
 
-  static const darkBackground = Color(0xFF0F1A14);
-  static const darkSurface = Color(0xFF1A2E22);
+  // ── Estados ────────────────────────────────────────────────────────────────
+  static const success = ReadLogColors.sage;
+  static const error = ReadLogColors.stamp;
+  static const warning = ReadLogColors.brass;
+
+  // ── Dark ───────────────────────────────────────────────────────────────────
+  static const darkBackground = ReadLogColors.ink;
+  static const darkSurface = ReadLogColors.inkAlt;
   static const darkSurfaceVariant = Color(0xFF243B2D);
   static const darkBorder = Color(0xFF2E4A38);
-  static const darkTextPrimary = Color(0xFFF0EFE8);
-  static const darkTextSecondary = Color(0xFFB0B0A8);
+  static const darkTextPrimary = ReadLogColors.cream;
+  static const darkTextSecondary = ReadLogColors.brassLight;
 }
 
 class AppTextStyles {
+  AppTextStyles._();
+
   static const String _displayFont = 'Fraunces';
-  static const String _bodyFont = 'Inter';
+  static const String _bodyFont = 'IBM Plex Mono';
 
   static const displayLarge = TextStyle(
     fontFamily: _displayFont,
@@ -57,7 +73,7 @@ class AppTextStyles {
 
   static const titleMedium = TextStyle(
     fontFamily: _bodyFont,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: FontWeight.w600,
     height: 1.4,
     color: AppColors.textPrimary,
@@ -65,7 +81,7 @@ class AppTextStyles {
 
   static const bodyLarge = TextStyle(
     fontFamily: _bodyFont,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: FontWeight.w400,
     height: 1.6,
     color: AppColors.textPrimary,
@@ -73,7 +89,7 @@ class AppTextStyles {
 
   static const bodyMedium = TextStyle(
     fontFamily: _bodyFont,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: FontWeight.w400,
     height: 1.5,
     color: AppColors.textSecondary,
@@ -81,7 +97,7 @@ class AppTextStyles {
 
   static const labelMedium = TextStyle(
     fontFamily: _bodyFont,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: FontWeight.w500,
     height: 1.4,
     letterSpacing: 0.5,
@@ -89,119 +105,8 @@ class AppTextStyles {
   );
 }
 
+/// AppTheme mantido para compatibilidade — internamente usa ReadLogTheme.
 class AppTheme {
-  static ThemeData get light => ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.light(
-          primary: AppColors.forestGreen,
-          onPrimary: Colors.white,
-          secondary: AppColors.warmGold,
-          onSecondary: Colors.white,
-          surface: AppColors.surface,
-          onSurface: AppColors.textPrimary,
-          surfaceContainerHighest: AppColors.surfaceVariant,
-          outline: AppColors.border,
-          error: AppColors.error,
-        ),
-        scaffoldBackgroundColor: AppColors.offWhite,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.offWhite,
-          foregroundColor: AppColors.textPrimary,
-          elevation: 0,
-          scrolledUnderElevation: 1,
-          centerTitle: false,
-          titleTextStyle: AppTextStyles.headlineMedium,
-        ),
-        cardTheme: CardThemeData(
-          color: AppColors.surface,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: AppColors.border),
-          ),
-          margin: EdgeInsets.zero,
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.forestGreen,
-            foregroundColor: Colors.white,
-            textStyle: AppTextStyles.titleMedium,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            minimumSize: const Size(double.infinity, 52),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: AppColors.surface,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.forestGreen, width: 2),
-          ),
-          labelStyle: AppTextStyles.bodyMedium,
-          hintStyle: AppTextStyles.bodyMedium,
-        ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.forestGreen,
-          unselectedItemColor: AppColors.textMuted,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          selectedLabelStyle: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 11,
-          ),
-        ),
-      );
-
-  static ThemeData get dark => ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.dark(
-          primary: AppColors.warmGoldLight,
-          onPrimary: AppColors.darkBackground,
-          secondary: AppColors.forestGreenLight,
-          onSecondary: Colors.white,
-          surface: AppColors.darkSurface,
-          onSurface: AppColors.darkTextPrimary,
-          surfaceContainerHighest: AppColors.darkSurfaceVariant,
-          outline: AppColors.darkBorder,
-          error: AppColors.error,
-        ),
-        scaffoldBackgroundColor: AppColors.darkBackground,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.darkBackground,
-          foregroundColor: AppColors.darkTextPrimary,
-          elevation: 0,
-          scrolledUnderElevation: 1,
-          centerTitle: false,
-          titleTextStyle: TextStyle(
-            fontFamily: 'Fraunces',
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppColors.darkTextPrimary,
-          ),
-        ),
-        cardTheme: CardThemeData(
-          color: AppColors.darkSurface,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: AppColors.darkBorder),
-          ),
-          margin: EdgeInsets.zero,
-        ),
-      );
+  static ThemeData get light => ReadLogTheme.light();
+  static ThemeData get dark => ReadLogTheme.dark();
 }

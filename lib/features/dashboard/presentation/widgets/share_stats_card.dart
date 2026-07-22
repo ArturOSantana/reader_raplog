@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_theme.dart';
 
 /// Card visual gerado para compartilhamento de estatísticas de leitura.
 /// Deve ser envolvido em um [RepaintBoundary] identificado com [repaintKey]
@@ -32,8 +32,8 @@ class ShareStatsCard extends StatelessWidget {
       width: 340,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.forestGreen,
-        borderRadius: BorderRadius.circular(20),
+        color: ReadLogColors.ink,
+        borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -46,8 +46,8 @@ class ShareStatsCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.warmGold,
-                  borderRadius: BorderRadius.circular(8),
+                  color: ReadLogColors.brass,
+                  borderRadius: BorderRadius.circular(3),
                 ),
                 child: const Center(
                   child: Text(
@@ -63,24 +63,16 @@ class ShareStatsCard extends StatelessWidget {
                   children: [
                     Text(
                       userName.isNotEmpty ? userName : 'Leitor',
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        height: 1.2,
-                      ),
+                      style: ReadLogType.display(
+                          size: 14, color: ReadLogColors.cream),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const Text(
+                    Text(
                       'Minhas estatísticas · ReadLog',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 11,
-                        color: Color(0xAAFFFFFF),
-                        height: 1.3,
-                      ),
+                      style: ReadLogType.mono(
+                          size: 10,
+                          color: ReadLogColors.cream.withValues(alpha: 0.55)),
                     ),
                   ],
                 ),
@@ -127,21 +119,20 @@ class ShareStatsCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
+              color: ReadLogColors.cream.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(3),
+              border: Border.all(
+                  color: ReadLogColors.cream.withValues(alpha: 0.15)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('🏆 ', style: TextStyle(fontSize: 14)),
                 Text(
                   '$totalBooks ${totalBooks == 1 ? 'livro lido' : 'livros lidos'} no total',
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                  style: ReadLogType.mono(
+                      size: 13,
+                      weight: FontWeight.w600,
+                      color: ReadLogColors.cream),
                 ),
               ],
             ),
@@ -169,23 +160,18 @@ class _StreakBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.warmGold,
-        borderRadius: BorderRadius.circular(12),
+        color: ReadLogColors.brass.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: ReadLogColors.brass.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('🔥', style: TextStyle(fontSize: 22)),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           Text(
-            '$streak ${streak == 1 ? 'dia' : 'dias'} de sequência!',
-            style: const TextStyle(
-              fontFamily: 'Fraunces',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1A18),
-              height: 1.2,
-            ),
+            '$streak ${streak == 1 ? 'dia' : 'dias'} de sequência',
+            style: ReadLogType.display(
+                size: 17, color: ReadLogColors.brassLight),
           ),
         ],
       ),
@@ -204,21 +190,17 @@ class _StatBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12),
+        color: ReadLogColors.cream.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(3),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: Color(0xAAFFFFFF),
-              letterSpacing: 0.3,
-            ),
+            style: ReadLogType.mono(
+                size: 10,
+                color: ReadLogColors.cream.withValues(alpha: 0.55)),
           ),
           const SizedBox(height: 8),
           ...rows.map((r) => Padding(
@@ -245,13 +227,10 @@ class _StatRow extends StatelessWidget {
         Flexible(
           child: Text(
             text,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-              height: 1.3,
-            ),
+            style: ReadLogType.mono(
+                size: 13,
+                weight: FontWeight.w500,
+                color: ReadLogColors.cream),
             overflow: TextOverflow.ellipsis,
           ),
         ),

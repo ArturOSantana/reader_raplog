@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/shell/main_shell.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/providers/providers.dart';
@@ -51,7 +52,14 @@ class BookClubsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Clubes do Livro')),
+      appBar: AppBar(
+        title: const Text('Clubes do Livro'),
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
+          tooltip: 'Abrir menu',
+        ),
+      ),
       body: const BookClubsBody(),
     );
   }
@@ -649,7 +657,6 @@ class _CreateClubSheetState extends ConsumerState<_CreateClubSheet> {
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(
                 labelText: 'Nome do clube',
-                hintText: 'Ex: Clube de Ficção Científica',
               ),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) {
@@ -902,7 +909,6 @@ class _JoinClubSheetState extends ConsumerState<_JoinClubSheet> {
             textCapitalization: TextCapitalization.characters,
             decoration: const InputDecoration(
               labelText: 'Código de convite',
-              hintText: 'Ex: ABC12345',
               prefixIcon: Icon(Icons.key_outlined),
             ),
             onSubmitted: (_) => _join(),

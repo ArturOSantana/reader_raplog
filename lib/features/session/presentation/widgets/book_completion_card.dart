@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/book.dart';
 
-/// Card bonito que é capturado como PNG e compartilhado ao finalizar um livro.
-/// Renderiza em tamanho fixo (1080×1350 virtuais) escalonado para caber na tela.
+/// Card capturado como PNG ao finalizar um livro.
+/// Segue a identidade "ficha de biblioteca" do ReadLog:
+/// fundo ink, tipografia Fraunces + IBM Plex Mono, carimbo de conclusão.
 class BookCompletionCard extends StatelessWidget {
   final Book book;
-
-  /// Total de minutos lidos somando todas as sessões do livro.
   final int totalMinutes;
-
-  /// Número total de sessões de leitura registradas para o livro.
   final int totalSessions;
-
-  /// Resenha escrita pelo usuário (opcional).
   final String? review;
 
   const BookCompletionCard({
@@ -32,8 +27,8 @@ class BookCompletionCard extends StatelessWidget {
   }
 
   String get _pagesLabel {
-    if (book.totalPages != null) return '${book.totalPages} págs.';
-    if (book.currentPage != null) return '${book.currentPage} págs.';
+    if (book.totalPages != null) return '${book.totalPages}';
+    if (book.currentPage != null) return '${book.currentPage}';
     return '—';
   }
 
@@ -46,115 +41,117 @@ class BookCompletionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // O card será capturado em 400×500 logical pixels
     return SizedBox(
       width: 400,
       height: 500,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Fundo degradê escuro
-          Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF0F1A14),
-            ),
-          ),
+          // ── Fundo: ink com textura de papel sutil ────────────────
+          Container(color: ReadLogColors.ink),
 
-          // Detalhe decorativo superior
+          // ── Faixa lateral esquerda — lombada do livro ─────────────
           Positioned(
-            top: -60,
-            right: -60,
+            left: 0,
+            top: 0,
+            bottom: 0,
             child: Container(
-              width: 220,
-              height: 220,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.forestGreen.withValues(alpha: 0.18),
+              width: 8,
+              decoration: const BoxDecoration(
+                color: ReadLogColors.stamp,
               ),
             ),
           ),
 
-          // Detalhe decorativo inferior
-          Positioned(
-            bottom: -40,
-            left: -40,
+          // ── Marca d'água: borda interna discreta ──────────────────
+          Positioned.fill(
             child: Container(
-              width: 160,
-              height: 160,
+              margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.warmGold.withValues(alpha: 0.12),
+                border: Border.all(
+                  color: ReadLogColors.cream.withValues(alpha: 0.06),
+                  width: 1,
+                ),
               ),
             ),
           ),
 
-          // Conteúdo
+          // ── Conteúdo ──────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+            padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header — badge "Livro lido"
+                // Linha superior: badge + marca
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Badge "Livro concluído" — estilo carimbo
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 5),
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.warmGold.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color: AppColors.warmGold.withValues(alpha: 0.6)),
+                            color: ReadLogColors.stamp.withValues(alpha: 0.7)),
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                      child: const Text(
-                        '✓  Livro concluído',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.warmGoldLight,
-                          letterSpacing: 0.4,
-                        ),
+                      child: Text(
+                        'LIVRO CONCLUÍDO',
+                        style: ReadLogType.mono(
+                          size: 9,
+                          weight: FontWeight.w600,
+                          color: ReadLogColors.stamp,
+                        ).copyWith(letterSpacing: 1.4),
                       ),
                     ),
                     const Spacer(),
-                    const Text(
-                      'ReadLog',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.darkTextSecondary,
-                        letterSpacing: 0.6,
+                    // Carimbo de conclusão rotacionado
+                    Transform.rotate(
+                      angle: -0.12,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'ReadLog',
+                            style: ReadLogType.display(
+                              size: 11,
+                              color: ReadLogColors.brassLight
+                                  .withValues(alpha: 0.6),
+                            ).copyWith(letterSpacing: 1.6),
+                          ),
+                          Container(
+                            width: 44,
+                            height: 1,
+                            color:
+                                ReadLogColors.brassLight.withValues(alpha: 0.3),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
 
-                // Título do livro
+                // Título
                 Text(
                   book.title,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Fraunces',
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    height: 1.25,
-                    color: AppColors.darkTextPrimary,
-                  ),
+                  style: ReadLogType.display(
+                    size: 26,
+                    weight: FontWeight.w600,
+                    color: ReadLogColors.cream,
+                  ).copyWith(height: 1.2),
                 ),
 
                 if (book.author != null) ...[
                   const SizedBox(height: 6),
                   Text(
                     book.author!,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      color: AppColors.darkTextSecondary,
+                    style: ReadLogType.mono(
+                      size: 12,
+                      color: ReadLogColors.cream.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -164,71 +161,84 @@ class BookCompletionCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: List.generate(5, (i) {
-                      return Icon(
-                        i < book.rating!
-                            ? Icons.star_rounded
-                            : Icons.star_outline_rounded,
-                        size: 20,
-                        color: i < book.rating!
-                            ? AppColors.warmGold
-                            : AppColors.darkBorder,
+                      final filled = i < book.rating!;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 2),
+                        child: Icon(
+                          filled
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          size: 18,
+                          color: filled
+                              ? ReadLogColors.brass
+                              : ReadLogColors.cream.withValues(alpha: 0.2),
+                        ),
                       );
                     }),
                   ),
                 ],
 
-                // Resenha
+                // Resenha — estilo nota de rodapé em itálico
                 if (review != null && review!.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.forestGreen.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: AppColors.forestGreen.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      '"$review"',
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
-                        fontStyle: FontStyle.italic,
-                        height: 1.5,
-                        color: AppColors.darkTextPrimary,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 2,
+                        height: null,
+                        color: ReadLogColors.brass.withValues(alpha: 0.5),
+                        margin: const EdgeInsets.only(right: 10),
                       ),
-                    ),
+                      Expanded(
+                        child: Text(
+                          '"$review"',
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                          style: ReadLogType.display(
+                            size: 12,
+                            weight: FontWeight.w300,
+                            italic: true,
+                            color:
+                                ReadLogColors.cream.withValues(alpha: 0.65),
+                          ).copyWith(height: 1.55),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
 
                 const Spacer(),
 
-                // Divisória
-                Container(height: 1, color: AppColors.darkBorder),
-                const SizedBox(height: 20),
+                // Divisória tracejada — régua de sumário
+                _DashedDivider(
+                    color: ReadLogColors.cream.withValues(alpha: 0.15)),
+                const SizedBox(height: 18),
 
-                // Estatísticas em 3 colunas
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _Stat(label: 'TEMPO', value: _timeLabel),
-                    _Stat(label: 'PÁGINAS', value: _pagesLabel),
-                    _Stat(label: 'SESSÕES', value: '$totalSessions'),
-                  ],
+                // Estatísticas em réguas de sumário (leader rows)
+                _CardLeaderRow(
+                  label: 'Tempo de leitura',
+                  value: _timeLabel,
+                ),
+                const SizedBox(height: 6),
+                _CardLeaderRow(
+                  label: 'Páginas',
+                  value: _pagesLabel,
+                ),
+                const SizedBox(height: 6),
+                _CardLeaderRow(
+                  label: 'Sessões',
+                  value: '$totalSessions',
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-                // Data de conclusão
+                // Data — rodapé
                 Text(
                   'Concluído em $_dateLabel',
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 11,
-                    color: AppColors.darkTextSecondary,
+                  style: ReadLogType.mono(
+                    size: 10,
+                    color: ReadLogColors.cream.withValues(alpha: 0.35),
                   ),
                 ),
               ],
@@ -240,38 +250,79 @@ class BookCompletionCard extends StatelessWidget {
   }
 }
 
-class _Stat extends StatelessWidget {
+/// Linha "label ........ valor" ao estilo sumário de livro, para uso interno
+/// nos cards PNG (usa cores fixas, independente do tema).
+class _CardLeaderRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _Stat({required this.label, required this.value});
+  const _CardLeaderRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.2,
-            color: AppColors.darkTextSecondary,
+          style: ReadLogType.mono(
+              size: 11,
+              color: ReadLogColors.cream.withValues(alpha: 0.5)),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 3),
+            child: CustomPaint(
+              painter: _DotsPainter(
+                  color: ReadLogColors.cream.withValues(alpha: 0.18)),
+              size: const Size(double.infinity, 1),
+            ),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(width: 6),
         Text(
           value,
-          style: const TextStyle(
-            fontFamily: 'Fraunces',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
-            color: AppColors.darkTextPrimary,
+          style: ReadLogType.mono(
+            size: 13,
+            weight: FontWeight.w600,
+            color: ReadLogColors.brassLight,
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DotsPainter extends CustomPainter {
+  final Color color;
+  _DotsPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, 0), Offset(x + 2, 0), paint);
+      x += 5;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DotsPainter old) => old.color != color;
+}
+
+class _DashedDivider extends StatelessWidget {
+  final Color color;
+  const _DashedDivider({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _DotsPainter(color: color),
+      size: const Size(double.infinity, 1),
     );
   }
 }

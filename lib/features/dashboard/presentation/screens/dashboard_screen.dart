@@ -5,7 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/shell/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/goal.dart';
 import '../../../../shared/providers/providers.dart';
 import '../widgets/share_stats_sheet.dart';
@@ -39,7 +39,6 @@ final _dashboardDataProvider = FutureProvider<Map<String, dynamic>>((ref) async 
   };
 });
 
-// Retorna o mês sendo exibido no calendário (ano, mês).
 final _calendarMonthProvider = StateProvider<DateTime>(
   (_) => DateTime(DateTime.now().year, DateTime.now().month),
 );
@@ -52,13 +51,18 @@ class DashboardScreen extends ConsumerWidget {
     final data = ref.watch(_dashboardDataProvider);
 
     return Scaffold(
+      backgroundColor: ReadLogColors.paper,
       appBar: AppBar(
+        backgroundColor: ReadLogColors.paper,
+        foregroundColor: ReadLogColors.charcoal,
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
           tooltip: 'Abrir menu',
         ),
-        title: const Text('Painel'),
+        title: Text('Painel',
+            style: ReadLogType.display(
+                size: 19, color: ReadLogColors.charcoal)),
         actions: [
           if (data.hasValue)
             IconButton(
@@ -105,7 +109,9 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: data.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: ReadLogColors.brass),
+        ),
         error: (e, _) => Center(child: Text('Erro: $e')),
         data: (d) {
           final daily = d['daily'] as Map<String, dynamic>;
@@ -125,16 +131,19 @@ class DashboardScreen extends ConsumerWidget {
             }
           }).length;
 
-          final todayMinutes = (daily['total_minutes'] as num?)?.toInt() ?? 0;
-          final todayPages = (daily['total_pages'] as num?)?.toInt() ?? 0;
-          final yearlyBooksRead = readBooks;
+          final todayMinutes =
+              (daily['total_minutes'] as num?)?.toInt() ?? 0;
+          final todayPages =
+              (daily['total_pages'] as num?)?.toInt() ?? 0;
 
           return RefreshIndicator(
+            color: ReadLogColors.brass,
             onRefresh: () => ref.refresh(_dashboardDataProvider.future),
             child: ListView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               children: [
-                Text('Hoje', style: AppTextStyles.headlineMedium),
+                // ── Hoje ─────────────────────────────────────────────
+                _SectionLabel(label: 'Hoje'),
                 const SizedBox(height: 12),
                 _SummaryGrid(
                   streak: streak,
@@ -142,40 +151,57 @@ class DashboardScreen extends ConsumerWidget {
                   todayPages: todayPages,
                   readBooks: readBooks,
                 ),
+
+                // ── Metas ────────────────────────────────────────────
                 if (goals.isNotEmpty) ...[
                   const SizedBox(height: 28),
-                  Text('Metas', style: AppTextStyles.headlineMedium),
+                  _SectionLabel(label: 'Metas'),
                   const SizedBox(height: 12),
                   _GoalProgressCard(
                     goals: goals,
                     todayMinutes: todayMinutes,
                     todayPages: todayPages,
-                    yearlyBooksRead: yearlyBooksRead,
+                    yearlyBooksRead: readBooks,
                     monthStats: month,
                   ),
                 ],
+
+                // ── Esta semana ───────────────────────────────────────
                 const SizedBox(height: 28),
-                Text('Esta semana', style: AppTextStyles.headlineMedium),
+                _SectionLabel(label: 'Esta semana'),
                 const SizedBox(height: 12),
                 _PeriodStats(data: week, showBooks: false),
+
+                // ── Este mês ──────────────────────────────────────────
                 const SizedBox(height: 28),
-                Text('Este mês', style: AppTextStyles.headlineMedium),
+                _SectionLabel(label: 'Este mês'),
                 const SizedBox(height: 12),
-                _PeriodStats(data: month, showBooks: true, books: books),
+                _PeriodStats(
+                    data: month, showBooks: true, books: books),
+
+                // ── Este ano ──────────────────────────────────────────
                 const SizedBox(height: 28),
-                Text('Este ano', style: AppTextStyles.headlineMedium),
+                _SectionLabel(label: 'Este ano'),
                 const SizedBox(height: 12),
-                _PeriodStats(data: year, showBooks: true, books: books),
+                _PeriodStats(
+                    data: year, showBooks: true, books: books),
+
+                // ── Calendário ────────────────────────────────────────
                 const SizedBox(height: 28),
-                Text('Calendário de leitura', style: AppTextStyles.headlineMedium),
+                _SectionLabel(label: 'Calendário de leitura'),
                 const SizedBox(height: 12),
-                _StreakCalendarWidget(heatmap: heatmap, streak: streak),
+                _StreakCalendarWidget(
+                    heatmap: heatmap, streak: streak),
+
+                // ── Atividade (heatmap) ───────────────────────────────
                 const SizedBox(height: 28),
-                Text('Atividade', style: AppTextStyles.headlineMedium),
+                _SectionLabel(label: 'Atividade — 365 dias'),
                 const SizedBox(height: 12),
                 _HeatmapWidget(data: heatmap),
+
+                // ── Destaques ─────────────────────────────────────────
                 const SizedBox(height: 28),
-                Text('Destaques', style: AppTextStyles.headlineMedium),
+                _SectionLabel(label: 'Destaques'),
                 const SizedBox(height: 12),
                 _HighlightsWidget(heatmap: heatmap, year: year),
               ],
@@ -187,8 +213,157 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
+// ── Rótulo de seção ─────────────────────────────────────────────────────────
 
-/// Widget que exibe o progresso de cada meta configurada.
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(label,
+            style: ReadLogType.display(
+                size: 17, color: ReadLogColors.charcoal)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Container(
+            height: 1,
+            color: ReadLogColors.paperDeep,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Grid de resumo diário ────────────────────────────────────────────────────
+
+class _SummaryGrid extends StatelessWidget {
+  final int streak;
+  final int todayMinutes;
+  final int todayPages;
+  final int readBooks;
+
+  const _SummaryGrid({
+    required this.streak,
+    required this.todayMinutes,
+    required this.todayPages,
+    required this.readBooks,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hours = todayMinutes ~/ 60;
+    final mins = todayMinutes % 60;
+    final timeLabel =
+        hours > 0 ? '${hours}h ${mins}min' : '${mins}min';
+
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 1.6,
+      children: [
+        _GridTile(
+          label: 'Sequência',
+          value: '$streak',
+          unit: streak == 1 ? 'dia' : 'dias',
+          accentColor: streak > 0 ? ReadLogColors.stamp : ReadLogColors.sage,
+        ),
+        _GridTile(
+          label: 'Hoje',
+          value: timeLabel,
+          unit: 'lidos',
+          accentColor: ReadLogColors.brass,
+        ),
+        _GridTile(
+          label: 'Páginas',
+          value: '$todayPages',
+          unit: 'hoje',
+          accentColor: ReadLogColors.sage,
+        ),
+        _GridTile(
+          label: 'Livros lidos',
+          value: '$readBooks',
+          unit: 'total',
+          accentColor: ReadLogColors.charcoal,
+        ),
+      ],
+    );
+  }
+}
+
+// ── Tile de estatística ───────────────────────────────────────────────────────
+
+class _GridTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final String unit;
+  final Color accentColor;
+
+  const _GridTile({
+    required this.label,
+    required this.value,
+    required this.unit,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: ReadLogColors.cream,
+        borderRadius: BorderRadius.circular(3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Aba de cor no topo
+          Container(
+            width: 28,
+            height: 3,
+            decoration: BoxDecoration(
+              color: accentColor,
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(value,
+                  style: ReadLogType.mono(
+                      size: 20,
+                      weight: FontWeight.w600,
+                      color: ReadLogColors.charcoal)),
+              Text(
+                '$label · $unit',
+                style: ReadLogType.mono(
+                    size: 9,
+                    color: ReadLogColors.charcoal.withValues(alpha: 0.5)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Cards de meta ────────────────────────────────────────────────────────────
+
 class _GoalProgressCard extends StatelessWidget {
   final List<Goal> goals;
   final int todayMinutes;
@@ -204,7 +379,6 @@ class _GoalProgressCard extends StatelessWidget {
     required this.monthStats,
   });
 
-  /// Retorna o valor atual para comparar com a meta.
   int _current(Goal goal) {
     switch (goal.type) {
       case GoalType.dailyMinutes:
@@ -229,68 +403,98 @@ class _GoalProgressCard extends StatelessWidget {
         final done = current >= target;
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: done ? AppColors.forestGreen : AppColors.border,
-              width: done ? 1.5 : 1.0,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(goal.type.label, style: AppTextStyles.titleMedium),
-                  ),
-                  if (done)
-                    _ShareGoalButton(goal: goal, currentValue: current)
-                  else
-                    Text(
-                      '$current / $target ${goal.type.unit}',
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                ],
+            color: ReadLogColors.cream,
+            borderRadius: BorderRadius.circular(3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.07),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
               ),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: AppColors.border,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    done
-                        ? AppColors.forestGreen
-                        : AppColors.forestGreen.withValues(alpha: 0.6),
-                  ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Aba lateral — stamp se feita, sage se em progresso
+              Container(
+                width: 5,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: done ? ReadLogColors.stamp : ReadLogColors.sage,
+                  borderRadius: const BorderRadius.horizontal(
+                      right: Radius.circular(3)),
                 ),
               ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    done ? '✓ Meta concluída!' : '$percent% concluído',
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: done ? AppColors.forestGreen : AppColors.textMuted,
-                      fontWeight: done ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                  ),
-                  if (!done)
-                    Text(
-                      'Faltam ${target - current} ${goal.type.unit}',
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color: AppColors.textMuted,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              goal.type.label,
+                              style: ReadLogType.display(
+                                  size: 13, color: ReadLogColors.charcoal),
+                            ),
+                          ),
+                          if (done)
+                            _ShareGoalButton(
+                                goal: goal, currentValue: current)
+                          else
+                            Text(
+                              '$current / $target ${goal.type.unit}',
+                              style: ReadLogType.mono(
+                                  size: 10,
+                                  color: ReadLogColors.charcoal
+                                      .withValues(alpha: 0.55)),
+                            ),
+                        ],
                       ),
-                    ),
-                ],
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 5,
+                          backgroundColor: ReadLogColors.paperDeep,
+                          color: done
+                              ? ReadLogColors.stamp
+                              : ReadLogColors.brass,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            done
+                                ? '✓ Meta concluída!'
+                                : '$percent% concluído',
+                            style: ReadLogType.mono(
+                              size: 9,
+                              color: done
+                                  ? ReadLogColors.stamp
+                                  : ReadLogColors.sage,
+                            ),
+                          ),
+                          if (!done)
+                            Text(
+                              'Faltam ${target - current} ${goal.type.unit}',
+                              style: ReadLogType.mono(
+                                  size: 9,
+                                  color: ReadLogColors.charcoal
+                                      .withValues(alpha: 0.4)),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -300,13 +504,14 @@ class _GoalProgressCard extends StatelessWidget {
   }
 }
 
-// ── Botão + sheet de compartilhamento da meta ─────────────────────────────
+// ── Botão de compartilhar meta ────────────────────────────────────────────────
 
 class _ShareGoalButton extends StatelessWidget {
   final Goal goal;
   final int currentValue;
 
-  const _ShareGoalButton({required this.goal, required this.currentValue});
+  const _ShareGoalButton(
+      {required this.goal, required this.currentValue});
 
   @override
   Widget build(BuildContext context) {
@@ -315,27 +520,28 @@ class _ShareGoalButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.forestGreen.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(20),
+          color: ReadLogColors.stamp.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(2),
           border: Border.all(
-              color: AppColors.forestGreen.withValues(alpha: 0.4)),
+              color: ReadLogColors.stamp.withValues(alpha: 0.4)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.check_circle_rounded,
-                size: 14, color: AppColors.forestGreen),
+                size: 13, color: ReadLogColors.stamp),
             const SizedBox(width: 4),
             Text(
               'Concluída',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.forestGreen,
-                fontWeight: FontWeight.w600,
+              style: ReadLogType.mono(
+                size: 10,
+                weight: FontWeight.w600,
+                color: ReadLogColors.stamp,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 5),
             const Icon(Icons.share_outlined,
-                size: 13, color: AppColors.forestGreen),
+                size: 12, color: ReadLogColors.stamp),
           ],
         ),
       ),
@@ -347,7 +553,8 @@ class _ShareGoalButton extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _GoalShareSheet(goal: goal, currentValue: currentValue),
+      builder: (_) =>
+          _GoalShareSheet(goal: goal, currentValue: currentValue),
     );
   }
 }
@@ -356,7 +563,8 @@ class _GoalShareSheet extends StatefulWidget {
   final Goal goal;
   final int currentValue;
 
-  const _GoalShareSheet({required this.goal, required this.currentValue});
+  const _GoalShareSheet(
+      {required this.goal, required this.currentValue});
 
   @override
   State<_GoalShareSheet> createState() => _GoalShareSheetState();
@@ -369,20 +577,18 @@ class _GoalShareSheetState extends State<_GoalShareSheet> {
   Future<void> _shareAsImage() async {
     setState(() => _sharing = true);
     try {
-      final boundary =
-          _cardKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final boundary = _cardKey.currentContext
+          ?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return;
 
       final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) return;
 
       final pngBytes = byteData.buffer.asUint8List();
-      final xFile = XFile.fromData(
-        pngBytes,
-        name: 'readlog_meta.png',
-        mimeType: 'image/png',
-      );
+      final xFile = XFile.fromData(pngBytes,
+          name: 'readlog_meta.png', mimeType: 'image/png');
 
       final goalLabel = widget.goal.type.label.toLowerCase();
       final unit = widget.goal.type.unit;
@@ -403,64 +609,51 @@ class _GoalShareSheetState extends State<_GoalShareSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFF0F1A14),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: ReadLogColors.ink,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      padding: const EdgeInsets.only(top: 16, bottom: 32, left: 16, right: 16),
+      padding:
+          const EdgeInsets.only(top: 16, bottom: 32, left: 20, right: 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Alça
           Container(
             width: 36,
             height: 4,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-              color: AppColors.darkBorder,
+              color: ReadLogColors.brassLight.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-
-          const Text(
+          Text(
             'Compartilhar conquista',
-            style: TextStyle(
-              fontFamily: 'Fraunces',
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: AppColors.darkTextPrimary,
-            ),
+            style: ReadLogType.display(
+                size: 20, color: ReadLogColors.cream),
           ),
           const SizedBox(height: 20),
-
-          // Preview capturável
           RepaintBoundary(
             key: _cardKey,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(3),
               child: GoalAchievementCard(
                 goal: widget.goal,
                 currentValue: widget.currentValue,
               ),
             ),
           ),
-
           const SizedBox(height: 24),
-
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.forestGreen,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
               onPressed: _sharing ? null : _shareAsImage,
               icon: _sharing
                   ? const SizedBox(
-                      width: 18,
-                      height: 18,
+                      width: 16,
+                      height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2,
+                          color: ReadLogColors.cream),
                     )
                   : const Icon(Icons.share_outlined, size: 18),
               label: Text(
@@ -473,42 +666,7 @@ class _GoalShareSheetState extends State<_GoalShareSheet> {
   }
 }
 
-
-class _SummaryGrid extends StatelessWidget {
-  final int streak;
-  final int todayMinutes;
-  final int todayPages;
-  final int readBooks;
-
-  const _SummaryGrid({
-    required this.streak,
-    required this.todayMinutes,
-    required this.todayPages,
-    required this.readBooks,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hours = todayMinutes ~/ 60;
-    final mins = todayMinutes % 60;
-    final timeLabel = hours > 0 ? '${hours}h ${mins}min' : '${mins}min';
-
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.5,
-      children: [
-        _GridTile(label: 'Sequência', value: '$streak dias'),
-        _GridTile(label: 'Hoje', value: timeLabel),
-        _GridTile(label: 'Páginas hoje', value: '$todayPages'),
-        _GridTile(label: 'Livros lidos', value: '$readBooks'),
-      ],
-    );
-  }
-}
+// ── Estatísticas de período ──────────────────────────────────────────────────
 
 class _PeriodStats extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -527,7 +685,8 @@ class _PeriodStats extends StatelessWidget {
     final pages = (data['total_pages'] as num?)?.toInt() ?? 0;
     final hours = minutes ~/ 60;
     final mins = minutes % 60;
-    final timeLabel = hours > 0 ? '${hours}h ${mins}min' : '${mins}min';
+    final timeLabel =
+        hours > 0 ? '${hours}h ${mins}min' : '${mins}min';
 
     int? readBooks;
     int? startedBooks;
@@ -550,58 +709,48 @@ class _PeriodStats extends StatelessWidget {
     }
 
     return GridView.count(
-      crossAxisCount: showBooks ? 2 : 2,
+      crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.5,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 1.6,
       children: [
-        _GridTile(label: 'Tempo', value: timeLabel),
-        _GridTile(label: 'Páginas', value: '$pages'),
+        _GridTile(
+            label: 'Tempo',
+            value: timeLabel,
+            unit: 'total',
+            accentColor: ReadLogColors.brass),
+        _GridTile(
+            label: 'Páginas',
+            value: '$pages',
+            unit: 'lidas',
+            accentColor: ReadLogColors.sage),
         if (showBooks && readBooks != null)
-          _GridTile(label: 'Livros concluídos', value: '$readBooks'),
+          _GridTile(
+              label: 'Concluídos',
+              value: '$readBooks',
+              unit: 'livros',
+              accentColor: ReadLogColors.stamp),
         if (showBooks && startedBooks != null)
-          _GridTile(label: 'Livros iniciados', value: '$startedBooks'),
+          _GridTile(
+              label: 'Iniciados',
+              value: '$startedBooks',
+              unit: 'livros',
+              accentColor: ReadLogColors.charcoal),
       ],
     );
   }
 }
 
-class _GridTile extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _GridTile({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppTextStyles.labelMedium),
-          Text(value, style: AppTextStyles.displayMedium),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Streak Calendar ──────────────────────────────────────────────────────────
+// ── Calendário de leitura ────────────────────────────────────────────────────
 
 class _StreakCalendarWidget extends ConsumerWidget {
   final List<Map<String, dynamic>> heatmap;
   final int streak;
 
-  const _StreakCalendarWidget({required this.heatmap, required this.streak});
+  const _StreakCalendarWidget(
+      {required this.heatmap, required this.streak});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -610,18 +759,16 @@ class _StreakCalendarWidget extends ConsumerWidget {
     for (final d in heatmap) {
       final date = d['date'] as String?;
       final mins = (d['total_minutes'] as num?)?.toInt() ?? 0;
-      if (date != null && mins > 0) activeDays.add(date);
+      if (date != null && mins > 0) { activeDays.add(date); }
     }
 
     final today = DateTime.now();
     final firstDay = DateTime(month.year, month.month, 1);
-    final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
-    // 0 = Mon … 6 = Sun (weekday - 1)
+    final daysInMonth =
+        DateUtils.getDaysInMonth(month.year, month.month);
     final startOffset = (firstDay.weekday - 1) % 7;
-    final monthLabel =
-        '${_monthName(month.month)} ${month.year}';
+    final monthLabel = '${_monthName(month.month)} ${month.year}';
 
-    // Conta dias lidos neste mês
     final monthStr =
         '${month.year}-${month.month.toString().padLeft(2, '0')}';
     final readDaysThisMonth =
@@ -630,19 +777,26 @@ class _StreakCalendarWidget extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        color: ReadLogColors.cream,
+        borderRadius: BorderRadius.circular(3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          // Header: naveg. de mês + streak badge
+          // Navegação de mês
           Row(
             children: [
               IconButton(
                 icon: const Icon(Icons.chevron_left, size: 20),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
+                color: ReadLogColors.charcoal.withValues(alpha: 0.6),
                 onPressed: () {
                   ref.read(_calendarMonthProvider.notifier).state =
                       DateTime(month.year, month.month - 1);
@@ -652,13 +806,18 @@ class _StreakCalendarWidget extends ConsumerWidget {
                 child: Text(
                   monthLabel,
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.titleMedium,
+                  style: ReadLogType.display(
+                      size: 14, color: ReadLogColors.charcoal),
                 ),
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right, size: 20),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
+                color: (month.year == today.year &&
+                        month.month == today.month)
+                    ? ReadLogColors.charcoal.withValues(alpha: 0.2)
+                    : ReadLogColors.charcoal.withValues(alpha: 0.6),
                 onPressed: month.year == today.year &&
                         month.month == today.month
                     ? null
@@ -669,15 +828,20 @@ class _StreakCalendarWidget extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // Dias da semana
+          const SizedBox(height: 10),
+          // Cabeçalho dos dias da semana
           Row(
             children: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D']
                 .map((l) => Expanded(
                       child: Center(
-                        child: Text(l,
-                            style: AppTextStyles.labelMedium
-                                .copyWith(fontWeight: FontWeight.w700)),
+                        child: Text(
+                          l,
+                          style: ReadLogType.mono(
+                              size: 10,
+                              weight: FontWeight.w600,
+                              color: ReadLogColors.charcoal
+                                  .withValues(alpha: 0.4)),
+                        ),
                       ),
                     ))
                 .toList(),
@@ -687,7 +851,8 @@ class _StreakCalendarWidget extends ConsumerWidget {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
               mainAxisSpacing: 4,
               crossAxisSpacing: 4,
@@ -695,7 +860,7 @@ class _StreakCalendarWidget extends ConsumerWidget {
             ),
             itemCount: startOffset + daysInMonth,
             itemBuilder: (_, index) {
-              if (index < startOffset) return const SizedBox();
+              if (index < startOffset) { return const SizedBox(); }
               final day = index - startOffset + 1;
               final dateStr =
                   '$monthStr-${day.toString().padLeft(2, '0')}';
@@ -703,54 +868,53 @@ class _StreakCalendarWidget extends ConsumerWidget {
               final isToday = today.year == month.year &&
                   today.month == month.month &&
                   today.day == day;
-              final isFuture = DateTime(month.year, month.month, day)
-                  .isAfter(today);
+              final isFuture =
+                  DateTime(month.year, month.month, day).isAfter(today);
 
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
                   color: isActive
-                      ? AppColors.forestGreen
+                      ? ReadLogColors.stamp
                       : isFuture
                           ? Colors.transparent
-                          : AppColors.surfaceVariant,
+                          : ReadLogColors.paperAlt,
                   shape: BoxShape.circle,
                   border: isToday
-                      ? Border.all(
-                          color: AppColors.warmGold, width: 2)
+                      ? Border.all(color: ReadLogColors.brass, width: 2)
                       : null,
                 ),
                 child: Center(
                   child: Text(
                     '$day',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight:
-                          isToday ? FontWeight.w700 : FontWeight.w400,
+                    style: ReadLogType.mono(
+                      size: 11,
+                      weight: isToday ? FontWeight.w700 : FontWeight.w400,
                       color: isActive
-                          ? Colors.white
+                          ? ReadLogColors.cream
                           : isFuture
-                              ? AppColors.textMuted
-                              : AppColors.textSecondary,
+                              ? ReadLogColors.charcoal.withValues(alpha: 0.2)
+                              : ReadLogColors.charcoal.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
               );
             },
           ),
-          const SizedBox(height: 12),
-          // Rodapé: dias lidos e sequência atual
+          const SizedBox(height: 14),
+          // Rodapé: chips de resumo
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _CalendarChip(
                 icon: Icons.calendar_today_outlined,
-                label: '$readDaysThisMonth ${readDaysThisMonth == 1 ? 'dia' : 'dias'} lidos',
+                label:
+                    '$readDaysThisMonth ${readDaysThisMonth == 1 ? 'dia' : 'dias'} lidos',
               ),
               _CalendarChip(
                 icon: Icons.local_fire_department,
-                label: '$streak ${streak == 1 ? 'dia' : 'dias'} seguidos',
+                label:
+                    '$streak ${streak == 1 ? 'dia' : 'dias'} seguidos',
                 highlight: streak > 0,
               ),
             ],
@@ -779,31 +943,30 @@ class _CalendarChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        highlight ? AppColors.warmGold : AppColors.textSecondary;
+    final color = highlight ? ReadLogColors.stamp : ReadLogColors.charcoal.withValues(alpha: 0.5);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: color),
+        Icon(icon, size: 13, color: color),
         const SizedBox(width: 4),
         Text(label,
-            style: AppTextStyles.labelMedium.copyWith(color: color)),
+            style: ReadLogType.mono(size: 10, color: color)),
       ],
     );
   }
 }
 
-// ── Highlights (destaques do período) ────────────────────────────────────────
+// ── Destaques do período ──────────────────────────────────────────────────────
 
 class _HighlightsWidget extends StatelessWidget {
   final List<Map<String, dynamic>> heatmap;
   final Map<String, dynamic> year;
 
-  const _HighlightsWidget({required this.heatmap, required this.year});
+  const _HighlightsWidget(
+      {required this.heatmap, required this.year});
 
   @override
   Widget build(BuildContext context) {
-    // Melhor dia (mais minutos)
     Map<String, dynamic>? bestDay;
     for (final d in heatmap) {
       final mins = (d['total_minutes'] as num?)?.toInt() ?? 0;
@@ -813,16 +976,15 @@ class _HighlightsWidget extends StatelessWidget {
       }
     }
 
-    final activeDays =
-        heatmap.where((d) => ((d['total_minutes'] as num?)?.toInt() ?? 0) > 0).length;
-
-    final totalMinutes =
-        (year['total_minutes'] as num?)?.toInt() ?? 0;
+    final activeDays = heatmap
+        .where(
+            (d) => ((d['total_minutes'] as num?)?.toInt() ?? 0) > 0)
+        .length;
+    final totalMinutes = (year['total_minutes'] as num?)?.toInt() ?? 0;
     final avgMinutes =
         activeDays > 0 ? (totalMinutes / activeDays).round() : 0;
 
-    final bestMins =
-        (bestDay?['total_minutes'] as num?)?.toInt() ?? 0;
+    final bestMins = (bestDay?['total_minutes'] as num?)?.toInt() ?? 0;
     final bestHours = bestMins ~/ 60;
     final bestMinsRem = bestMins % 60;
     final bestLabel = bestHours > 0
@@ -836,30 +998,38 @@ class _HighlightsWidget extends StatelessWidget {
         : '${avgMinsRem}min';
 
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        color: ReadLogColors.cream,
+        borderRadius: BorderRadius.circular(3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         children: [
           _HighlightRow(
             icon: Icons.emoji_events_outlined,
             label: 'Melhor dia',
-            value: bestDay != null ? '$bestLabel (${bestDay['date']})' : '—',
+            value: bestDay != null
+                ? '$bestLabel (${bestDay['date']})'
+                : '—',
+            isFirst: true,
           ),
-          const Divider(height: 20, color: AppColors.border),
           _HighlightRow(
             icon: Icons.trending_up_outlined,
             label: 'Média por dia ativo',
             value: activeDays > 0 ? avgLabel : '—',
           ),
-          const Divider(height: 20, color: AppColors.border),
           _HighlightRow(
             icon: Icons.check_circle_outline,
             label: 'Dias com leitura (ano)',
-            value: '$activeDays ${activeDays == 1 ? 'dia' : 'dias'}',
+            value:
+                '$activeDays ${activeDays == 1 ? 'dia' : 'dias'}',
+            isLast: true,
           ),
         ],
       ),
@@ -871,31 +1041,55 @@ class _HighlightRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final bool isFirst;
+  final bool isLast;
 
   const _HighlightRow({
     required this.icon,
     required this.label,
     required this.value,
+    this.isFirst = false,
+    this.isLast = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Icon(icon, size: 18, color: AppColors.forestGreen),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(label, style: AppTextStyles.bodyMedium),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: ReadLogColors.brass),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(label,
+                    style: ReadLogType.mono(
+                        size: 12,
+                        color: ReadLogColors.charcoal
+                            .withValues(alpha: 0.7))),
+              ),
+              Text(value,
+                  style: ReadLogType.mono(
+                      size: 13,
+                      weight: FontWeight.w600,
+                      color: ReadLogColors.charcoal)),
+            ],
+          ),
         ),
-        Text(value,
-            style: AppTextStyles.titleMedium
-                .copyWith(color: AppColors.textPrimary)),
+        if (!isLast)
+          Divider(
+              height: 1,
+              thickness: 1,
+              color: ReadLogColors.paperDeep.withValues(alpha: 0.8),
+              indent: 16,
+              endIndent: 16),
       ],
     );
   }
 }
 
-// ── Heatmap ───────────────────────────────────────────────────────────────────
+// ── Heatmap de atividade ──────────────────────────────────────────────────────
 
 class _HeatmapWidget extends StatelessWidget {
   final List<Map<String, dynamic>> data;
@@ -906,15 +1100,19 @@ class _HeatmapWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (data.isEmpty) {
       return Container(
-        height: 100,
+        height: 80,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+          color: ReadLogColors.cream,
+          borderRadius: BorderRadius.circular(3),
         ),
         child: Center(
-          child: Text('Nenhuma sessão registrada ainda',
-              style: AppTextStyles.bodyMedium),
+          child: Text(
+            'Nenhuma sessão registrada ainda',
+            style: ReadLogType.mono(
+                size: 12,
+                color: ReadLogColors.charcoal.withValues(alpha: 0.4)),
+          ),
         ),
       );
     }
@@ -924,27 +1122,73 @@ class _HeatmapWidget extends StatelessWidget {
         .fold<double>(1.0, (a, b) => a > b ? a : b);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        color: ReadLogColors.cream,
+        borderRadius: BorderRadius.circular(3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      child: Wrap(
-        spacing: 3,
-        runSpacing: 3,
-        children: data.map((d) {
-          final minutes = (d['total_minutes'] as num?)?.toDouble() ?? 0.0;
-          final intensity = (minutes / maxMinutes).clamp(0.1, 1.0);
-          return Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: AppColors.forestGreen.withValues(alpha: intensity),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          );
-        }).toList(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 3,
+            runSpacing: 3,
+            children: data.map((d) {
+              final minutes =
+                  (d['total_minutes'] as num?)?.toDouble() ?? 0.0;
+              final intensity =
+                  minutes > 0 ? (minutes / maxMinutes).clamp(0.15, 1.0) : 0.0;
+              return Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: intensity > 0
+                      ? ReadLogColors.stamp.withValues(alpha: intensity)
+                      : ReadLogColors.paperDeep.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+          // Legenda
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text('menos',
+                  style: ReadLogType.mono(
+                      size: 9,
+                      color:
+                          ReadLogColors.charcoal.withValues(alpha: 0.4))),
+              const SizedBox(width: 4),
+              ...List.generate(5, (i) {
+                final alpha = 0.15 + i * 0.17;
+                return Container(
+                  width: 10,
+                  height: 10,
+                  margin: const EdgeInsets.only(left: 2),
+                  decoration: BoxDecoration(
+                    color: ReadLogColors.stamp.withValues(alpha: alpha),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                );
+              }),
+              const SizedBox(width: 4),
+              Text('mais',
+                  style: ReadLogType.mono(
+                      size: 9,
+                      color:
+                          ReadLogColors.charcoal.withValues(alpha: 0.4))),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_theme.dart';
 import 'share_stats_card.dart';
 
 /// Exibe um bottom sheet com o card de estatísticas pronto para compartilhar.
@@ -21,9 +21,9 @@ Future<void> showShareStatsSheet({
 }) {
   return showModalBottomSheet(
     context: context,
-    backgroundColor: AppColors.offWhite,
+    backgroundColor: ReadLogColors.ink,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
     builder: (_) => _ShareStatsContent(
       streak: streak,
@@ -106,22 +106,25 @@ class _ShareStatsContentState extends State<_ShareStatsContent> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Drag handle
           Container(
-            width: 40,
+            width: 36,
             height: 4,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-              color: AppColors.border,
+              color: ReadLogColors.brassLight.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
 
-          Text('Compartilhar estatísticas', style: AppTextStyles.headlineMedium),
+          Text(
+            'Compartilhar estatísticas',
+            style: ReadLogType.display(size: 20, color: ReadLogColors.cream),
+          ),
           const SizedBox(height: 20),
 
           // Preview do card capturável
@@ -139,7 +142,7 @@ class _ShareStatsContentState extends State<_ShareStatsContent> {
             ),
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
 
           SizedBox(
             width: double.infinity,
@@ -147,13 +150,13 @@ class _ShareStatsContentState extends State<_ShareStatsContent> {
               onPressed: _sharing ? null : _share,
               icon: _sharing
                   ? const SizedBox(
-                      width: 18,
-                      height: 18,
+                      width: 16,
+                      height: 16,
                       child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2),
+                          color: ReadLogColors.cream, strokeWidth: 2),
                     )
                   : const Icon(Icons.share_rounded),
-              label: Text(_sharing ? 'Preparando...' : 'Compartilhar'),
+              label: Text(_sharing ? 'Preparando…' : 'Compartilhar'),
             ),
           ),
         ],

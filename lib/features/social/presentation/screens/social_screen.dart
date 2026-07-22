@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/shell/main_shell.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/friend.dart';
 import '../../../../shared/models/social_feed.dart';
@@ -52,6 +53,11 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Social'),
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
+          tooltip: 'Abrir menu',
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.people_outlined),

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_streak_description">Exibe sua ofensiva de leitura atual</string>
+    <string name="widget_current_book_description">Exibe o livro que você está lendo atualmente</string>
+    <string name="widget_daily_goal_description">Exibe o progresso da sua meta diária de leitura</string>
+    <string name="widget_quote_description">Exibe a frase do dia para te inspirar a ler</string>
+    <string name="widget_club_description">Exibe o próximo encontro do seu clube do livro</string>
+    <string name="widget_dashboard_description">Painel completo de leitura: livro, meta, ofensiva, frase e clube</string>
+</resources>

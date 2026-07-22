@@ -159,7 +159,6 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
                     onFieldSubmitted: (_) => _searchingIsbn ? null : _searchByIsbn(),
                     decoration: InputDecoration(
                       labelText: 'Buscar por ISBN',
-                      hintText: '9788535902778',
                       prefixIcon: const Icon(Icons.tag),
                       suffixIcon: _searchingIsbn
                           ? const Padding(
@@ -195,7 +194,6 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
                 labelText: 'Buscar por título ou autor',
-                hintText: 'Título, autor ou ISBN…',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searching
                     ? const Padding(

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cores do tema CLARO para os widgets. -->
+<resources>
+    <!-- Fundo do widget: branco levemente off-white -->
+    <color name="widget_background">#FFFAF8F5</color>
+    <!-- Texto principal: quase preto -->
+    <color name="widget_text_primary">#1F1E1B</color>
+    <!-- Texto secundário: cinza médio -->
+    <color name="widget_text_secondary">#6B6560</color>
+    <!-- Cor de acento (azul ReadLog) -->
+    <color name="widget_accent">#3B7DD8</color>
+    <!-- Fundo da barra de progresso -->
+    <color name="widget_progress_bg">#E5E0DB</color>
+    <!-- Separador -->
+    <color name="widget_divider">#E5E0DB</color>
+</resources>

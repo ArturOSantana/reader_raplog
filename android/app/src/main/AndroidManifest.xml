@@ -43,6 +43,81 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- ── Widgets nativos ─────────────────────────────────────────────── -->
+
+        <receiver
+            android:name=".widgets.StreakWidget"
+            android:exported="true"
+            android:label="Ofensiva">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/streak_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widgets.CurrentBookWidget"
+            android:exported="true"
+            android:label="Livro Atual">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/current_book_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widgets.DailyGoalWidget"
+            android:exported="true"
+            android:label="Meta Diária">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/daily_goal_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widgets.QuoteWidget"
+            android:exported="true"
+            android:label="Frase do Dia">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quote_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widgets.ClubWidget"
+            android:exported="true"
+            android:label="Clube do Livro">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/club_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widgets.ReaderDashboardWidget"
+            android:exported="true"
+            android:label="Painel do Leitor">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/reader_dashboard_widget_info" />
+        </receiver>
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
