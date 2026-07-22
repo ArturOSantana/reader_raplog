@@ -1,0 +1,107 @@
+name: Beta — Android
+
+on:
+  push:
+    branches: [main]
+
+# Cancela runs anteriores ainda em andamento para a mesma branch
+concurrency:
+  group: beta-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-distribute:
+    name: Build & distribute APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # necessário para contar commits
+
+      # ── 2. Versão automática ───────────────────────────────────────────────
+      # versionCode  = total de commits no histórico (único, sempre cresce)
+      # versionName  = 0.<semanas desde epoch>.<commits nesta semana>  ex: 0.261.3
+      - name: Compute version
+        id: ver
+        run: |
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          WEEKS=$(( $(date +%s) / 604800 ))
+          COMMITS_WEEK=$(git log --oneline --since="7 days ago" | wc -l | tr -d ' ')
+          VERSION_CODE=$COMMIT_COUNT
+          VERSION_NAME="0.${WEEKS}.${COMMITS_WEEK}"
+          echo "code=$VERSION_CODE"   >> "$GITHUB_OUTPUT"
+          echo "name=$VERSION_NAME"   >> "$GITHUB_OUTPUT"
+          echo "### Build $VERSION_NAME (+$VERSION_CODE)" >> "$GITHUB_STEP_SUMMARY"
+
+      # ── 3. Flutter ─────────────────────────────────────────────────────────
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: pubspec.yaml   # respeita o campo environment.sdk
+          channel: stable
+          cache: true
+
+      # ── 4. .env com os segredos ────────────────────────────────────────────
+      - name: Create .env
+        run: |
+          cat > .env <<EOF
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          EOF
+
+      # ── 5. Dependências ────────────────────────────────────────────────────
+      - name: Flutter pub get
+        run: flutter pub get
+
+      # ── 6. Keystore de release ─────────────────────────────────────────────
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+
+      - name: Create key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.KEYSTORE_STORE_PASS }}
+          keyPassword=${{ secrets.KEYSTORE_KEY_PASS }}
+          keyAlias=${{ secrets.KEYSTORE_ALIAS }}
+          storeFile=keystore.jks
+          EOF
+
+      # ── 7. Build APK release ───────────────────────────────────────────────
+      - name: Build APK
+        run: |
+          flutter build apk --release \
+            --build-number=${{ steps.ver.outputs.code }} \
+            --build-name=${{ steps.ver.outputs.name }}
+
+      # ── 8. Renomeia o artefato com a versão ────────────────────────────────
+      - name: Rename APK
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/readlog-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}.apk
+
+      # ── 9. Upload artefato no GitHub (opcional, útil para baixar manualmente) ──
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: readlog-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}
+          path: build/app/outputs/flutter-apk/readlog-*.apk
+          retention-days: 14
+
+      # ── 10. Firebase App Distribution ─────────────────────────────────────
+      - name: Distribute via Firebase
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID_ANDROID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          groups: beta-testers
+          file: build/app/outputs/flutter-apk/readlog-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}.apk
+          releaseNotes: |
+            Build automática · ${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}
+            Commit: ${{ github.sha }}
+            Mensagem: ${{ github.event.head_commit.message }}

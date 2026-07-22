@@ -27,3 +27,7 @@ macos/.symlinks/
 .idea/
 .vscode/
 *.iml
+
+# Android keystore (nunca commitar)
+android/key.properties
+android/app/keystore.jks
