@@ -66,5 +66,18 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+<key>CFBundleURLTypes</key>
+<array>
+	<!-- Deep-link de callback OAuth do Supabase (Google Sign-In) -->
+	<dict>
+		<key>CFBundleTypeRole</key>
+		<string>Editor</string>
+		<key>CFBundleURLSchemes</key>
+		<array>
+			<!-- Substitua pelo seu iOS Client ID invertido: com.googleusercontent.apps.XXXXXX -->
+			<string>com.readlog.readlog</string>
+		</array>
+	</dict>
+</array>
 </dict>
 </plist>

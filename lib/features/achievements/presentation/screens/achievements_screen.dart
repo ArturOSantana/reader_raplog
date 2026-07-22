@@ -16,7 +16,7 @@ class AchievementsScreen extends ConsumerWidget {
     final achievements = ref.watch(_achievementsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Conquistas')),
+      appBar: AppBar(leading: const DrawerButton(), title: const Text('Conquistas')),
       body: achievements.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erro: $e')),

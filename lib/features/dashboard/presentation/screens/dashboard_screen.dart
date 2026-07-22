@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/models/goal.dart';
 import '../../../../shared/providers/providers.dart';
 
 final _dashboardDataProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final sessionRepo = ref.watch(sessionRepositoryProvider);
   final bookRepo = ref.watch(bookRepositoryProvider);
+  final goalRepo = ref.watch(goalRepositoryProvider);
 
   final results = await Future.wait([
     sessionRepo.fetchDailyStats(),
     sessionRepo.fetchStreak(),
     sessionRepo.fetchHeatmap(days: 365),
     bookRepo.fetchAll(),
+    sessionRepo.fetchPeriodStats(period: 'week'),
+    sessionRepo.fetchPeriodStats(period: 'month'),
+    sessionRepo.fetchPeriodStats(period: 'year'),
+    goalRepo.fetchAll(),
   ]);
 
   return {
@@ -19,8 +25,17 @@ final _dashboardDataProvider = FutureProvider<Map<String, dynamic>>((ref) async 
     'streak': results[1] as int,
     'heatmap': results[2] as List<Map<String, dynamic>>,
     'books': results[3],
+    'week': results[4] as Map<String, dynamic>,
+    'month': results[5] as Map<String, dynamic>,
+    'year': results[6] as Map<String, dynamic>,
+    'goals': results[7] as List<Goal>,
   };
 });
+
+// Retorna o mês sendo exibido no calendário (ano, mês).
+final _calendarMonthProvider = StateProvider<DateTime>(
+  (_) => DateTime(DateTime.now().year, DateTime.now().month),
+);
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -30,7 +45,7 @@ class DashboardScreen extends ConsumerWidget {
     final data = ref.watch(_dashboardDataProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(leading: const DrawerButton(), title: const Text('Dashboard')),
       body: data.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erro: $e')),
@@ -39,9 +54,11 @@ class DashboardScreen extends ConsumerWidget {
           final streak = d['streak'] as int;
           final heatmap = d['heatmap'] as List<Map<String, dynamic>>;
           final books = d['books'] as List;
+          final week = d['week'] as Map<String, dynamic>;
+          final month = d['month'] as Map<String, dynamic>;
+          final year = d['year'] as Map<String, dynamic>;
+          final goals = d['goals'] as List<Goal>;
 
-          final totalMinutes = (daily['total_minutes'] as num?)?.toInt() ?? 0;
-          final totalPages = (daily['total_pages'] as num?)?.toInt() ?? 0;
           final readBooks = books.where((b) {
             try {
               return (b as dynamic).status.dbValue == 'read';
@@ -50,23 +67,59 @@ class DashboardScreen extends ConsumerWidget {
             }
           }).length;
 
+          final todayMinutes = (daily['total_minutes'] as num?)?.toInt() ?? 0;
+          final todayPages = (daily['total_pages'] as num?)?.toInt() ?? 0;
+          final yearlyBooksRead = readBooks;
+
           return RefreshIndicator(
             onRefresh: () => ref.refresh(_dashboardDataProvider.future),
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                Text('Resumo', style: AppTextStyles.headlineMedium),
-                const SizedBox(height: 16),
+                Text('Hoje', style: AppTextStyles.headlineMedium),
+                const SizedBox(height: 12),
                 _SummaryGrid(
                   streak: streak,
-                  todayMinutes: totalMinutes,
-                  todayPages: totalPages,
+                  todayMinutes: todayMinutes,
+                  todayPages: todayPages,
                   readBooks: readBooks,
                 ),
+                if (goals.isNotEmpty) ...[
+                  const SizedBox(height: 28),
+                  Text('Metas', style: AppTextStyles.headlineMedium),
+                  const SizedBox(height: 12),
+                  _GoalProgressCard(
+                    goals: goals,
+                    todayMinutes: todayMinutes,
+                    todayPages: todayPages,
+                    yearlyBooksRead: yearlyBooksRead,
+                    monthStats: month,
+                  ),
+                ],
+                const SizedBox(height: 28),
+                Text('Esta semana', style: AppTextStyles.headlineMedium),
+                const SizedBox(height: 12),
+                _PeriodStats(data: week, showBooks: false),
+                const SizedBox(height: 28),
+                Text('Este mês', style: AppTextStyles.headlineMedium),
+                const SizedBox(height: 12),
+                _PeriodStats(data: month, showBooks: true, books: books),
+                const SizedBox(height: 28),
+                Text('Este ano', style: AppTextStyles.headlineMedium),
+                const SizedBox(height: 12),
+                _PeriodStats(data: year, showBooks: true, books: books),
+                const SizedBox(height: 28),
+                Text('Calendário de leitura', style: AppTextStyles.headlineMedium),
+                const SizedBox(height: 12),
+                _StreakCalendarWidget(heatmap: heatmap, streak: streak),
                 const SizedBox(height: 28),
                 Text('Atividade', style: AppTextStyles.headlineMedium),
                 const SizedBox(height: 12),
                 _HeatmapWidget(data: heatmap),
+                const SizedBox(height: 28),
+                Text('Destaques', style: AppTextStyles.headlineMedium),
+                const SizedBox(height: 12),
+                _HighlightsWidget(heatmap: heatmap, year: year),
               ],
             ),
           );
@@ -75,6 +128,94 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 }
+
+
+/// Widget que exibe o progresso de cada meta configurada.
+class _GoalProgressCard extends StatelessWidget {
+  final List<Goal> goals;
+  final int todayMinutes;
+  final int todayPages;
+  final int yearlyBooksRead;
+  final Map<String, dynamic> monthStats;
+
+  const _GoalProgressCard({
+    required this.goals,
+    required this.todayMinutes,
+    required this.todayPages,
+    required this.yearlyBooksRead,
+    required this.monthStats,
+  });
+
+  /// Retorna o valor atual para comparar com a meta.
+  int _current(Goal goal) {
+    switch (goal.type) {
+      case GoalType.dailyMinutes:
+        return todayMinutes;
+      case GoalType.dailyPages:
+        return todayPages;
+      case GoalType.yearlyBooks:
+        return yearlyBooksRead;
+      case GoalType.monthlyPages:
+        return (monthStats['total_pages'] as num?)?.toInt() ?? 0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: goals.map((goal) {
+        final current = _current(goal);
+        final target = goal.targetValue;
+        final progress = (current / target).clamp(0.0, 1.0);
+        final done = current >= target;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: done ? AppColors.forestGreen : AppColors.border,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(goal.type.label, style: AppTextStyles.titleMedium),
+                  Text(
+                    done ? '✓ Concluída' : '$current / $target ${goal.type.unit}',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: done
+                          ? AppColors.forestGreen
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 6,
+                  backgroundColor: AppColors.border,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    done ? AppColors.forestGreen : AppColors.forestGreen.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
 
 class _SummaryGrid extends StatelessWidget {
   final int streak;
@@ -93,7 +234,7 @@ class _SummaryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final hours = todayMinutes ~/ 60;
     final mins = todayMinutes % 60;
-    final timeLabel = hours > 0 ? '${hours}h${mins}min' : '${mins}min';
+    final timeLabel = hours > 0 ? '${hours}h ${mins}min' : '${mins}min';
 
     return GridView.count(
       crossAxisCount: 2,
@@ -103,10 +244,68 @@ class _SummaryGrid extends StatelessWidget {
       mainAxisSpacing: 12,
       childAspectRatio: 1.5,
       children: [
-        _GridTile(label: 'Sequencia', value: '$streak dias'),
+        _GridTile(label: 'Sequência', value: '$streak dias'),
         _GridTile(label: 'Hoje', value: timeLabel),
-        _GridTile(label: 'Paginas hoje', value: '$todayPages'),
+        _GridTile(label: 'Páginas hoje', value: '$todayPages'),
         _GridTile(label: 'Livros lidos', value: '$readBooks'),
+      ],
+    );
+  }
+}
+
+class _PeriodStats extends StatelessWidget {
+  final Map<String, dynamic> data;
+  final bool showBooks;
+  final List<dynamic> books;
+
+  const _PeriodStats({
+    required this.data,
+    this.showBooks = false,
+    this.books = const [],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final minutes = (data['total_minutes'] as num?)?.toInt() ?? 0;
+    final pages = (data['total_pages'] as num?)?.toInt() ?? 0;
+    final hours = minutes ~/ 60;
+    final mins = minutes % 60;
+    final timeLabel = hours > 0 ? '${hours}h ${mins}min' : '${mins}min';
+
+    int? readBooks;
+    int? startedBooks;
+    if (showBooks && books.isNotEmpty) {
+      readBooks = books.where((b) {
+        try {
+          return (b as dynamic).status.dbValue == 'read';
+        } catch (_) {
+          return false;
+        }
+      }).length;
+      startedBooks = books.where((b) {
+        try {
+          final s = (b as dynamic).status.dbValue as String;
+          return s == 'reading' || s == 'read' || s == 'abandoned';
+        } catch (_) {
+          return false;
+        }
+      }).length;
+    }
+
+    return GridView.count(
+      crossAxisCount: showBooks ? 2 : 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.5,
+      children: [
+        _GridTile(label: 'Tempo', value: timeLabel),
+        _GridTile(label: 'Páginas', value: '$pages'),
+        if (showBooks && readBooks != null)
+          _GridTile(label: 'Livros concluídos', value: '$readBooks'),
+        if (showBooks && startedBooks != null)
+          _GridTile(label: 'Livros iniciados', value: '$startedBooks'),
       ],
     );
   }
@@ -139,6 +338,308 @@ class _GridTile extends StatelessWidget {
   }
 }
 
+// ── Streak Calendar ──────────────────────────────────────────────────────────
+
+class _StreakCalendarWidget extends ConsumerWidget {
+  final List<Map<String, dynamic>> heatmap;
+  final int streak;
+
+  const _StreakCalendarWidget({required this.heatmap, required this.streak});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final month = ref.watch(_calendarMonthProvider);
+    final activeDays = <String>{};
+    for (final d in heatmap) {
+      final date = d['date'] as String?;
+      final mins = (d['total_minutes'] as num?)?.toInt() ?? 0;
+      if (date != null && mins > 0) activeDays.add(date);
+    }
+
+    final today = DateTime.now();
+    final firstDay = DateTime(month.year, month.month, 1);
+    final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
+    // 0 = Mon … 6 = Sun (weekday - 1)
+    final startOffset = (firstDay.weekday - 1) % 7;
+    final monthLabel =
+        '${_monthName(month.month)} ${month.year}';
+
+    // Conta dias lidos neste mês
+    final monthStr =
+        '${month.year}-${month.month.toString().padLeft(2, '0')}';
+    final readDaysThisMonth =
+        activeDays.where((d) => d.startsWith(monthStr)).length;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          // Header: naveg. de mês + streak badge
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () {
+                  ref.read(_calendarMonthProvider.notifier).state =
+                      DateTime(month.year, month.month - 1);
+                },
+              ),
+              Expanded(
+                child: Text(
+                  monthLabel,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.titleMedium,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: month.year == today.year &&
+                        month.month == today.month
+                    ? null
+                    : () {
+                        ref.read(_calendarMonthProvider.notifier).state =
+                            DateTime(month.year, month.month + 1);
+                      },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Dias da semana
+          Row(
+            children: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D']
+                .map((l) => Expanded(
+                      child: Center(
+                        child: Text(l,
+                            style: AppTextStyles.labelMedium
+                                .copyWith(fontWeight: FontWeight.w700)),
+                      ),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: 6),
+          // Grid de dias
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 4,
+              crossAxisSpacing: 4,
+              childAspectRatio: 1,
+            ),
+            itemCount: startOffset + daysInMonth,
+            itemBuilder: (_, index) {
+              if (index < startOffset) return const SizedBox();
+              final day = index - startOffset + 1;
+              final dateStr =
+                  '$monthStr-${day.toString().padLeft(2, '0')}';
+              final isActive = activeDays.contains(dateStr);
+              final isToday = today.year == month.year &&
+                  today.month == month.month &&
+                  today.day == day;
+              final isFuture = DateTime(month.year, month.month, day)
+                  .isAfter(today);
+
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? AppColors.forestGreen
+                      : isFuture
+                          ? Colors.transparent
+                          : AppColors.surfaceVariant,
+                  shape: BoxShape.circle,
+                  border: isToday
+                      ? Border.all(
+                          color: AppColors.warmGold, width: 2)
+                      : null,
+                ),
+                child: Center(
+                  child: Text(
+                    '$day',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight:
+                          isToday ? FontWeight.w700 : FontWeight.w400,
+                      color: isActive
+                          ? Colors.white
+                          : isFuture
+                              ? AppColors.textMuted
+                              : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          // Rodapé: dias lidos e sequência atual
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _CalendarChip(
+                icon: Icons.calendar_today_outlined,
+                label: '$readDaysThisMonth ${readDaysThisMonth == 1 ? 'dia' : 'dias'} lidos',
+              ),
+              _CalendarChip(
+                icon: Icons.local_fire_department,
+                label: '$streak ${streak == 1 ? 'dia' : 'dias'} seguidos',
+                highlight: streak > 0,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _monthName(int month) => const [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      ][month - 1];
+}
+
+class _CalendarChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool highlight;
+
+  const _CalendarChip({
+    required this.icon,
+    required this.label,
+    this.highlight = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        highlight ? AppColors.warmGold : AppColors.textSecondary;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(label,
+            style: AppTextStyles.labelMedium.copyWith(color: color)),
+      ],
+    );
+  }
+}
+
+// ── Highlights (destaques do período) ────────────────────────────────────────
+
+class _HighlightsWidget extends StatelessWidget {
+  final List<Map<String, dynamic>> heatmap;
+  final Map<String, dynamic> year;
+
+  const _HighlightsWidget({required this.heatmap, required this.year});
+
+  @override
+  Widget build(BuildContext context) {
+    // Melhor dia (mais minutos)
+    Map<String, dynamic>? bestDay;
+    for (final d in heatmap) {
+      final mins = (d['total_minutes'] as num?)?.toInt() ?? 0;
+      if (bestDay == null ||
+          mins > ((bestDay['total_minutes'] as num?)?.toInt() ?? 0)) {
+        bestDay = d;
+      }
+    }
+
+    final activeDays =
+        heatmap.where((d) => ((d['total_minutes'] as num?)?.toInt() ?? 0) > 0).length;
+
+    final totalMinutes =
+        (year['total_minutes'] as num?)?.toInt() ?? 0;
+    final avgMinutes =
+        activeDays > 0 ? (totalMinutes / activeDays).round() : 0;
+
+    final bestMins =
+        (bestDay?['total_minutes'] as num?)?.toInt() ?? 0;
+    final bestHours = bestMins ~/ 60;
+    final bestMinsRem = bestMins % 60;
+    final bestLabel = bestHours > 0
+        ? '${bestHours}h ${bestMinsRem}min'
+        : '${bestMinsRem}min';
+
+    final avgHours = avgMinutes ~/ 60;
+    final avgMinsRem = avgMinutes % 60;
+    final avgLabel = avgHours > 0
+        ? '${avgHours}h ${avgMinsRem}min'
+        : '${avgMinsRem}min';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _HighlightRow(
+            icon: Icons.emoji_events_outlined,
+            label: 'Melhor dia',
+            value: bestDay != null ? '$bestLabel (${bestDay['date']})' : '—',
+          ),
+          const Divider(height: 20, color: AppColors.border),
+          _HighlightRow(
+            icon: Icons.trending_up_outlined,
+            label: 'Média por dia ativo',
+            value: activeDays > 0 ? avgLabel : '—',
+          ),
+          const Divider(height: 20, color: AppColors.border),
+          _HighlightRow(
+            icon: Icons.check_circle_outline,
+            label: 'Dias com leitura (ano)',
+            value: '$activeDays ${activeDays == 1 ? 'dia' : 'dias'}',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HighlightRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _HighlightRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.forestGreen),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(label, style: AppTextStyles.bodyMedium),
+        ),
+        Text(value,
+            style: AppTextStyles.titleMedium
+                .copyWith(color: AppColors.textPrimary)),
+      ],
+    );
+  }
+}
+
+// ── Heatmap ───────────────────────────────────────────────────────────────────
+
 class _HeatmapWidget extends StatelessWidget {
   final List<Map<String, dynamic>> data;
 
@@ -155,7 +656,7 @@ class _HeatmapWidget extends StatelessWidget {
           border: Border.all(color: AppColors.border),
         ),
         child: Center(
-          child: Text('Nenhuma sessao registrada ainda',
+          child: Text('Nenhuma sessão registrada ainda',
               style: AppTextStyles.bodyMedium),
         ),
       );

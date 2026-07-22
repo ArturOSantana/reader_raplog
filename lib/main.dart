@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/local/local_database.dart';
 import 'core/router/app_router.dart';
+import 'core/router/route_persistence.dart';
 import 'core/theme/app_theme.dart';
 
 Future<void> main() async {
@@ -16,7 +18,17 @@ Future<void> main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
-  runApp(const ProviderScope(child: ReadlogApp()));
+  // Inicializa banco SQLite antes do runApp
+  await LocalDatabase.instance.db;
+
+  final lastRoute = await loadLastRoute();
+
+  runApp(ProviderScope(
+    overrides: [
+      initialRouteProvider.overrideWithValue(lastRoute),
+    ],
+    child: const ReadlogApp(),
+  ));
 }
 
 class ReadlogApp extends ConsumerWidget {

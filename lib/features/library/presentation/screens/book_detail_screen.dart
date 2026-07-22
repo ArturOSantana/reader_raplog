@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book.dart';
+import '../../../../shared/models/reading_session.dart';
 import '../../../../shared/providers/providers.dart';
 
 final _bookDetailProvider =
-    FutureProvider.autoDispose.family<Book, String>((ref, id) {
-  return ref.watch(bookRepositoryProvider).fetchById(id);
+    FutureProvider.autoDispose.family<Book, String>((ref, id) async {
+  final book = await ref.read(bookRepositoryProvider).fetchById(id);
+  if (book == null) throw Exception('Livro não encontrado');
+  return book;
+});
+
+final _recentSessionsProvider =
+    FutureProvider.autoDispose.family<List<ReadingSession>, String>((ref, bookId) async {
+  final all = await ref.watch(sessionRepositoryProvider).fetchByBook(bookId);
+  return all.take(3).toList();
 });
 
 class BookDetailScreen extends ConsumerWidget {
@@ -22,11 +32,17 @@ class BookDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          if (book.valueOrNull != null)
+          if (book.valueOrNull != null) ...[
+            IconButton(
+              icon: const Icon(Icons.share_outlined),
+              tooltip: 'Compartilhar',
+              onPressed: () => _shareBook(book.valueOrNull!),
+            ),
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               onPressed: () {},
             ),
+          ],
         ],
       ),
       body: book.when(
@@ -35,6 +51,30 @@ class BookDetailScreen extends ConsumerWidget {
         data: (b) => _BookDetailBody(book: b),
       ),
     );
+  }
+
+  void _shareBook(Book book) {
+    final buffer = StringBuffer();
+    buffer.writeln('📚 ${book.title}');
+    if (book.author != null) buffer.writeln('✍️  ${book.author}');
+    buffer.writeln('📖 Status: ${book.status.label}');
+
+    if (book.currentPage != null && book.totalPages != null) {
+      final pct = ((book.currentPage! / book.totalPages!) * 100)
+          .toStringAsFixed(0);
+      buffer.writeln('📊 Progresso: ${book.currentPage}/${book.totalPages} páginas ($pct%)');
+    } else if (book.currentPage != null) {
+      buffer.writeln('📊 Página atual: ${book.currentPage}');
+    }
+
+    if (book.rating != null) {
+      final stars = '⭐' * book.rating! + '☆' * (5 - book.rating!);
+      buffer.writeln('$stars (${book.rating}/5)');
+    }
+
+    buffer.writeln('\nRegistrado no ReadLog 📔');
+
+    SharePlus.instance.share(ShareParams(text: buffer.toString(), subject: book.title));
   }
 }
 
@@ -45,12 +85,15 @@ class _BookDetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final recentSessions = ref.watch(_recentSessionsProvider(book.id));
+
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Capa
             Container(
               width: 80,
               height: 110,
@@ -58,8 +101,17 @@ class _BookDetailBody extends ConsumerWidget {
                 color: AppColors.forestGreen.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.menu_book_outlined,
-                  color: AppColors.forestGreen, size: 36),
+              child: book.coverUrl != null && book.coverUrl!.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(book.coverUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                              Icons.menu_book_outlined,
+                              color: AppColors.forestGreen, size: 36)),
+                    )
+                  : const Icon(Icons.menu_book_outlined,
+                      color: AppColors.forestGreen, size: 36),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -83,32 +135,134 @@ class _BookDetailBody extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 24),
+
+        // Progresso
+        if (book.currentPage != null && book.totalPages != null) ...[
+          _ProgressBar(current: book.currentPage!, total: book.totalPages!),
+          const SizedBox(height: 8),
+        ],
+
+        if (book.currentPage != null) ...[
+          _InfoRow(
+            label: 'Página atual',
+            value: book.totalPages != null
+                ? '${book.currentPage} / ${book.totalPages}'
+                : '${book.currentPage}',
+          ),
+          const Divider(height: 1, color: AppColors.border),
+        ],
         if (book.totalPages != null) ...[
-          _InfoRow(label: 'Total de paginas', value: '${book.totalPages}'),
+          _InfoRow(label: 'Total de páginas', value: '${book.totalPages}'),
           const Divider(height: 1, color: AppColors.border),
         ],
         if (book.genre != null) ...[
-          _InfoRow(label: 'Genero', value: book.genre!),
+          _InfoRow(label: 'Gênero', value: book.genre!),
           const Divider(height: 1, color: AppColors.border),
         ],
         if (book.publisher != null) ...[
           _InfoRow(label: 'Editora', value: book.publisher!),
           const Divider(height: 1, color: AppColors.border),
         ],
-        const SizedBox(height: 24),
-        FilledButton.icon(
-          onPressed: () => context.go('/session?bookId=${book.id}'),
-          icon: const Icon(Icons.timer_outlined),
-          label: const Text('Iniciar leitura'),
-        ),
+        if (book.startDate != null) ...[
+          _InfoRow(
+            label: 'Início',
+            value:
+                '${book.startDate!.day.toString().padLeft(2, '0')}/${book.startDate!.month.toString().padLeft(2, '0')}/${book.startDate!.year}',
+          ),
+          const Divider(height: 1, color: AppColors.border),
+        ],
+        if (book.endDate != null) ...[
+          _InfoRow(
+            label: 'Concluído',
+            value:
+                '${book.endDate!.day.toString().padLeft(2, '0')}/${book.endDate!.month.toString().padLeft(2, '0')}/${book.endDate!.year}',
+          ),
+          const Divider(height: 1, color: AppColors.border),
+        ],
+
+        const SizedBox(height: 20),
+
+        // Ações
+        if (book.status == BookStatus.reading)
+          FilledButton.icon(
+            onPressed: () => context.go('/session?bookId=${book.id}'),
+            icon: const Icon(Icons.timer_outlined),
+            label: const Text('Iniciar leitura'),
+          ),
         const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: () => context.push('/notes/${book.id}'),
           icon: const Icon(Icons.note_alt_outlined),
-          label: const Text('Ver notas'),
+          label: const Text('Notas'),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => context.push('/highlights/${book.id}',
+              extra: book.title),
+          icon: const Icon(Icons.format_quote),
+          label: const Text('Trechos favoritos'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.warmGold,
+            side: const BorderSide(color: AppColors.warmGold),
+          ),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: () => context.push('/session-history/${book.id}',
+              extra: book.title),
+          icon: const Icon(Icons.history_outlined),
+          label: const Text('Histórico de sessões'),
+        ),
+
+        const SizedBox(height: 20),
         _StatusSelector(book: book),
+
+        // Sessões recentes
+        recentSessions.when(
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (sessions) {
+            if (sessions.isEmpty) return const SizedBox.shrink();
+            return _RecentSessions(sessions: sessions, bookId: book.id, bookTitle: book.title);
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _ProgressBar extends StatelessWidget {
+  final int current;
+  final int total;
+
+  const _ProgressBar({required this.current, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = (current / total).clamp(0.0, 1.0);
+    final percent = (progress * 100).toStringAsFixed(0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Progresso', style: AppTextStyles.labelMedium),
+            Text('$percent%', style: AppTextStyles.labelMedium),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 6,
+            backgroundColor: AppColors.border,
+            valueColor:
+                const AlwaysStoppedAnimation<Color>(AppColors.forestGreen),
+          ),
+        ),
       ],
     );
   }
@@ -182,7 +336,6 @@ class _StatusSelector extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 8),
         Text('Alterar status', style: AppTextStyles.titleMedium),
         const SizedBox(height: 8),
         Wrap(
@@ -193,9 +346,14 @@ class _StatusSelector extends ConsumerWidget {
               label: Text(s.label),
               selected: isSelected,
               onSelected: (_) async {
+                final updates = <String, dynamic>{'status': s.dbValue};
+                if (s == BookStatus.read && book.endDate == null) {
+                  updates['end_date'] =
+                      DateTime.now().toIso8601String().substring(0, 10);
+                }
                 await ref
                     .read(bookRepositoryProvider)
-                    .update(book.id, {'status': s.dbValue});
+                    .update(book.id, updates);
                 ref.invalidate(_bookDetailProvider(book.id));
               },
               selectedColor: AppColors.forestGreen,
@@ -205,6 +363,73 @@ class _StatusSelector extends ConsumerWidget {
             );
           }).toList(),
         ),
+      ],
+    );
+  }
+}
+
+class _RecentSessions extends StatelessWidget {
+  final List<ReadingSession> sessions;
+  final String bookId;
+  final String bookTitle;
+
+  const _RecentSessions({
+    required this.sessions,
+    required this.bookId,
+    required this.bookTitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Sessões recentes', style: AppTextStyles.titleMedium),
+            TextButton(
+              onPressed: () =>
+                  context.push('/session-history/$bookId', extra: bookTitle),
+              child: const Text('Ver todas'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...sessions.map((s) {
+          final date = s.startedAt;
+          final dateLabel =
+              '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
+          final duration = s.durationMinutes;
+          final durationLabel = duration != null
+              ? (duration >= 60
+                  ? '${duration ~/ 60}h ${duration % 60}min'
+                  : '${duration}min')
+              : '—';
+          final pages = s.pagesRead;
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                Text(dateLabel, style: AppTextStyles.titleMedium),
+                const Spacer(),
+                Text(durationLabel, style: AppTextStyles.bodyMedium),
+                if (pages != null) ...[
+                  const SizedBox(width: 12),
+                  Text('$pages pág.', style: AppTextStyles.bodyMedium),
+                ],
+              ],
+            ),
+          );
+        }),
       ],
     );
   }

@@ -22,6 +22,7 @@ class LibraryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const DrawerButton(),
         title: const Text('Biblioteca'),
         actions: [
           IconButton(

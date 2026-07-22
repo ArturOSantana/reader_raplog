@@ -13,6 +13,12 @@ dependencies:
   # Supabase
   supabase_flutter: ^2.5.6
 
+  # Google Sign-In
+  google_sign_in: ^6.2.1
+
+  # HTTP
+  http: ^1.2.2
+
   # Env
   flutter_dotenv: ^5.2.1
 
@@ -25,11 +31,20 @@ dependencies:
 
   # Local storage / cache
   shared_preferences: ^2.3.1
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+  connectivity_plus: ^6.1.4
+
+  # Notifications
+  flutter_local_notifications: ^18.0.1
 
   # UI
   cached_network_image: ^3.3.1
   shimmer: ^3.0.0
   fl_chart: ^0.68.0
+
+  # Share
+  share_plus: ^13.0.0
 
   # Utils
   intl: ^0.19.0

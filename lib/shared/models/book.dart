@@ -58,6 +58,7 @@ class Book extends Equatable {
   final DateTime? startDate;
   final DateTime? endDate;
   final int? rating;
+  final int? currentPage;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -74,6 +75,7 @@ class Book extends Equatable {
     this.startDate,
     this.endDate,
     this.rating,
+    this.currentPage,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -95,6 +97,7 @@ class Book extends Equatable {
             ? DateTime.parse(map['end_date'] as String)
             : null,
         rating: map['rating'] as int?,
+        currentPage: map['current_page'] as int?,
         createdAt: DateTime.parse(map['created_at'] as String),
         updatedAt: DateTime.parse(map['updated_at'] as String),
       );
@@ -112,6 +115,7 @@ class Book extends Equatable {
         'start_date': startDate?.toIso8601String().substring(0, 10),
         'end_date': endDate?.toIso8601String().substring(0, 10),
         'rating': rating,
+        'current_page': currentPage,
       };
 
   Book copyWith({
@@ -125,6 +129,7 @@ class Book extends Equatable {
     DateTime? startDate,
     DateTime? endDate,
     int? rating,
+    int? currentPage,
   }) =>
       Book(
         id: id,
@@ -139,10 +144,11 @@ class Book extends Equatable {
         startDate: startDate ?? this.startDate,
         endDate: endDate ?? this.endDate,
         rating: rating ?? this.rating,
+        currentPage: currentPage ?? this.currentPage,
         createdAt: createdAt,
         updatedAt: DateTime.now(),
       );
 
   @override
-  List<Object?> get props => [id, userId, title, author, status, rating];
+  List<Object?> get props => [id, userId, title, author, status, rating, currentPage];
 }

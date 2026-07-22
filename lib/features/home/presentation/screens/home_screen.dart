@@ -3,34 +3,42 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book.dart';
+import '../../../../shared/models/goal.dart';
 import '../../../../shared/providers/providers.dart';
 
 final _homeDataProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final sessionRepo = ref.watch(sessionRepositoryProvider);
   final bookRepo = ref.watch(bookRepositoryProvider);
+  final goalRepo = ref.watch(goalRepositoryProvider);
 
   final results = await Future.wait([
     sessionRepo.fetchDailyStats(),
     sessionRepo.fetchStreak(),
     bookRepo.fetchAll(status: BookStatus.reading),
+    goalRepo.fetchAll(),
   ]);
 
   return {
     'daily': results[0] as Map<String, dynamic>,
     'streak': results[1] as int,
     'reading': results[2] as List<Book>,
+    'goals': results[3] as List<Goal>,
   };
 });
+
+final homeRefreshTriggerProvider = StateProvider<int>((ref) => 0);
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(homeRefreshTriggerProvider);
     final data = ref.watch(_homeDataProvider);
 
     return Scaffold(
       appBar: AppBar(
+        leading: const DrawerButton(),
         title: const Text('Readlog'),
       ),
       body: data.when(
@@ -40,18 +48,38 @@ class HomeScreen extends ConsumerWidget {
           final daily = d['daily'] as Map<String, dynamic>;
           final streak = d['streak'] as int;
           final reading = d['reading'] as List<Book>;
+          final goals = d['goals'] as List<Goal>;
+
+          final todayMinutes = (daily['total_minutes'] as num?)?.toInt() ?? 0;
+          final todayPages = (daily['total_pages'] as num?)?.toInt() ?? 0;
+
+          // Filtra apenas metas diárias para exibir na Home
+          final dailyGoals = goals.where((g) =>
+              g.type == GoalType.dailyMinutes ||
+              g.type == GoalType.dailyPages).toList();
 
           return RefreshIndicator(
-            onRefresh: () => ref.refresh(_homeDataProvider.future),
+            onRefresh: () async {
+              ref.invalidate(_homeDataProvider);
+              await ref.read(_homeDataProvider.future);
+            },
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
                 _StreakCard(streak: streak),
                 const SizedBox(height: 16),
                 _DailyStatsCard(
-                  minutes: (daily['total_minutes'] as num?)?.toInt() ?? 0,
-                  pages: (daily['total_pages'] as num?)?.toInt() ?? 0,
+                  minutes: todayMinutes,
+                  pages: todayPages,
                 ),
+                if (dailyGoals.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _DailyGoalRow(
+                    goals: dailyGoals,
+                    todayMinutes: todayMinutes,
+                    todayPages: todayPages,
+                  ),
+                ],
                 const SizedBox(height: 24),
                 Text('Lendo agora', style: AppTextStyles.headlineMedium),
                 const SizedBox(height: 12),
@@ -255,6 +283,86 @@ class _EmptyReadingCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Linha compacta de progresso das metas diárias — exibida na Home.
+class _DailyGoalRow extends StatelessWidget {
+  final List<Goal> goals;
+  final int todayMinutes;
+  final int todayPages;
+
+  const _DailyGoalRow({
+    required this.goals,
+    required this.todayMinutes,
+    required this.todayPages,
+  });
+
+  int _current(Goal goal) {
+    if (goal.type == GoalType.dailyMinutes) return todayMinutes;
+    return todayPages;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: goals.map((goal) {
+        final current = _current(goal);
+        final target = goal.targetValue;
+        final progress = (current / target).clamp(0.0, 1.0);
+        final done = current >= target;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: done ? AppColors.forestGreen : AppColors.border,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Meta: ${goal.type.label}',
+                    style: AppTextStyles.labelMedium,
+                  ),
+                  Text(
+                    done
+                        ? '✓ Meta atingida!'
+                        : '$current / $target ${goal.type.unit}',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: done
+                          ? AppColors.forestGreen
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 5,
+                  backgroundColor: AppColors.border,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    done
+                        ? AppColors.forestGreen
+                        : AppColors.forestGreen.withValues(alpha: 0.55),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

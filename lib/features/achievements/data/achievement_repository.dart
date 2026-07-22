@@ -11,7 +11,8 @@ class AchievementRepository {
   Future<List<Achievement>> fetchAll() async {
     final data = await _client
         .from('achievements')
-        .select('*, user_achievements(unlocked_at)')
+        .select('*, user_achievements!left(unlocked_at, user_id)')
+        .eq('user_achievements.user_id', _userId)
         .order('xp_reward', ascending: true);
 
     return (data as List).map((e) {
