@@ -1,30 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/providers/providers.dart';
 
-class SplashScreen extends ConsumerWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(authStateProvider);
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
 
-    auth.whenData((state) async {
-      if (!context.mounted) return;
-      if (state.session == null) {
-        context.go('/auth/login');
-        return;
-      }
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  bool _navigated = false;
 
-      // Usuário logado: força nova leitura do provider (invalida cache antigo)
-      ref.invalidate(onboardingCompletedProvider);
-      final completed = await ref.read(onboardingCompletedProvider.future);
-      if (!context.mounted) return;
-      context.go(completed ? '/home' : '/onboarding');
+  Future<void> _navigate(Session? session) async {
+    if (_navigated || !mounted) return;
+    _navigated = true;
+
+    if (session == null) {
+      context.go('/auth/login');
+      return;
+    }
+
+    // Usuário logado: força nova leitura do provider (invalida cache antigo)
+    ref.invalidate(onboardingCompletedProvider);
+    final completed = await ref.read(onboardingCompletedProvider.future);
+    if (!mounted) return;
+    context.go(completed ? '/home' : '/onboarding');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Verifica sessão imediatamente (sem esperar o stream emitir)
+    final currentSession = Supabase.instance.client.auth.currentSession;
+    if (currentSession != null) {
+      // Já tem sessão ativa — navega assim que o frame estiver pronto
+      WidgetsBinding.instance.addPostFrameCallback((_) => _navigate(currentSession));
+    }
+    // Se não tiver sessão, aguarda o stream (listener abaixo no build)
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Escuta mudanças de auth (login, logout, token refresh)
+    ref.listen(authStateProvider, (_, next) {
+      next.whenData((state) => _navigate(state.session));
     });
+
+    // Se ainda não temos sessão e o stream está loading, redireciona para login
+    final auth = ref.watch(authStateProvider);
+    if (auth is AsyncData && !_navigated) {
+      final session = auth.valueOrNull?.session;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _navigate(session));
+    }
 
     return Scaffold(
       backgroundColor: AppColors.forestGreen,
