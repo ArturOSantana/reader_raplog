@@ -458,6 +458,11 @@ class _StatusBadge extends StatelessWidget {
         fg = AppColors.textMuted;
         icon = Icons.lock_outline;
         break;
+      case ClubStatus.archived:
+        bg = AppColors.surfaceVariant;
+        fg = AppColors.textMuted;
+        icon = Icons.archive_outlined;
+        break;
     }
 
     return Container(
@@ -624,10 +629,11 @@ class _CreateClubSheetState extends ConsumerState<_CreateClubSheet> {
         Navigator.pop(context);
         widget.onCreated(club);
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[CreateClub] Erro: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro ao criar clube. Tente novamente.')),
+          SnackBar(content: Text('Erro ao criar clube: $e')),
         );
       }
     } finally {

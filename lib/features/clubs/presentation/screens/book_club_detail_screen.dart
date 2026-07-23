@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/models/club_extras.dart';
@@ -133,9 +134,10 @@ class _ClubDetailBody extends ConsumerWidget {
             _ClubHeader(club: club),
             const SizedBox(height: 16),
             // ── Código de convite ────────────────────────────────────────
-            if (club.inviteCode != null && club.canManage && !club.isClosed)
-              _InviteCodeCard(inviteCode: club.inviteCode!),
-            if (club.inviteCode != null && club.canManage && !club.isClosed)
+            if (club.inviteCode != null && !club.isClosed)
+              _InviteCodeCard(
+                  inviteCode: club.inviteCode!, clubName: club.name),
+            if (club.inviteCode != null && !club.isClosed)
               const SizedBox(height: 16),
             // ── Livro atual ──────────────────────────────────────────────
             _CurrentBookCard(club: club),
@@ -432,8 +434,12 @@ class _StatusBanner extends StatelessWidget {
 
 class _InviteCodeCard extends StatelessWidget {
   final String inviteCode;
+  final String clubName;
 
-  const _InviteCodeCard({required this.inviteCode});
+  const _InviteCodeCard(
+      {required this.inviteCode, required this.clubName});
+
+  String get _inviteLink => 'https://readlog.app/join/$inviteCode';
 
   @override
   Widget build(BuildContext context) {
@@ -454,7 +460,7 @@ class _InviteCodeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Código de convite',
+                Text('Convite para o clube',
                     style: TextStyle(
                         fontSize: 12, color: cs.onSurfaceVariant)),
                 const SizedBox(height: 2),
@@ -470,6 +476,7 @@ class _InviteCodeCard extends StatelessWidget {
               ],
             ),
           ),
+          // Copiar código
           IconButton(
             icon: Icon(Icons.copy_outlined, color: accentColor, size: 18),
             onPressed: () {
@@ -479,6 +486,21 @@ class _InviteCodeCard extends StatelessWidget {
               );
             },
             tooltip: 'Copiar código',
+          ),
+          // Compartilhar link
+          IconButton(
+            icon: Icon(Icons.share_outlined, color: accentColor, size: 18),
+            onPressed: () {
+              SharePlus.instance.share(
+                ShareParams(
+                  text:
+                      'Venha ler comigo no clube "$clubName" no Readlog! 📚\n'
+                      'Use o código **$inviteCode** ou acesse:\n$_inviteLink',
+                  subject: 'Convite para o clube $clubName',
+                ),
+              );
+            },
+            tooltip: 'Compartilhar convite',
           ),
         ],
       ),
@@ -580,6 +602,11 @@ class _ClubHeader extends StatelessWidget {
         fg = Colors.white70;
         icon = Icons.lock_outline;
         break;
+      case ClubStatus.archived:
+        bg = Colors.white.withValues(alpha: 0.08);
+        fg = Colors.white54;
+        icon = Icons.archive_outlined;
+        break;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -600,14 +627,53 @@ class _ClubHeader extends StatelessWidget {
 
 // ── Current Book Card ─────────────────────────────────────────────────────────
 
-class _CurrentBookCard extends StatelessWidget {
+class _CurrentBookCard extends ConsumerStatefulWidget {
   final BookClub club;
 
   const _CurrentBookCard({required this.club});
 
   @override
+  ConsumerState<_CurrentBookCard> createState() => _CurrentBookCardState();
+}
+
+class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
+  bool _addingToLibrary = false;
+
+  Future<void> _addToLibrary() async {
+    final club = widget.club;
+    if (club.currentBookTitle == null) return;
+    setState(() => _addingToLibrary = true);
+    try {
+      await ref.read(bookRepositoryProvider).insert({
+        'title': club.currentBookTitle,
+        'author': club.currentBookAuthor,
+        'status': 'reading',
+        'source_club_id': club.id,
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '"${club.currentBookTitle}" adicionado à sua biblioteca!',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao adicionar à biblioteca.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _addingToLibrary = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final club = widget.club;
     final hasBook = club.currentBookTitle != null;
 
     return Container(
@@ -621,78 +687,109 @@ class _CurrentBookCard extends StatelessWidget {
               : cs.outlineVariant,
         ),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 60,
-            decoration: BoxDecoration(
-              color: hasBook
-                  ? AppColors.warmGold.withValues(alpha: 0.18)
-                  : cs.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(
-              Icons.menu_book_outlined,
-              color: hasBook ? AppColors.warmGold : cs.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: hasBook
+                      ? AppColors.warmGold.withValues(alpha: 0.18)
+                      : cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  Icons.menu_book_outlined,
+                  color: hasBook ? AppColors.warmGold : cs.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        'Leitura atual',
-                        style: AppTextStyles.labelMedium
-                            .copyWith(color: cs.onSurfaceVariant),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Leitura atual',
+                            style: AppTextStyles.labelMedium
+                                .copyWith(color: cs.onSurfaceVariant),
+                          ),
+                        ),
+                        if (hasBook) _BookStatusChip(club.currentBookStatus),
+                      ],
                     ),
-                    if (hasBook) _BookStatusChip(club.currentBookStatus),
+                    const SizedBox(height: 4),
+                    Text(
+                      hasBook ? club.currentBookTitle! : 'Nenhum livro definido',
+                      style: AppTextStyles.titleMedium.copyWith(
+                        color: hasBook ? cs.onSurface : cs.onSurfaceVariant,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (club.currentBookAuthor != null)
+                      Text(
+                        club.currentBookAuthor!,
+                        style: AppTextStyles.bodyMedium
+                            .copyWith(color: cs.onSurfaceVariant),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    if (hasBook && club.readingPacePerDay != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        '${club.readingPacePerDay} pág/dia',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.forestGreen,
+                        ),
+                      ),
+                    ],
+                    if (hasBook && club.readingTargetEndDate != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Meta: ${DateFormat('dd/MM/yyyy', 'pt_BR').format(club.readingTargetEndDate!)}',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  hasBook ? club.currentBookTitle! : 'Nenhum livro definido',
-                  style: AppTextStyles.titleMedium.copyWith(
-                    color: hasBook ? cs.onSurface : cs.onSurfaceVariant,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (club.currentBookAuthor != null)
-                  Text(
-                    club.currentBookAuthor!,
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: cs.onSurfaceVariant),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                if (hasBook && club.readingPacePerDay != null) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    '${club.readingPacePerDay} pág/dia',
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: AppColors.forestGreen,
-                    ),
-                  ),
-                ],
-                if (hasBook && club.readingTargetEndDate != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'Meta: ${DateFormat('dd/MM/yyyy', 'pt_BR').format(club.readingTargetEndDate!)}',
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: cs.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
+          // ── Botão: adicionar à biblioteca com source_club_id ──────────
+          if (hasBook) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _addingToLibrary ? null : _addToLibrary,
+                icon: _addingToLibrary
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add, size: 18),
+                label: const Text('Adicionar à minha biblioteca'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.warmGold,
+                  side: BorderSide(
+                      color: AppColors.warmGold.withValues(alpha: 0.6)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  textStyle: AppTextStyles.labelMedium
+                      .copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

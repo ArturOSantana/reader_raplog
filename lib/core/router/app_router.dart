@@ -25,6 +25,9 @@ import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/social/presentation/screens/social_screen.dart';
 import '../../features/clubs/presentation/screens/book_clubs_screen.dart';
 import '../../features/clubs/presentation/screens/book_club_detail_screen.dart';
+import '../../features/clubs/presentation/screens/club_reading_room_screen.dart';
+import '../../features/clubs/presentation/screens/club_checkin_screen.dart';
+import '../../features/clubs/presentation/screens/club_calendar_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/notifications/presentation/screens/notification_settings_screen.dart';
@@ -200,6 +203,43 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => BookClubDetailScreen(
                   clubId: state.pathParameters['clubId']!,
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'reading-room',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, String>? ?? {};
+                      return ClubReadingRoomScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] ?? 'Clube',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'checkin',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ClubCheckinScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        latestSessionId:
+                            extra['latestSessionId'] as String?,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'calendar',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, String>? ?? {};
+                      return ClubCalendarScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] ?? 'Clube',
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),

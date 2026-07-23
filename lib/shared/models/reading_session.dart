@@ -6,6 +6,41 @@ enum SessionStatus { active, paused, finished }
 /// Objetivo opcional que o usuário pode definir ao iniciar a sessão.
 enum SessionGoal { byTime, byPage, dailyGoal, freeReading }
 
+/// Humor do leitor ao finalizar a sessão (base para Diário do Livro — V3).
+enum SessionMood { happy, neutral, confused, bored, excited }
+
+extension SessionMoodX on SessionMood {
+  String get dbValue => name;
+
+  String get emoji {
+    switch (this) {
+      case SessionMood.happy:    return '😊';
+      case SessionMood.neutral:  return '😐';
+      case SessionMood.confused: return '🤔';
+      case SessionMood.bored:    return '😴';
+      case SessionMood.excited:  return '🤩';
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case SessionMood.happy:    return 'Animado';
+      case SessionMood.neutral:  return 'Neutro';
+      case SessionMood.confused: return 'Confuso';
+      case SessionMood.bored:    return 'Entediado';
+      case SessionMood.excited:  return 'Empolgado';
+    }
+  }
+
+  static SessionMood? fromDb(String? v) {
+    if (v == null) return null;
+    return SessionMood.values.firstWhere(
+      (e) => e.name == v,
+      orElse: () => SessionMood.neutral,
+    );
+  }
+}
+
 class ReadingSession extends Equatable {
   final String id;
   final String userId;
@@ -24,6 +59,10 @@ class ReadingSession extends Equatable {
   final SessionGoal? sessionGoal;
   /// Valor numérico do objetivo: minutos ou número de página destino.
   final int? goalValue;
+  /// Humor do leitor ao finalizar a sessão (opcional).
+  final SessionMood? mood;
+  /// Impressão rápida da sessão — base para o Diário do Livro. Máx. 500 chars.
+  final String? miniReview;
   final DateTime createdAt;
 
   const ReadingSession({
@@ -41,6 +80,8 @@ class ReadingSession extends Equatable {
     this.status = SessionStatus.active,
     this.sessionGoal,
     this.goalValue,
+    this.mood,
+    this.miniReview,
     required this.createdAt,
   });
 
@@ -54,6 +95,8 @@ class ReadingSession extends Equatable {
     SessionStatus? status,
     SessionGoal? sessionGoal,
     int? goalValue,
+    SessionMood? mood,
+    String? miniReview,
   }) =>
       ReadingSession(
         id: id,
@@ -71,6 +114,8 @@ class ReadingSession extends Equatable {
         status: status ?? this.status,
         sessionGoal: sessionGoal ?? this.sessionGoal,
         goalValue: goalValue ?? this.goalValue,
+        mood: mood ?? this.mood,
+        miniReview: miniReview ?? this.miniReview,
         createdAt: createdAt,
       );
 
@@ -99,6 +144,8 @@ class ReadingSession extends Equatable {
               )
             : null,
         goalValue: map['goal_value'] as int?,
+        mood: SessionMoodX.fromDb(map['mood'] as String?),
+        miniReview: map['mini_review'] as String?,
         createdAt: DateTime.parse(map['created_at'] as String),
       );
 
@@ -117,8 +164,10 @@ class ReadingSession extends Equatable {
         'status': status.name,
         'session_goal': sessionGoal?.name,
         'goal_value': goalValue,
+        'mood': mood?.dbValue,
+        'mini_review': miniReview,
       };
 
   @override
-  List<Object?> get props => [id, userId, bookId, startedAt];
+  List<Object?> get props => [id, userId, bookId, startedAt, mood];
 }

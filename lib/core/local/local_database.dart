@@ -148,4 +148,10 @@ class LocalDatabase {
     await _db?.close();
     _db = null;
   }
+
+  /// Injeta um banco externo no singleton — uso exclusivo em testes.
+  // ignore: invalid_use_of_visible_for_testing_member
+  void injectForTest(Database db) {
+    _db = db;
+  }
 }

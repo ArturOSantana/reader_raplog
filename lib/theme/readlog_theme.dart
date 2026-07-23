@@ -776,3 +776,334 @@ class ReadLogCatalogCard extends StatelessWidget {
     );
   }
 }
+
+
+/// -------------------- CLUBE: MILESTONE TRACK --------------------
+///
+/// Trilha de marcos (25/50/75/100%) para o ciclo de leitura do clube.
+/// Reaproveita o vocabulário visual da barra de progresso da biblioteca —
+/// não usa ícones de "conquista social" genéricos.
+
+class ReadLogMilestoneTrack extends StatelessWidget {
+  /// 0 a 4 — quantos marcos já foram concluídos pelo clube.
+  final int completedSegments;
+  final List<String> labels;
+
+  const ReadLogMilestoneTrack({
+    super.key,
+    required this.completedSegments,
+    this.labels = const ['25%', '50%', '75%', '100%'],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: List.generate(labels.length, (i) {
+            final done = i < completedSegments;
+            final current = i == completedSegments;
+            return Expanded(
+              child: Container(
+                margin: EdgeInsets.only(right: i == labels.length - 1 ? 0 : 4),
+                height: 7,
+                decoration: BoxDecoration(
+                  color: done
+                      ? ReadLogColors.stamp
+                      : current
+                          ? ReadLogColors.brass
+                          : ReadLogColors.paperDeep,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: labels
+              .map((l) => Text(
+                    l,
+                    style: ReadLogType.mono(
+                      size: 9.5,
+                      color: ReadLogColors.charcoal.withValues(alpha: 0.65),
+                    ),
+                  ))
+              .toList(),
+        ),
+      ],
+    );
+  }
+}
+
+/// -------------------- CLUBE: LIVE CHIP (Sala de Leitura) --------------------
+///
+/// Selo pulsante para presença ao vivo (Supabase Presence/Broadcast).
+/// Não usa ícone de câmera/videochamada — é "ponto de tinta aceso".
+
+class ReadLogLiveChip extends StatefulWidget {
+  final String label;
+  const ReadLogLiveChip({super.key, required this.label});
+
+  @override
+  State<ReadLogLiveChip> createState() => _ReadLogLiveChipState();
+}
+
+class _ReadLogLiveChipState extends State<ReadLogLiveChip>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: ReadLogColors.stamp.withValues(alpha: 0.14),
+        border: Border.all(color: ReadLogColors.stamp),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FadeTransition(
+            opacity: _controller,
+            child: Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                color: ReadLogColors.stamp,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            widget.label.toUpperCase(),
+            style: ReadLogType.mono(size: 9.5, color: const Color(0xFFE8A392))
+                .copyWith(letterSpacing: 0.8),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// -------------------- CLUBE: LEADERBOARD ROW --------------------
+///
+/// Linha de ranking — usado no leaderboard de apostas e no ranking geral do clube.
+
+class ReadLogLeaderboardRow extends StatelessWidget {
+  final int position;
+  final String name;
+  final String metric; // ex: "82% acerto", "1.240 pág."
+  final bool highlight;
+
+  const ReadLogLeaderboardRow({
+    super.key,
+    required this.position,
+    required this.name,
+    required this.metric,
+    this.highlight = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      decoration: highlight
+          ? BoxDecoration(
+              color: ReadLogColors.brass.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(3),
+            )
+          : null,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 20,
+            child: Text(
+              '$position',
+              style: ReadLogType.mono(
+                size: 12,
+                color: ReadLogColors.brass,
+                weight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              name,
+              style: ReadLogType.mono(size: 13, color: ReadLogColors.charcoal),
+            ),
+          ),
+          Text(
+            metric,
+            style: ReadLogType.mono(
+              size: 12,
+              weight: FontWeight.w600,
+              color: ReadLogColors.stamp,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// -------------------- CLUBE: POLL / BET BAR --------------------
+///
+/// Barra de opção para votação livre ou lado de aposta. Mesma linguagem
+/// visual da barra de progresso da biblioteca — não é um componente novo.
+
+class ReadLogPollBar extends StatelessWidget {
+  final String label;
+  final double percent; // 0..1
+  final Color fillColor;
+
+  const ReadLogPollBar({
+    super.key,
+    required this.label,
+    required this.percent,
+    this.fillColor = ReadLogColors.sage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal),
+              ),
+              Text(
+                '${(percent * 100).round()}%',
+                style: ReadLogType.mono(
+                  size: 12,
+                  weight: FontWeight.w600,
+                  color: ReadLogColors.charcoal,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: percent.clamp(0.0, 1.0),
+              minHeight: 6,
+              backgroundColor: ReadLogColors.paperDeep,
+              color: fillColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// -------------------- NOTIFICAÇÕES: LIST TILE --------------------
+///
+/// Tile de notificação com borda esquerda stamp para não-lidas.
+/// Agrupa emoji + título + subtítulo + timestamp — sem badge genérico.
+
+class ReadLogNotificationTile extends StatelessWidget {
+  final String emoji;
+  final String title;
+  final String subtitle;
+  final String time;
+  final bool unread;
+  final VoidCallback? onTap;
+
+  const ReadLogNotificationTile({
+    super.key,
+    required this.emoji,
+    required this.title,
+    required this.subtitle,
+    required this.time,
+    this.unread = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 7),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: ReadLogColors.cream,
+          borderRadius: BorderRadius.circular(3),
+          border: unread
+              ? const Border(
+                  left: BorderSide(color: ReadLogColors.stamp, width: 3),
+                )
+              : null,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: ReadLogColors.paperDeep,
+                shape: BoxShape.circle,
+              ),
+              child: Text(emoji, style: const TextStyle(fontSize: 14)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: ReadLogType.mono(
+                      size: 12,
+                      weight: FontWeight.w600,
+                      color: ReadLogColors.charcoal,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: ReadLogType.mono(
+                      size: 11,
+                      color: ReadLogColors.charcoal.withValues(alpha: 0.65),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    time,
+                    style: ReadLogType.mono(
+                      size: 9.5,
+                      color: ReadLogColors.charcoal.withValues(alpha: 0.45),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

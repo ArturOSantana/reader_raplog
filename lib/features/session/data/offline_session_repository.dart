@@ -65,6 +65,8 @@ class OfflineSessionRepository {
     required int endPage,
     String? notes,
     int pausedDurationSeconds = 0,
+    SessionMood? mood,
+    String? miniReview,
   }) async {
     final now = DateTime.now();
 
@@ -79,7 +81,7 @@ class OfflineSessionRepository {
     final startPage = localSession?.startPage ?? 0;
     final pagesRead = (endPage - startPage).clamp(0, 99999);
 
-    final updateFields = {
+    final updateFields = <String, dynamic>{
       'ended_at': now.toIso8601String(),
       'end_page': endPage,
       'pages_read': pagesRead,
@@ -87,6 +89,9 @@ class OfflineSessionRepository {
       'paused_duration_seconds': pausedDurationSeconds,
       'notes': notes,
       'status': 'finished',
+      if (mood != null) 'mood': mood.dbValue,
+      if (miniReview != null && miniReview.isNotEmpty)
+        'mini_review': miniReview,
     };
 
     await _local.update(sessionId, updateFields);

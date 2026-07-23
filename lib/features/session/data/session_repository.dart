@@ -38,6 +38,8 @@ class SessionRepository {
     required int endPage,
     String? notes,
     int pausedDurationSeconds = 0,
+    SessionMood? mood,
+    String? miniReview,
   }) async {
     final now = DateTime.now();
     final session = await _client
@@ -66,6 +68,9 @@ class SessionRepository {
           'paused_duration_seconds': pausedDurationSeconds,
           'notes': notes,
           'status': 'finished',
+          if (mood != null) 'mood': mood.dbValue,
+          if (miniReview != null && miniReview.isNotEmpty)
+            'mini_review': miniReview,
         })
         .eq('id', sessionId)
         .eq('user_id', _userId)

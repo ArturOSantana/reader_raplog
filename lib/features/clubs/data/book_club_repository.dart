@@ -1,6 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../shared/models/book_club.dart';
+import '../../../shared/models/club_bets_and_polls.dart';
 import '../../../shared/models/club_extras.dart';
+import '../../../shared/models/club_schedule_milestones_challenges.dart';
 import '../../../shared/models/social_feed.dart';
 
 class BookClubRepository {
@@ -170,6 +172,13 @@ class BookClubRepository {
     await _client.from('book_clubs').update({
       'status': 'closed',
       'closed_at': DateTime.now().toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', clubId);
+  }
+
+  Future<void> archiveClub(String clubId) async {
+    await _client.from('book_clubs').update({
+      'status': 'archived',
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('id', clubId);
   }
@@ -675,5 +684,279 @@ class BookClubRepository {
       params: {'p_club_id': clubId},
     );
     return result as String;
+  }
+
+  // ── Cronograma de Leitura ────────────────────────────────────────────────
+
+  Future<List<ClubReadingScheduleEntry>> listReadingSchedule(String clubId) async {
+    final data = await _client
+        .from('club_reading_schedule')
+        .select()
+        .eq('club_id', clubId)
+        .order('week_number');
+    return (data as List)
+        .map((e) => ClubReadingScheduleEntry.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<ClubReadingScheduleEntry> addScheduleEntry(
+      ClubReadingScheduleEntry entry) async {
+    final data = await _client
+        .from('club_reading_schedule')
+        .insert(entry.toInsertMap())
+        .select()
+        .single();
+    return ClubReadingScheduleEntry.fromMap(data);
+  }
+
+  Future<void> deleteScheduleEntry(String entryId) async {
+    await _client.from('club_reading_schedule').delete().eq('id', entryId);
+  }
+
+  // ── Marcos de Progresso ──────────────────────────────────────────────────
+
+  Future<List<ClubMilestone>> listMilestones(String clubId) async {
+    final data = await _client
+        .from('club_milestones')
+        .select()
+        .eq('club_id', clubId)
+        .order('milestone_pct');
+    return (data as List)
+        .map((e) => ClubMilestone.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> createMilestonesForCycle(String clubId) async {
+    await _client.rpc(
+      'create_milestones_for_cycle',
+      params: {'p_club_id': clubId},
+    );
+  }
+
+  Future<List<ClubMilestoneTopic>> listMilestoneTopics(
+      String milestoneId) async {
+    final data = await _client
+        .from('club_milestone_topics')
+        .select('*, profile:profiles(name, avatar_url)')
+        .eq('milestone_id', milestoneId)
+        .order('created_at');
+    return (data as List)
+        .map((e) => ClubMilestoneTopic.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<ClubMilestoneTopic> addMilestoneTopic({
+    required String milestoneId,
+    required String clubId,
+    required String content,
+    String spoilerLevel = 'none',
+    String? parentId,
+  }) async {
+    final data = await _client
+        .from('club_milestone_topics')
+        .insert({
+          'milestone_id': milestoneId,
+          'club_id': clubId,
+          'user_id': _userId,
+          'content': content,
+          'spoiler_level': spoilerLevel,
+          'parent_id': parentId,
+        })
+        .select('*, profile:profiles(name, avatar_url)')
+        .single();
+    return ClubMilestoneTopic.fromMap(data);
+  }
+
+  // ── Desafios ─────────────────────────────────────────────────────────────
+
+  Future<List<ClubChallenge>> listChallenges(String clubId,
+      {bool activeOnly = false}) async {
+    var q = _client
+        .from('club_challenges')
+        .select()
+        .eq('club_id', clubId);
+    if (activeOnly) q = q.eq('status', 'active');
+    final data = await q.order('ends_at', ascending: false);
+    return (data as List)
+        .map((e) => ClubChallenge.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<ClubChallenge> createChallenge({
+    required String clubId,
+    required String title,
+    String? description,
+    required ChallengeGoalType goalType,
+    required int goalValue,
+    required DateTime startsAt,
+    required DateTime endsAt,
+  }) async {
+    final data = await _client
+        .from('club_challenges')
+        .insert({
+          'club_id': clubId,
+          'created_by': _userId,
+          'title': title,
+          'description': description,
+          'goal_type': goalType.dbValue,
+          'goal_value': goalValue,
+          'starts_at': startsAt.toIso8601String(),
+          'ends_at': endsAt.toIso8601String(),
+        })
+        .select()
+        .single();
+    return ClubChallenge.fromMap(data);
+  }
+
+  Future<List<ChallengeProgressEntry>> fetchChallengeProgress(
+      String challengeId) async {
+    final data = await _client.rpc(
+      'club_challenge_progress',
+      params: {'p_challenge_id': challengeId},
+    );
+    return (data as List)
+        .map((e) => ChallengeProgressEntry.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ── Apostas Amistosas ────────────────────────────────────────────────────
+
+  Future<List<ClubBet>> listBets(String clubId) async {
+    final data = await _client
+        .from('club_bets')
+        .select()
+        .eq('club_id', clubId)
+        .order('created_at', ascending: false);
+    return (data as List)
+        .map((e) => ClubBet.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<ClubBet> createBet({
+    required String clubId,
+    required String description,
+    required BetStakeType stakeType,
+    String? stakeDescription,
+    String? resolutionCriteria,
+    String sideALabel = 'Sim',
+    String sideBLabel = 'Não',
+    DateTime? resolvesAt,
+  }) async {
+    final data = await _client
+        .from('club_bets')
+        .insert({
+          'club_id': clubId,
+          'created_by': _userId,
+          'description': description,
+          'stake_type': stakeType.dbValue,
+          'stake_description': stakeDescription,
+          'resolution_criteria': resolutionCriteria,
+          'side_a_label': sideALabel,
+          'side_b_label': sideBLabel,
+          'resolves_at': resolvesAt?.toIso8601String(),
+        })
+        .select()
+        .single();
+    return ClubBet.fromMap(data);
+  }
+
+  Future<void> joinBet(String betId, String side) async {
+    await _client.from('club_bet_participants').upsert({
+      'bet_id': betId,
+      'user_id': _userId,
+      'side': side,
+    }, onConflict: 'bet_id,user_id');
+  }
+
+  Future<List<ClubBetParticipant>> listBetParticipants(String betId) async {
+    final data = await _client
+        .from('club_bet_participants')
+        .select('*, profile:profiles(name, avatar_url)')
+        .eq('bet_id', betId)
+        .order('joined_at');
+    return (data as List)
+        .map((e) => ClubBetParticipant.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> resolveBet(String betId, String winnerSide) async {
+    await _client.rpc('resolve_bet', params: {
+      'p_bet_id': betId,
+      'p_winner_side': winnerSide,
+    });
+  }
+
+  Future<List<BetLeaderboardEntry>> fetchBetsLeaderboard(
+    String clubId, {
+    int minBets = 2,
+  }) async {
+    final data = await _client.rpc('club_bets_leaderboard', params: {
+      'p_club_id': clubId,
+      'p_min_bets': minBets,
+    });
+    return (data as List)
+        .map((e) => BetLeaderboardEntry.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ── Votações Livres (Open Polls) ─────────────────────────────────────────
+
+  Future<List<ClubOpenPoll>> listOpenPolls(String clubId) async {
+    final data = await _client
+        .from('club_open_polls')
+        .select()
+        .eq('club_id', clubId)
+        .order('created_at', ascending: false);
+    return (data as List)
+        .map((e) => ClubOpenPoll.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<ClubOpenPoll> createOpenPoll({
+    required String clubId,
+    required String question,
+    required List<OpenPollOption> options,
+    bool multiSelect = false,
+    DateTime? closesAt,
+  }) async {
+    final data = await _client
+        .from('club_open_polls')
+        .insert({
+          'club_id': clubId,
+          'created_by': _userId,
+          'question': question,
+          'options': options.map((o) => o.toMap()).toList(),
+          'multi_select': multiSelect,
+          'closes_at': closesAt?.toIso8601String(),
+        })
+        .select()
+        .single();
+    return ClubOpenPoll.fromMap(data);
+  }
+
+  Future<void> voteOnOpenPoll(String pollId, List<String> optionIds) async {
+    await _client.from('club_open_poll_votes').upsert({
+      'poll_id': pollId,
+      'user_id': _userId,
+      'option_ids': optionIds,
+    }, onConflict: 'poll_id,user_id');
+  }
+
+  Future<List<OpenPollOptionResult>> fetchOpenPollResults(
+      String pollId) async {
+    final data = await _client.rpc(
+      'open_poll_results',
+      params: {'p_poll_id': pollId},
+    );
+    return (data as List)
+        .map((e) =>
+            OpenPollOptionResult.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> closeOpenPoll(String pollId) async {
+    await _client
+        .from('club_open_polls')
+        .update({'status': 'closed'}).eq('id', pollId);
   }
 }

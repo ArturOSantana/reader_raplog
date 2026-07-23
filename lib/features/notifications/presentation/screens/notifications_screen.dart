@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/shell/main_shell.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../data/notification_models.dart';
 import '../../../inspiration/data/inspiration_quotes.dart';
@@ -28,18 +28,22 @@ class NotificationsScreen extends ConsumerWidget {
         ? inboxState.items
         : inboxState.items.where((i) => i.category == filter).toList();
 
-    // Agrupa por data
     final groups = _groupByDate(items);
 
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: ReadLogColors.paper,
       appBar: AppBar(
+        backgroundColor: ReadLogColors.paper,
+        foregroundColor: ReadLogColors.charcoal,
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
           tooltip: 'Abrir menu',
         ),
-        title: const Text('Notificações'),
+        title: Text(
+          'Notificações',
+          style: ReadLogType.display(size: 19, color: ReadLogColors.charcoal),
+        ),
         actions: [
           if (inboxState.unreadCount > 0)
             TextButton(
@@ -47,10 +51,9 @@ class NotificationsScreen extends ConsumerWidget {
                   ref.read(notificationInboxProvider.notifier).markAllRead(),
               child: Text(
                 'Marcar tudo',
-                style: TextStyle(
-                  color: AppColors.forestGreen,
-                  fontSize: 13,
-                  fontFamily: 'Inter',
+                style: ReadLogType.mono(
+                  size: 12,
+                  color: ReadLogColors.brass,
                 ),
               ),
             ),
@@ -63,13 +66,12 @@ class NotificationsScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // Barra de filtros de categoria
           _CategoryFilterBar(selected: filter),
           Expanded(
             child: inboxState.loading
                 ? const Center(
                     child: CircularProgressIndicator(
-                        color: AppColors.forestGreen),
+                        color: ReadLogColors.brass),
                   )
                 : inboxState.error != null
                     ? _ErrorView(
@@ -80,7 +82,7 @@ class NotificationsScreen extends ConsumerWidget {
                     : items.isEmpty
                         ? _EmptyView(hasFilter: filter != null)
                         : RefreshIndicator(
-                            color: AppColors.forestGreen,
+                            color: ReadLogColors.brass,
                             onRefresh: () => ref
                                 .read(notificationInboxProvider.notifier)
                                 .load(),
@@ -135,27 +137,30 @@ class _CategoryFilterBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return SizedBox(
-      height: 44,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: [
-          _FilterChip(
-            label: 'Todas',
-            emoji: '🔔',
-            selected: selected == null,
-            onTap: () =>
-                ref.read(_inboxFilterProvider.notifier).state = null,
-          ),
-          ...NotificationCategory.values.map((cat) => _FilterChip(
-                label: cat.label,
-                emoji: cat.emoji,
-                selected: selected == cat,
-                onTap: () =>
-                    ref.read(_inboxFilterProvider.notifier).state = cat,
-              )),
-        ],
+    return Container(
+      color: ReadLogColors.paperAlt,
+      child: SizedBox(
+        height: 46,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          children: [
+            _FilterChip(
+              label: 'Todas',
+              emoji: '🔔',
+              selected: selected == null,
+              onTap: () =>
+                  ref.read(_inboxFilterProvider.notifier).state = null,
+            ),
+            ...NotificationCategory.values.map((cat) => _FilterChip(
+                  label: cat.label,
+                  emoji: cat.emoji,
+                  selected: selected == cat,
+                  onTap: () =>
+                      ref.read(_inboxFilterProvider.notifier).state = cat,
+                )),
+          ],
+        ),
       ),
     );
   }
@@ -180,30 +185,30 @@ class _FilterChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: selected
-              ? AppColors.forestGreen
-              : AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
+          color: selected ? ReadLogColors.charcoal : Colors.transparent,
+          borderRadius: BorderRadius.circular(2),
           border: Border.all(
-            color: selected ? AppColors.forestGreen : AppColors.border,
+            color: selected
+                ? ReadLogColors.charcoal
+                : ReadLogColors.charcoal.withValues(alpha: 0.4),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 13)),
+            Text(emoji, style: const TextStyle(fontSize: 12)),
             const SizedBox(width: 4),
             Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: selected ? Colors.white : AppColors.textSecondary,
-              ),
+              label.toUpperCase(),
+              style: ReadLogType.mono(
+                size: 10,
+                color: selected
+                    ? ReadLogColors.paper
+                    : ReadLogColors.charcoal.withValues(alpha: 0.65),
+              ).copyWith(letterSpacing: 0.5),
             ),
           ],
         ),
@@ -228,11 +233,11 @@ class _DateGroup extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
-            label,
-            style: AppTextStyles.labelMedium.copyWith(
-              color: AppColors.textMuted,
-              letterSpacing: 0.8,
-            ),
+            label.toUpperCase(),
+            style: ReadLogType.mono(
+              size: 9.5,
+              color: ReadLogColors.charcoal.withValues(alpha: 0.5),
+            ).copyWith(letterSpacing: 0.8),
           ),
         ),
         ...items.map((item) => _NotifTile(item: item)),
@@ -248,8 +253,6 @@ class _NotifTile extends ConsumerWidget {
 
   const _NotifTile({required this.item});
 
-  /// Retorna o contexto de inspiração compatível com a categoria da notificação,
-  /// ou null quando não há frase específica para essa categoria.
   static InspirationContext? _inspirationContextFor(NotificationCategory cat) {
     switch (cat) {
       case NotificationCategory.streak:
@@ -263,100 +266,41 @@ class _NotifTile extends ConsumerWidget {
     }
   }
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return InkWell(
-      onTap: () async {
-        if (!item.isRead) {
-          ref.read(notificationInboxProvider.notifier).markRead(item.id);
-        }
-        final ctx = _inspirationContextFor(item.category);
-        if (ctx != null) {
-          final service = ref.read(dailyInspirationServiceProvider);
-          final quote = await service.pick(ctx);
-          if (!context.mounted) return;
-          InspirationBottomSheet.show(
-            context,
-            quote: quote,
-            title: '${item.category.emoji} ${item.title.toUpperCase()}',
-          );
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: item.isRead ? Colors.transparent : AppColors.forestGreen.withValues(alpha: 0.04),
-          border: Border(
-            bottom: BorderSide(color: AppColors.border, width: 0.5),
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Emoji da categoria
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Text(
-                  item.category.emoji,
-                  style: const TextStyle(fontSize: 18),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: item.isRead ? FontWeight.w400 : FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.body,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _timeAgo(item.createdAt),
-                    style: AppTextStyles.labelMedium,
-                  ),
-                ],
-              ),
-            ),
-            if (!item.isRead)
-              Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.only(top: 4, left: 8),
-                decoration: const BoxDecoration(
-                  color: AppColors.forestGreen,
-                  shape: BoxShape.circle,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   static String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
     if (diff.inMinutes < 60) return '${diff.inMinutes}min atrás';
     if (diff.inHours < 24) return '${diff.inHours}h atrás';
     return DateFormat('d MMM', 'pt_BR').format(dt);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ReadLogNotificationTile(
+        emoji: item.category.emoji,
+        title: item.title,
+        subtitle: item.body,
+        time: _timeAgo(item.createdAt),
+        unread: !item.isRead,
+        onTap: () async {
+          if (!item.isRead) {
+            ref.read(notificationInboxProvider.notifier).markRead(item.id);
+          }
+          final ctx = _inspirationContextFor(item.category);
+          if (ctx != null) {
+            final service = ref.read(dailyInspirationServiceProvider);
+            final quote = await service.pick(ctx);
+            if (!context.mounted) return;
+            InspirationBottomSheet.show(
+              context,
+              quote: quote,
+              title: '${item.category.emoji} ${item.title.toUpperCase()}',
+            );
+          }
+        },
+      ),
+    );
   }
 }
 
@@ -375,14 +319,20 @@ class _EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.notifications_none_outlined,
-                size: 56, color: AppColors.textMuted),
+            Icon(
+              Icons.notifications_none_outlined,
+              size: 56,
+              color: ReadLogColors.charcoal.withValues(alpha: 0.3),
+            ),
             const SizedBox(height: 16),
             Text(
               hasFilter
                   ? 'Nenhuma notificação nessa categoria'
                   : 'Nenhuma notificação ainda',
-              style: AppTextStyles.bodyMedium,
+              style: ReadLogType.mono(
+                size: 13,
+                color: ReadLogColors.charcoal.withValues(alpha: 0.5),
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -403,9 +353,18 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Erro ao carregar notificações', style: AppTextStyles.bodyMedium),
+          Text(
+            'Erro ao carregar notificações',
+            style: ReadLogType.mono(
+              size: 13,
+              color: ReadLogColors.charcoal.withValues(alpha: 0.6),
+            ),
+          ),
           const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('Tentar novamente')),
+          OutlinedButton(
+            onPressed: onRetry,
+            child: const Text('Tentar novamente'),
+          ),
         ],
       ),
     );

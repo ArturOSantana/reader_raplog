@@ -145,7 +145,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
-  Future<void> _handleSessionFinished(int endPage, String? notes) async {
+  Future<void> _handleSessionFinished(
+      int endPage, String? notes, SessionMood? mood, String? miniReview) async {
     final session = ref.read(sessionNotifierProvider).session!;
     final elapsed = ref.read(sessionNotifierProvider).elapsedSeconds;
 
@@ -153,6 +154,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         await ref.read(sessionNotifierProvider.notifier).finishSession(
               endPage: endPage,
               notes: notes,
+              mood: mood,
+              miniReview: miniReview,
             );
 
     if (finished == null || !mounted) return;
@@ -861,7 +864,9 @@ class _GoalProgressBar extends StatelessWidget {
 class _FinishSessionSheet extends StatefulWidget {
   final ReadingSession session;
   final int elapsedSeconds;
-  final Future<void> Function(int endPage, String? notes) onSaved;
+  // Assinatura expandida: mood e miniReview agora são passados ao salvar
+  final Future<void> Function(
+      int endPage, String? notes, SessionMood? mood, String? miniReview) onSaved;
 
   const _FinishSessionSheet({
     required this.session,
@@ -876,12 +881,16 @@ class _FinishSessionSheet extends StatefulWidget {
 class _FinishSessionSheetState extends State<_FinishSessionSheet> {
   final _endPageController = TextEditingController();
   final _notesController = TextEditingController();
+  final _miniReviewController = TextEditingController();
+  SessionMood? _mood;
+  bool _extrasExpanded = false; // extras colapsáveis
   bool _saving = false;
 
   @override
   void dispose() {
     _endPageController.dispose();
     _notesController.dispose();
+    _miniReviewController.dispose();
     super.dispose();
   }
 
@@ -902,10 +911,13 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
     }
 
     setState(() => _saving = true);
-    Navigator.pop(context); // fecha o sheet antes de salvar
-    await widget.onSaved(endPage, _notesController.text.isEmpty
-        ? null
-        : _notesController.text);
+    Navigator.pop(context);
+    await widget.onSaved(
+      endPage,
+      _notesController.text.isEmpty ? null : _notesController.text,
+      _mood,
+      _miniReviewController.text.isEmpty ? null : _miniReviewController.text,
+    );
   }
 
   @override
@@ -913,13 +925,13 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
     final startPage = widget.session.startPage ?? 0;
     final elapsed = widget.elapsedSeconds;
     final durationLabel = _fmtTime(elapsed);
-    final pagesEstimate = (int.tryParse(_endPageController.text) ?? 0) -
-        startPage;
+    final pagesEstimate =
+        (int.tryParse(_endPageController.text) ?? 0) - startPage;
     final speed = elapsed > 0 && pagesEstimate > 0
         ? (pagesEstimate / (elapsed / 60)).toStringAsFixed(2)
         : null;
 
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
         left: 24,
         right: 24,
@@ -930,7 +942,7 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle
+          // ── Handle ───────────────────────────────────────────────────
           Center(
             child: Container(
               width: 40,
@@ -943,6 +955,7 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
             ),
           ),
 
+          // ── NÚCLEO MÍNIMO ─────────────────────────────────────────────
           Text('Você terminou sua leitura?',
               style: ReadLogType.display(
                   size: 20, color: ReadLogColors.charcoal)),
@@ -957,20 +970,12 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
             controller: _endPageController,
             keyboardType: TextInputType.number,
             autofocus: true,
-            decoration: const InputDecoration(labelText: 'Página final'),
+            decoration: const InputDecoration(labelText: 'Página final *'),
             onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _notesController,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Observações (opcional)',
-            ),
           ),
 
           // Resumo em tempo real
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -981,18 +986,118 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _SummaryItem(
-                    label: 'Tempo', value: durationLabel),
+                _SummaryItem(label: 'Tempo', value: durationLabel),
                 _SummaryItem(
                     label: 'Páginas',
                     value: pagesEstimate > 0 ? '$pagesEstimate' : '—'),
-                _SummaryItem(
-                    label: 'Pág/min',
-                    value: speed ?? '—'),
+                _SummaryItem(label: 'Pág/min', value: speed ?? '—'),
               ],
             ),
           ),
 
+          // ── EXTRAS COLAPSÁVEIS ────────────────────────────────────────
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => setState(() => _extrasExpanded = !_extrasExpanded),
+            child: Row(
+              children: [
+                Icon(
+                  _extrasExpanded
+                      ? Icons.expand_less
+                      : Icons.expand_more,
+                  size: 18,
+                  color: ReadLogColors.charcoal.withValues(alpha: 0.5),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _extrasExpanded ? 'Menos detalhes' : 'Adicionar humor e impressão',
+                  style: ReadLogType.mono(
+                      size: 12,
+                      color: ReadLogColors.charcoal.withValues(alpha: 0.55)),
+                ),
+              ],
+            ),
+          ),
+
+          if (_extrasExpanded) ...[
+            const SizedBox(height: 16),
+
+            // Mood
+            Text('Como foi a leitura?',
+                style: ReadLogType.mono(
+                    size: 12,
+                    color: ReadLogColors.charcoal.withValues(alpha: 0.7))),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: SessionMood.values.map((m) {
+                final selected = _mood == m;
+                return GestureDetector(
+                  onTap: () => setState(() =>
+                      _mood = selected ? null : m),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 54,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? ReadLogColors.brass.withValues(alpha: 0.15)
+                          : ReadLogColors.cream,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: selected
+                            ? ReadLogColors.brass
+                            : ReadLogColors.paperDeep,
+                        width: selected ? 2 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(m.emoji,
+                            style: const TextStyle(fontSize: 20)),
+                        const SizedBox(height: 2),
+                        Text(m.label,
+                            style: ReadLogType.mono(size: 9),
+                            textAlign: TextAlign.center),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Mini resenha
+            Text('Impressão rápida (opcional)',
+                style: ReadLogType.mono(
+                    size: 12,
+                    color: ReadLogColors.charcoal.withValues(alpha: 0.7))),
+            const SizedBox(height: 6),
+            TextFormField(
+              controller: _miniReviewController,
+              maxLines: 3,
+              maxLength: 500,
+              decoration: const InputDecoration(
+                hintText:
+                    '"Hoje finalmente entendi a motivação do personagem."',
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // Notas internas
+            TextFormField(
+              controller: _notesController,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Notas internas (opcional)',
+              ),
+            ),
+          ],
+
+          // ── Botão salvar ──────────────────────────────────────────────
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,

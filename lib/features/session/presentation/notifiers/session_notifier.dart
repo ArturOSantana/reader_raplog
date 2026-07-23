@@ -123,6 +123,8 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
   Future<ReadingSession?> finishSession({
     required int endPage,
     String? notes,
+    SessionMood? mood,
+    String? miniReview,
   }) async {
     final session = state.session;
     if (session == null) return null;
@@ -134,6 +136,8 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
           endPage: endPage,
           notes: notes,
           pausedDurationSeconds: session.pausedDurationSeconds,
+          mood: mood,
+          miniReview: miniReview,
         );
 
     state = const ActiveSessionState();

@@ -2,39 +2,33 @@ import 'package:equatable/equatable.dart';
 
 // ── Status do clube ───────────────────────────────────────────────────────────
 
-enum ClubStatus { active, onVacation, closed }
+enum ClubStatus { active, onVacation, closed, archived }
 
 extension ClubStatusX on ClubStatus {
   String get dbValue {
     switch (this) {
-      case ClubStatus.active:
-        return 'active';
-      case ClubStatus.onVacation:
-        return 'on_vacation';
-      case ClubStatus.closed:
-        return 'closed';
+      case ClubStatus.active:     return 'active';
+      case ClubStatus.onVacation: return 'on_vacation';
+      case ClubStatus.closed:     return 'closed';
+      case ClubStatus.archived:   return 'archived';
     }
   }
 
   String get label {
     switch (this) {
-      case ClubStatus.active:
-        return 'Ativo';
-      case ClubStatus.onVacation:
-        return 'Em férias';
-      case ClubStatus.closed:
-        return 'Encerrado';
+      case ClubStatus.active:     return 'Ativo';
+      case ClubStatus.onVacation: return 'Em férias';
+      case ClubStatus.closed:     return 'Encerrado';
+      case ClubStatus.archived:   return 'Arquivado';
     }
   }
 
   static ClubStatus fromDb(String? value) {
     switch (value) {
-      case 'on_vacation':
-        return ClubStatus.onVacation;
-      case 'closed':
-        return ClubStatus.closed;
-      default:
-        return ClubStatus.active;
+      case 'on_vacation': return ClubStatus.onVacation;
+      case 'closed':      return ClubStatus.closed;
+      case 'archived':    return ClubStatus.archived;
+      default:            return ClubStatus.active;
     }
   }
 }
