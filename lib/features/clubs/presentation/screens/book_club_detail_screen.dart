@@ -882,6 +882,23 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
     if (club.currentBookTitle == null) return;
     setState(() => _addingToLibrary = true);
     try {
+      // Verifica se o livro deste clube já está na biblioteca
+      final existing = await ref
+          .read(bookRepositoryProvider)
+          .fetchBySourceClub(club.id);
+      if (existing != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '"${club.currentBookTitle}" já está na sua biblioteca.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
       await ref.read(bookRepositoryProvider).insert({
         'title': club.currentBookTitle,
         'author': club.currentBookAuthor,

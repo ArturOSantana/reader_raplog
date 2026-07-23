@@ -49,6 +49,23 @@ class OfflineBookRepository {
     return _local.fetchAll(_userId, status: status);
   }
 
+  Future<Book?> fetchBySourceClub(String clubId) async {
+    if (_isOnline()) {
+      try {
+        final data = await _client
+            .from('books')
+            .select()
+            .eq('user_id', _userId)
+            .eq('source_club_id', clubId)
+            .limit(1)
+            .maybeSingle();
+        if (data != null) return Book.fromMap(data);
+        return null;
+      } catch (_) {}
+    }
+    return _local.fetchBySourceClub(_userId, clubId);
+  }
+
   Future<Book?> fetchById(String id) async {
     if (_isOnline()) {
       try {

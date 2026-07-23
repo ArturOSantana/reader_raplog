@@ -53,18 +53,67 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
               tooltip: 'Compartilhar card',
               onPressed: () => _shareBookCard(context, book.valueOrNull!),
             ),
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: 'Editar',
-              onPressed: () async {
-                final updated = await context.push(
-                  '/library/book/${widget.bookId}/edit',
-                  extra: book.valueOrNull!,
-                );
-                if (updated == true) {
-                  ref.invalidate(_bookDetailProvider(widget.bookId));
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (value) async {
+                if (value == 'edit') {
+                  final updated = await context.push(
+                    '/library/book/${widget.bookId}/edit',
+                    extra: book.valueOrNull!,
+                  );
+                  if (updated == true) {
+                    ref.invalidate(_bookDetailProvider(widget.bookId));
+                  }
+                } else if (value == 'delete') {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Excluir livro'),
+                      content: Text(
+                        'Tem certeza que deseja excluir "${book.valueOrNull!.title}" da sua biblioteca? Esta ação não pode ser desfeita.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancelar'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: TextButton.styleFrom(
+                            foregroundColor:
+                                Theme.of(ctx).colorScheme.error,
+                          ),
+                          child: const Text('Excluir'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true && context.mounted) {
+                    await ref
+                        .read(bookRepositoryProvider)
+                        .delete(widget.bookId);
+                    if (context.mounted) context.pop();
+                  }
                 }
               },
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: ListTile(
+                    leading: Icon(Icons.edit_outlined),
+                    title: Text('Editar'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: ListTile(
+                    leading: Icon(Icons.delete_outline),
+                    title: Text('Excluir'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
             ),
           ],
         ],

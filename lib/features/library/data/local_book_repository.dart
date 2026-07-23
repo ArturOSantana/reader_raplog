@@ -20,6 +20,18 @@ class LocalBookRepository {
     return rows.map(Book.fromMap).toList();
   }
 
+  Future<Book?> fetchBySourceClub(String userId, String clubId) async {
+    final db = await LocalDatabase.instance.db;
+    final rows = await db.query(
+      'books',
+      where: 'user_id = ? AND source_club_id = ? AND is_deleted = 0',
+      whereArgs: [userId, clubId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return Book.fromMap(rows.first);
+  }
+
   Future<Book?> fetchById(String id) async {
     final db = await LocalDatabase.instance.db;
     final rows = await db.query(
