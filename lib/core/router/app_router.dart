@@ -28,6 +28,8 @@ import '../../features/clubs/presentation/screens/book_club_detail_screen.dart';
 import '../../features/clubs/presentation/screens/club_reading_room_screen.dart';
 import '../../features/clubs/presentation/screens/club_checkin_screen.dart';
 import '../../features/clubs/presentation/screens/club_calendar_screen.dart';
+import '../../features/clubs/presentation/screens/challenge_detail_screen.dart';
+import '../../features/clubs/presentation/screens/club_feed_screen.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/notifications/presentation/screens/notification_settings_screen.dart';
@@ -234,6 +236,30 @@ final routerProvider = Provider<GoRouter>((ref) {
                       final extra =
                           state.extra as Map<String, String>? ?? {};
                       return ClubCalendarScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] ?? 'Clube',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'challenges/:challengeId',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ChallengeDetailScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        challengeId: state.pathParameters['challengeId']!,
+                        challengeTitle:
+                            extra['challengeTitle'] as String? ?? 'Desafio',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'feed',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, String>? ?? {};
+                      return ClubFeedScreen(
                         clubId: state.pathParameters['clubId']!,
                         clubName: extra['clubName'] ?? 'Clube',
                       );

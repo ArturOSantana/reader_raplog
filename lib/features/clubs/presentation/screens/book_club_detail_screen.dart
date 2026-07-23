@@ -9,6 +9,8 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/models/club_extras.dart';
+import '../../../../shared/models/club_schedule_milestones_challenges.dart';
+import '../../../../shared/models/club_bets_and_polls.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../library/data/book_search_result.dart';
 import '../../../library/data/book_search_service.dart';
@@ -53,6 +55,26 @@ final _clubReadingProgressProvider =
 final _clubHallOfFameProvider =
     FutureProvider.family<List<ClubHallOfFameEntry>, String>((ref, clubId) {
   return ref.watch(bookClubRepositoryProvider).fetchHallOfFame(clubId);
+});
+
+final _clubChallengesProvider =
+    FutureProvider.family<List<ClubChallenge>, String>((ref, clubId) {
+  return ref.watch(bookClubRepositoryProvider).listChallenges(clubId, activeOnly: false);
+});
+
+final _clubStreakProvider =
+    FutureProvider.family<int, String>((ref, clubId) {
+  return ref.watch(bookClubRepositoryProvider).fetchClubStreak(clubId);
+});
+
+final _clubBetsProvider =
+    FutureProvider.family<List<ClubBet>, String>((ref, clubId) {
+  return ref.watch(bookClubRepositoryProvider).listBets(clubId);
+});
+
+final _clubOpenPollsProvider =
+    FutureProvider.family<List<ClubOpenPoll>, String>((ref, clubId) {
+  return ref.watch(bookClubRepositoryProvider).listOpenPolls(clubId);
 });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -102,6 +124,14 @@ class _ClubDetailBody extends ConsumerWidget {
       appBar: AppBar(
         title: Text(club.name),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.dynamic_feed_outlined),
+            tooltip: 'Feed do clube',
+            onPressed: () => context.push(
+              '/clubs/$clubId/feed',
+              extra: {'clubName': club.name},
+            ),
+          ),
           if (club.canManage)
             PopupMenuButton<String>(
               onSelected: (v) => _onMenuSelected(context, ref, v),
@@ -119,6 +149,10 @@ class _ClubDetailBody extends ConsumerWidget {
           ref.invalidate(_clubReadingNowProvider(clubId));
           ref.invalidate(_clubReadingProgressProvider(clubId));
           ref.invalidate(_clubHallOfFameProvider(clubId));
+          ref.invalidate(_clubChallengesProvider(clubId));
+          ref.invalidate(_clubStreakProvider(clubId));
+          ref.invalidate(_clubBetsProvider(clubId));
+          ref.invalidate(_clubOpenPollsProvider(clubId));
         },
         child: Builder(builder: (context) {
           final cs = Theme.of(context).colorScheme;
@@ -167,6 +201,21 @@ class _ClubDetailBody extends ConsumerWidget {
             const SizedBox(height: 12),
             _MembersList(club: club, clubId: clubId),
             const SizedBox(height: 24),
+            // ── Desafios ─────────────────────────────────────────────────
+            if (!club.isClosed) ...[
+              _ChallengesSection(club: club, clubId: clubId),
+              const SizedBox(height: 24),
+            ],
+            // ── Apostas Amistosas ─────────────────────────────────────────
+            if (!club.isClosed) ...[
+              _BetsSection(club: club, clubId: clubId),
+              const SizedBox(height: 24),
+            ],
+            // ── Votações Livres ───────────────────────────────────────────
+            if (!club.isClosed) ...[
+              _OpenPollsSection(club: club, clubId: clubId),
+              const SizedBox(height: 24),
+            ],
             // ── Histórico de livros ──────────────────────────────────────
             Text('Histórico de leituras', style: sectionStyle),
             const SizedBox(height: 12),
@@ -510,15 +559,17 @@ class _InviteCodeCard extends StatelessWidget {
 
 // ── Club Header ───────────────────────────────────────────────────────────────
 
-class _ClubHeader extends StatelessWidget {
+class _ClubHeader extends ConsumerWidget {
   final BookClub club;
 
   const _ClubHeader({required this.club});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final streakAsync = ref.watch(_clubStreakProvider(club.id));
+    final streak = streakAsync.valueOrNull ?? 0;
 
     final iconBg = club.isClosed
         ? cs.surfaceContainerHighest
@@ -574,6 +625,33 @@ class _ClubHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   _statusChip(club),
+                  if (streak > 0) ...[
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('🔥',
+                              style: TextStyle(fontSize: 11)),
+                          const SizedBox(width: 2),
+                          Text(
+                            '$streak',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -3201,6 +3279,1261 @@ class _AddMeetingSheetState extends ConsumerState<_AddMeetingSheet> {
                   : const Text('Agendar encontro'),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: DESAFIOS DO CLUBE
+// ════════════════════════════════════════════════════════════════════════════
+
+class _ChallengesSection extends ConsumerWidget {
+  final BookClub club;
+  final String clubId;
+
+  const _ChallengesSection({required this.club, required this.clubId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final challengesAsync = ref.watch(_clubChallengesProvider(clubId));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text('💪', style: TextStyle(fontSize: 18)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Desafios',
+                style: AppTextStyles.headlineMedium.copyWith(color: cs.onSurface),
+              ),
+            ),
+            if (club.canManage)
+              TextButton.icon(
+                onPressed: () => _showCreateSheet(context, ref),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Novo'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.warmGold,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        challengesAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (challenges) {
+            if (challenges.isEmpty) {
+              return _EmptyCard(
+                icon: '🎯',
+                message: 'Nenhum desafio criado ainda.',
+                sub: club.canManage
+                    ? 'Crie um desafio para motivar o clube!'
+                    : 'Os admins podem criar desafios para o clube.',
+              );
+            }
+            final active = challenges.where((c) => c.isOngoing).toList();
+            final others = challenges.where((c) => !c.isOngoing).toList();
+            return Column(
+              children: [
+                ...active.map((c) => _ChallengeCard(
+                      challenge: c,
+                      clubId: clubId,
+                      isActive: true,
+                    )),
+                ...others.take(3).map((c) => _ChallengeCard(
+                      challenge: c,
+                      clubId: clubId,
+                      isActive: false,
+                    )),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showCreateSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _CreateChallengeSheet(
+        clubId: clubId,
+        onSaved: () => ref.invalidate(_clubChallengesProvider(clubId)),
+      ),
+    );
+  }
+}
+
+class _ChallengeCard extends ConsumerWidget {
+  final ClubChallenge challenge;
+  final String clubId;
+  final bool isActive;
+
+  const _ChallengeCard({
+    required this.challenge,
+    required this.clubId,
+    required this.isActive,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.darkSurface : Colors.white;
+    final border = isDark ? AppColors.darkBorder : AppColors.border;
+
+    final accentColor = isActive ? AppColors.warmGold : AppColors.textMuted;
+
+    return GestureDetector(
+      onTap: () => context.push(
+        '/clubs/$clubId/challenges/${challenge.id}',
+        extra: {'challengeTitle': challenge.title},
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isActive
+              ? AppColors.warmGold.withValues(alpha: 0.06)
+              : surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive
+                ? AppColors.warmGold.withValues(alpha: 0.35)
+                : border,
+            width: isActive ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(
+                  challenge.goalType.unit == 'pág.' ? '📖' :
+                  challenge.goalType.unit == 'min' ? '⏱' :
+                  challenge.goalType.unit == 'dias' ? '📅' : '🔁',
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    challenge.title,
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: isActive ? cs.onSurface : AppColors.textMuted,
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Meta: ${challenge.goalValue} ${challenge.goalType.unit}',
+                    style: AppTextStyles.labelMedium,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    isActive ? '● Ativo' : challenge.status.dbValue == 'finished' ? 'Encerrado' : 'Cancelado',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: accentColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  challenge.daysLeftLabel,
+                  style: AppTextStyles.labelMedium.copyWith(fontSize: 10),
+                ),
+              ],
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right, size: 16, color: cs.onSurfaceVariant),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Sheet: Criar Desafio ──────────────────────────────────────────────────────
+
+class _CreateChallengeSheet extends ConsumerStatefulWidget {
+  final String clubId;
+  final VoidCallback onSaved;
+
+  const _CreateChallengeSheet({required this.clubId, required this.onSaved});
+
+  @override
+  ConsumerState<_CreateChallengeSheet> createState() =>
+      _CreateChallengesheetState();
+}
+
+class _CreateChallengesheetState extends ConsumerState<_CreateChallengeSheet> {
+  final _titleCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+  final _goalValueCtrl = TextEditingController();
+  ChallengeGoalType _goalType = ChallengeGoalType.pages;
+  DateTime _startsAt = DateTime.now();
+  DateTime _endsAt = DateTime.now().add(const Duration(days: 30));
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    _goalValueCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final title = _titleCtrl.text.trim();
+    final goalValue = int.tryParse(_goalValueCtrl.text.trim()) ?? 0;
+    if (title.isEmpty || goalValue <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Preencha o nome e a meta.')),
+      );
+      return;
+    }
+    if (_endsAt.isBefore(_startsAt)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('A data de fim deve ser após a de início.')),
+      );
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await ref.read(bookClubRepositoryProvider).createChallenge(
+            clubId: widget.clubId,
+            title: title,
+            description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+            goalType: _goalType,
+            goalValue: goalValue,
+            startsAt: _startsAt,
+            endsAt: _endsAt,
+          );
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onSaved();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erro: $e')));
+      }
+    }
+  }
+
+  Future<void> _pickDate({required bool isStart}) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: isStart ? _startsAt : _endsAt,
+      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _startsAt = picked;
+          if (_endsAt.isBefore(_startsAt)) {
+            _endsAt = _startsAt.add(const Duration(days: 30));
+          }
+        } else {
+          _endsAt = picked;
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final fmt = DateFormat('dd/MM/yyyy', 'pt_BR');
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('💪 Novo Desafio',
+                style: AppTextStyles.headlineMedium
+                    .copyWith(color: cs.onSurface)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _titleCtrl,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Nome do desafio *',
+                hintText: 'Ex: Desafio de Março',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _descCtrl,
+              maxLines: 2,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Descrição (opcional)',
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('Tipo de meta', style: AppTextStyles.labelMedium),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: ChallengeGoalType.values.map((t) {
+                final selected = _goalType == t;
+                return ChoiceChip(
+                  label: Text(t.label),
+                  selected: selected,
+                  onSelected: (_) => setState(() => _goalType = t),
+                  selectedColor: AppColors.warmGold.withValues(alpha: 0.2),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _goalValueCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Meta (${_goalType.unit}) *',
+                hintText: 'Ex: 500',
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _pickDate(isStart: true),
+                    icon: const Icon(Icons.calendar_today_outlined, size: 16),
+                    label: Text('Início: ${fmt.format(_startsAt)}',
+                        style: const TextStyle(fontSize: 12)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _pickDate(isStart: false),
+                    icon: const Icon(Icons.event_outlined, size: 16),
+                    label: Text('Fim: ${fmt.format(_endsAt)}',
+                        style: const TextStyle(fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _loading ? null : _save,
+                style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.warmGold),
+                child: _loading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text('Criar desafio'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: APOSTAS AMISTOSAS
+// ════════════════════════════════════════════════════════════════════════════
+
+class _BetsSection extends ConsumerWidget {
+  final BookClub club;
+  final String clubId;
+
+  const _BetsSection({required this.club, required this.clubId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final betsAsync = ref.watch(_clubBetsProvider(clubId));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text('🎲', style: TextStyle(fontSize: 18)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Apostas Amistosas',
+                style: AppTextStyles.headlineMedium.copyWith(color: cs.onSurface),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () => _showCreateSheet(context, ref),
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('Nova'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.forestGreen,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        betsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (bets) {
+            if (bets.isEmpty) {
+              return _EmptyCard(
+                icon: '🤝',
+                message: 'Nenhuma aposta ainda.',
+                sub: 'Desafie um colega a uma aposta amistosa!',
+              );
+            }
+            return Column(
+              children: bets.take(5).map((b) => _BetCard(bet: b, clubId: clubId, ref: ref)).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showCreateSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _CreateBetSheet(
+        clubId: clubId,
+        onSaved: () => ref.invalidate(_clubBetsProvider(clubId)),
+      ),
+    );
+  }
+}
+
+class _BetCard extends StatelessWidget {
+  final ClubBet bet;
+  final String clubId;
+  final WidgetRef ref;
+
+  const _BetCard({required this.bet, required this.clubId, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.darkSurface : Colors.white;
+    final border = isDark ? AppColors.darkBorder : AppColors.border;
+
+    Color statusColor;
+    String statusLabel;
+    switch (bet.status) {
+      case BetStatus.open:
+        statusColor = AppColors.forestGreen;
+        statusLabel = 'Aberta';
+        break;
+      case BetStatus.closed:
+        statusColor = AppColors.textMuted;
+        statusLabel = 'Fechada';
+        break;
+      case BetStatus.resolved:
+        statusColor = AppColors.warmGold;
+        statusLabel = 'Resolvida';
+        break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                bet.stakeType.emoji,
+                style: const TextStyle(fontSize: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  bet.description,
+                  style: AppTextStyles.titleMedium.copyWith(
+                    color: cs.onSurface,
+                    fontSize: 13,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: statusColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _SideChip(label: bet.sideALabel, color: AppColors.forestGreen),
+              const SizedBox(width: 6),
+              Text('vs', style: AppTextStyles.labelMedium),
+              const SizedBox(width: 6),
+              _SideChip(label: bet.sideBLabel, color: AppColors.error),
+            ],
+          ),
+          if (bet.isResolved && bet.winnerLabel != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.emoji_events_outlined,
+                    size: 14, color: AppColors.warmGold),
+                const SizedBox(width: 4),
+                Text(
+                  'Vencedor: ${bet.winnerLabel}',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: AppColors.warmGold,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (bet.isOpen) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _joinBet(context, 'a'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.forestGreen,
+                      side: const BorderSide(color: AppColors.forestGreen),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                    ),
+                    child: Text(bet.sideALabel,
+                        style: const TextStyle(fontSize: 12)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _joinBet(context, 'b'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                    ),
+                    child: Text(bet.sideBLabel,
+                        style: const TextStyle(fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _joinBet(BuildContext context, String side) async {
+    try {
+      await ref.read(bookClubRepositoryProvider).joinBet(bet.id, side);
+      ref.invalidate(_clubBetsProvider(clubId));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Você entrou na aposta!')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erro: $e')));
+      }
+    }
+  }
+}
+
+class _SideChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _SideChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Sheet: Criar Aposta ───────────────────────────────────────────────────────
+
+class _CreateBetSheet extends ConsumerStatefulWidget {
+  final String clubId;
+  final VoidCallback onSaved;
+
+  const _CreateBetSheet({required this.clubId, required this.onSaved});
+
+  @override
+  ConsumerState<_CreateBetSheet> createState() => _CreateBetSheetState();
+}
+
+class _CreateBetSheetState extends ConsumerState<_CreateBetSheet> {
+  final _descCtrl = TextEditingController();
+  final _sideACtrl = TextEditingController(text: 'Sim');
+  final _sideBCtrl = TextEditingController(text: 'Não');
+  BetStakeType _stakeType = BetStakeType.cafe;
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _descCtrl.dispose();
+    _sideACtrl.dispose();
+    _sideBCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final desc = _descCtrl.text.trim();
+    if (desc.isEmpty) return;
+    setState(() => _loading = true);
+    try {
+      await ref.read(bookClubRepositoryProvider).createBet(
+            clubId: widget.clubId,
+            description: desc,
+            stakeType: _stakeType,
+            sideALabel: _sideACtrl.text.trim().isEmpty ? 'Sim' : _sideACtrl.text.trim(),
+            sideBLabel: _sideBCtrl.text.trim().isEmpty ? 'Não' : _sideBCtrl.text.trim(),
+          );
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onSaved();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erro: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20, right: 20, top: 20,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36, height: 4,
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('🎲 Nova Aposta',
+                style: AppTextStyles.headlineMedium.copyWith(color: cs.onSurface)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _descCtrl,
+              maxLines: 2,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Descrição da aposta *',
+                hintText: 'Ex: Quem vai terminar o livro primeiro?',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('Prêmio', style: AppTextStyles.labelMedium),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: BetStakeType.values.map((t) {
+                final selected = _stakeType == t;
+                return ChoiceChip(
+                  label: Text('${t.emoji} ${t.dbValue}'),
+                  selected: selected,
+                  onSelected: (_) => setState(() => _stakeType = t),
+                  selectedColor: AppColors.forestGreen.withValues(alpha: 0.2),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _sideACtrl,
+                    decoration: const InputDecoration(labelText: 'Lado A'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _sideBCtrl,
+                    decoration: const InputDecoration(labelText: 'Lado B'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _loading ? null : _save,
+                style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.forestGreen),
+                child: _loading
+                    ? const SizedBox(
+                        height: 20, width: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : const Text('Criar aposta'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SEÇÃO: VOTAÇÕES LIVRES (OPEN POLLS)
+// ════════════════════════════════════════════════════════════════════════════
+
+class _OpenPollsSection extends ConsumerWidget {
+  final BookClub club;
+  final String clubId;
+
+  const _OpenPollsSection({required this.club, required this.clubId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final pollsAsync = ref.watch(_clubOpenPollsProvider(clubId));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text('📊', style: TextStyle(fontSize: 18)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Votações',
+                style: AppTextStyles.headlineMedium.copyWith(color: cs.onSurface),
+              ),
+            ),
+            if (club.canManage)
+              TextButton.icon(
+                onPressed: () => _showCreateSheet(context, ref),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Nova'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF7c5cd8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        pollsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (polls) {
+            if (polls.isEmpty) {
+              return _EmptyCard(
+                icon: '🗳️',
+                message: 'Nenhuma votação aberta.',
+                sub: club.canManage
+                    ? 'Crie uma votação para ouvir o clube.'
+                    : 'Aguarde uma votação dos admins.',
+              );
+            }
+            return Column(
+              children: polls.take(5).map((p) => _OpenPollCard(
+                    poll: p,
+                    clubId: clubId,
+                  )).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showCreateSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _CreateOpenPollSheet(
+        clubId: clubId,
+        onSaved: () => ref.invalidate(_clubOpenPollsProvider(clubId)),
+      ),
+    );
+  }
+}
+
+class _OpenPollCard extends ConsumerStatefulWidget {
+  final ClubOpenPoll poll;
+  final String clubId;
+
+  const _OpenPollCard({required this.poll, required this.clubId});
+
+  @override
+  ConsumerState<_OpenPollCard> createState() => _OpenPollCardState();
+}
+
+class _OpenPollCardState extends ConsumerState<_OpenPollCard> {
+  List<OpenPollOptionResult>? _results;
+  bool _loadingVote = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadResults();
+  }
+
+  Future<void> _loadResults() async {
+    final results = await ref
+        .read(bookClubRepositoryProvider)
+        .fetchOpenPollResults(widget.poll.id);
+    if (mounted) setState(() => _results = results);
+  }
+
+  Future<void> _vote(String optionId) async {
+    setState(() => _loadingVote = true);
+    try {
+      await ref
+          .read(bookClubRepositoryProvider)
+          .voteOnOpenPoll(widget.poll.id, [optionId]);
+      await _loadResults();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erro: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _loadingVote = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.darkSurface : Colors.white;
+    final border = isDark ? AppColors.darkBorder : AppColors.border;
+    final results = _results;
+    final isOpen = widget.poll.isOpen;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.poll.question,
+                  style: AppTextStyles.titleMedium
+                      .copyWith(color: cs.onSurface, fontSize: 13),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isOpen
+                      ? AppColors.forestGreen.withValues(alpha: 0.12)
+                      : AppColors.textMuted.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  isOpen ? 'Aberta' : 'Encerrada',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: isOpen ? AppColors.forestGreen : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (results == null)
+            const Center(child: CircularProgressIndicator())
+          else
+            ...results.map((r) {
+              return GestureDetector(
+                onTap: (isOpen && !_loadingVote) ? () => _vote(r.optionId) : null,
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: r.votedByMe
+                        ? const Color(0xFF7c5cd8).withValues(alpha: 0.12)
+                        : cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: r.votedByMe
+                          ? const Color(0xFF7c5cd8).withValues(alpha: 0.4)
+                          : cs.outlineVariant,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      if (r.votedByMe)
+                        const Icon(Icons.check_circle,
+                            size: 14, color: Color(0xFF7c5cd8)),
+                      if (r.votedByMe) const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          r.optionLabel,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: r.votedByMe ? FontWeight.w600 : FontWeight.normal,
+                            color: r.votedByMe
+                                ? const Color(0xFF7c5cd8)
+                                : cs.onSurface,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${r.voteCount} (${r.pct.toStringAsFixed(0)}%)',
+                        style: AppTextStyles.labelMedium.copyWith(fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Sheet: Criar Votação Livre ────────────────────────────────────────────────
+
+class _CreateOpenPollSheet extends ConsumerStatefulWidget {
+  final String clubId;
+  final VoidCallback onSaved;
+
+  const _CreateOpenPollSheet({required this.clubId, required this.onSaved});
+
+  @override
+  ConsumerState<_CreateOpenPollSheet> createState() =>
+      _CreateOpenPollSheetState();
+}
+
+class _CreateOpenPollSheetState extends ConsumerState<_CreateOpenPollSheet> {
+  final _questionCtrl = TextEditingController();
+  final List<TextEditingController> _optionCtrls = [
+    TextEditingController(),
+    TextEditingController(),
+  ];
+  bool _multiSelect = false;
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _questionCtrl.dispose();
+    for (final c in _optionCtrls) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final question = _questionCtrl.text.trim();
+    final options = _optionCtrls
+        .map((c) => c.text.trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
+    if (question.isEmpty || options.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Preencha a pergunta e ao menos 2 opções.')),
+      );
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final pollOptions = options.asMap().entries.map((e) {
+        return OpenPollOption(id: 'opt_${e.key + 1}', label: e.value);
+      }).toList();
+      await ref.read(bookClubRepositoryProvider).createOpenPoll(
+            clubId: widget.clubId,
+            question: question,
+            options: pollOptions,
+            multiSelect: _multiSelect,
+          );
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onSaved();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erro: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20, right: 20, top: 20,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36, height: 4,
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('📊 Nova Votação',
+                style: AppTextStyles.headlineMedium.copyWith(color: cs.onSurface)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _questionCtrl,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Pergunta *',
+                hintText: 'Ex: Qual horário preferem para o encontro?',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('Opções', style: AppTextStyles.labelMedium),
+            const SizedBox(height: 8),
+            ..._optionCtrls.asMap().entries.map((e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: e.value,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: InputDecoration(
+                            labelText: 'Opção ${e.key + 1}',
+                          ),
+                        ),
+                      ),
+                      if (_optionCtrls.length > 2)
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline,
+                              color: AppColors.error),
+                          onPressed: () => setState(() {
+                            e.value.dispose();
+                            _optionCtrls.removeAt(e.key);
+                          }),
+                        ),
+                    ],
+                  ),
+                )),
+            if (_optionCtrls.length < 6)
+              TextButton.icon(
+                onPressed: () =>
+                    setState(() => _optionCtrls.add(TextEditingController())),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Adicionar opção'),
+              ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              title: const Text('Permitir múltiplas escolhas'),
+              value: _multiSelect,
+              onChanged: (v) => setState(() => _multiSelect = v),
+              contentPadding: EdgeInsets.zero,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _loading ? null : _save,
+                style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF7c5cd8)),
+                child: _loading
+                    ? const SizedBox(
+                        height: 20, width: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : const Text('Criar votação'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// WIDGET AUXILIAR: Card vazio
+// ════════════════════════════════════════════════════════════════════════════
+
+class _EmptyCard extends StatelessWidget {
+  final String icon;
+  final String message;
+  final String? sub;
+
+  const _EmptyCard({required this.icon, required this.message, this.sub});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: isDark ? AppColors.darkBorder : AppColors.border),
+      ),
+      child: Column(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 28)),
+          const SizedBox(height: 8),
+          Text(message, style: AppTextStyles.bodyMedium),
+          if (sub != null) ...[
+            const SizedBox(height: 4),
+            Text(sub!, style: AppTextStyles.labelMedium,
+                textAlign: TextAlign.center),
+          ],
         ],
       ),
     );
