@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/shell/main_shell.dart';
 import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../data/notification_models.dart';
@@ -35,11 +34,7 @@ class NotificationsScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: ReadLogColors.paper,
         foregroundColor: ReadLogColors.charcoal,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
-          tooltip: 'Abrir menu',
-        ),
+        automaticallyImplyLeading: false,
         title: Text(
           'Notificações',
           style: ReadLogType.display(size: 19, color: ReadLogColors.charcoal),

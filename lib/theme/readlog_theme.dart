@@ -26,6 +26,24 @@ class ReadLogColors {
   static const sage = Color(0xFF6F8768); // verde sálvia — estados secundários
   static const cream = Color(0xFFF4EEDD);
   static const charcoal = Color(0xFF241C14); // texto principal sobre papel
+
+  // ── Semânticos de estado ─────────────────────────────────────────────────
+  static const success = sage;               // #6F8768
+  static const warning = Color(0xFFC98A3B); // âmbar seco
+  static const danger  = stamp;             // #9C3B29
+
+  // ── Superfícies novas ────────────────────────────────────────────────────
+  static const paperShadow = Color(0x1A241C14); // sombra "tinta"
+  static const inkLine     = Color(0x14F4EEDD); // divisores em dark  (cream 8%)
+  static const paperLine   = Color(0x1F241C14); // divisores em light (charcoal 12%)
+
+  // ── Status de presença ───────────────────────────────────────────────────
+  static const online  = sage;
+  static const idle    = brass;
+  static const offline = Color(0x66241C14);
+
+  // ── Sage escurecido para body sobre paper (a11y ≥ 4.5) ──────────────────
+  static const sageDark = Color(0xFF5A6F55);
 }
 
 class ReadLogType {
@@ -102,6 +120,37 @@ class ReadLogType {
         fontWeight: weight,
         color: color,
         fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+      );
+
+  /// "Manuscrito" — Fraunces itálico para citações e trechos.
+  static TextStyle quote({
+    double size = 14,
+    Color? color,
+  }) =>
+      TextStyle(
+        fontFamily: 'Fraunces',
+        fontSize: size,
+        fontWeight: FontWeight.w400,
+        fontStyle: FontStyle.italic,
+        letterSpacing: 0.1,
+        height: 1.45,
+        color: color,
+      );
+
+  /// "Carimbo pequeno" — Plex Mono bold uppercase para pills de evento.
+  static TextStyle stampLabel({
+    double size = 10,
+    Color? color,
+  }) =>
+      TextStyle(
+        fontFamily: 'IBM Plex Mono',
+        fontFamilyFallback: const ['Courier New', 'monospace'],
+        fontSize: size,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.2,
+        color: color,
+      ).copyWith(
+        // uppercase via TextStyle não existe — usar em conjunto com toUpperCase()
       );
 }
 
@@ -553,34 +602,78 @@ class _DottedLinePainter extends CustomPainter {
 
 /// -------------------- WIDGET: SPINE NAV BAR --------------------
 ///
-/// Navegação inferior estilizada como lombadas de livro lado a lado.
-/// A aba ativa ganha um "marcador de página" animado (triângulo invertido) no topo.
+/// Redesign v2: 5 abas com FAB central de Sessão.
+///
+/// Layout: Home · Clubes · [Sessão FAB] · Biblioteca · Perfil
+/// O item central (índice 2) é um círculo stamp 56px elevado — não é uma aba
+/// destino comum, é o botão de iniciar/retomar sessão.
+///
+/// [sessionActive]: quando true o FAB pulsa suavemente.
+/// [onSessionTap]:  callback específico do botão Sessão (índice 2).
 
-class ReadLogSpineNavBar extends StatelessWidget {
+class ReadLogSpineNavBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final List<IconData> icons;
+  final bool sessionActive;
+
+  // Ícones das 4 abas laterais (sem o central)
+  static const _sideIcons = [
+    Icons.home_outlined,
+    Icons.groups_2_outlined,
+    Icons.menu_book_outlined,
+    Icons.person_outline,
+  ];
 
   const ReadLogSpineNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
-    this.icons = const [
-      Icons.home_outlined,
-      Icons.menu_book_outlined,
-      Icons.timer_outlined,
-      Icons.emoji_events_outlined,
-      Icons.person_outline,
-    ],
+    this.sessionActive = false,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.paddingOf(context).bottom;
+  State<ReadLogSpineNavBar> createState() => _ReadLogSpineNavBarState();
+}
 
+class _ReadLogSpineNavBarState extends State<ReadLogSpineNavBar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.sessionActive) _pulse.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(ReadLogSpineNavBar old) {
+    super.didUpdateWidget(old);
+    if (widget.sessionActive && !_pulse.isAnimating) {
+      _pulse.repeat(reverse: true);
+    } else if (!widget.sessionActive && _pulse.isAnimating) {
+      _pulse.stop();
+      _pulse.value = 1.0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  // Mapeia índice visual (0-4) para índice lógico das rotas
+  // Visual: 0=Home  1=Clubs  2=Session(FAB)  3=Library  4=Profile
+  // Lógico: 0=Home  1=Clubs  2=Session       3=Library  4=Profile
+  static int _visualToLogical(int v) => v; // 1:1
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-      padding: EdgeInsets.fromLTRB(6, 6, 6, bottomPadding > 0 ? 0 : 0),
       decoration: BoxDecoration(
         color: ReadLogColors.charcoal,
         borderRadius: BorderRadius.circular(16),
@@ -589,17 +682,79 @@ class ReadLogSpineNavBar extends StatelessWidget {
         top: false,
         child: SizedBox(
           height: 62,
-          child: Row(
-            children: List.generate(icons.length, (i) {
-              final active = i == currentIndex;
-              return Expanded(
-                child: _SpineTab(
-                  icon: icons[i],
-                  active: active,
-                  onTap: () => onTap(i),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              // ── Quatro abas laterais ────────────────────────────────
+              Row(
+                children: [
+                  // Abas 0 e 1 (Home, Clubes)
+                  ...List.generate(2, (i) {
+                    final logical = _visualToLogical(i);
+                    return Expanded(
+                      child: _SpineTab(
+                        icon: ReadLogSpineNavBar._sideIcons[i],
+                        active: widget.currentIndex == logical,
+                        onTap: () => widget.onTap(logical),
+                      ),
+                    );
+                  }),
+                  // Espaço central reservado para o FAB
+                  const SizedBox(width: 72),
+                  // Abas 3 e 4 (Biblioteca, Perfil)
+                  ...List.generate(2, (i) {
+                    final sideIdx = i + 2; // índice no _sideIcons
+                    final logical = _visualToLogical(i + 3);
+                    return Expanded(
+                      child: _SpineTab(
+                        icon: ReadLogSpineNavBar._sideIcons[sideIdx],
+                        active: widget.currentIndex == logical,
+                        onTap: () => widget.onTap(logical),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+
+              // ── FAB central de Sessão ───────────────────────────────
+              Positioned(
+                top: -12,
+                child: FadeTransition(
+                  opacity: widget.sessionActive
+                      ? Tween<double>(begin: 0.6, end: 1.0).animate(
+                          CurvedAnimation(
+                            parent: _pulse,
+                            curve: Curves.easeInOut,
+                          ),
+                        )
+                      : const AlwaysStoppedAnimation(1.0),
+                  child: GestureDetector(
+                    onTap: () => widget.onTap(2),
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: ReadLogColors.stamp,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: ReadLogColors.stamp.withValues(alpha: 0.4),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow,
+                        color: ReadLogColors.cream,
+                        size: 26,
+                      ),
+                    ),
+                  ),
                 ),
-              );
-            }),
+              ),
+            ],
           ),
         ),
       ),
@@ -653,9 +808,7 @@ class _SpineTab extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 2),
             padding: const EdgeInsets.only(top: 10),
             decoration: BoxDecoration(
-              color: active
-                  ? ReadLogColors.brass
-                  : Colors.transparent,
+              color: active ? ReadLogColors.brass : Colors.transparent,
               borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(6)),
             ),

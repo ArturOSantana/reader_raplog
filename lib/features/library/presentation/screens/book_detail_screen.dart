@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
@@ -264,6 +265,12 @@ class _BookDetailBody extends ConsumerWidget {
           ),
           const Divider(height: 1, color: AppColors.border),
         ],
+        if (book.deadline != null &&
+            book.status != BookStatus.read &&
+            book.status != BookStatus.abandoned) ...[
+          _DeadlineRow(deadline: book.deadline!),
+          const Divider(height: 1, color: AppColors.border),
+        ],
 
         const SizedBox(height: 20),
 
@@ -442,6 +449,75 @@ class _MetricCell extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DeadlineRow extends StatelessWidget {
+  final DateTime deadline;
+
+  const _DeadlineRow({required this.deadline});
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DateTime.now();
+    final daysLeft = deadline.difference(DateTime(today.year, today.month, today.day)).inDays;
+    final isExpiringSoon = daysLeft <= 1;
+    final isOverdue = daysLeft < 0;
+
+    Color badgeColor;
+    String badgeText;
+    if (isOverdue) {
+      badgeColor = AppColors.error;
+      badgeText = 'Vencido';
+    } else if (isExpiringSoon) {
+      badgeColor = AppColors.warmGold;
+      badgeText = daysLeft == 0 ? 'Vence hoje!' : 'Vence amanhã!';
+    } else {
+      badgeColor = AppColors.forestGreen;
+      badgeText = '$daysLeft dias restantes';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.hourglass_bottom_outlined,
+                  size: 16,
+                  color: isExpiringSoon || isOverdue
+                      ? badgeColor
+                      : AppColors.textMuted),
+              const SizedBox(width: 6),
+              Text('Prazo de leitura', style: AppTextStyles.bodyMedium),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                DateFormat('dd/MM/yyyy').format(deadline),
+                style: AppTextStyles.titleMedium,
+              ),
+              const SizedBox(height: 2),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: badgeColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  badgeText,
+                  style: AppTextStyles.labelMedium.copyWith(color: badgeColor),
+                ),
+              ),
+            ],
           ),
         ],
       ),

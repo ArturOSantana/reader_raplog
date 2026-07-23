@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/club_stories_and_capsule.dart';
 import '../../../../shared/providers/providers.dart';
@@ -206,6 +210,25 @@ class _StoryCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 14, height: 1.5)),
             ),
           ],
+          if (story.storyType == StoryType.image &&
+              story.imageUrl != null) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                story.imageUrl!,
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  height: 200,
+                  color: cs.surfaceContainerLowest,
+                  child: Icon(Icons.broken_image_outlined,
+                      color: cs.onSurface.withValues(alpha: 0.3)),
+                ),
+              ),
+            ),
+          ],
           if (story.bookTitle != null) ...[
             const SizedBox(height: 10),
             Row(
@@ -269,38 +292,86 @@ class _CreateStorySheet extends ConsumerStatefulWidget {
   final String clubId;
   final VoidCallback onCreated;
 
-  const _CreateStorySheet(
-      {required this.clubId, required this.onCreated});
+  const _CreateStorySheet({required this.clubId, required this.onCreated});
 
   @override
-  ConsumerState<_CreateStorySheet> createState() =>
-      _CreateStorySheetState();
+  ConsumerState<_CreateStorySheet> createState() => _CreateStorySheetState();
 }
 
-class _CreateStorySheetState extends ConsumerState<_CreateStorySheet> {
-  final _ctrl = TextEditingController();
+class _CreateStorySheetState extends ConsumerState<_CreateStorySheet>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs;
+  final _textCtrl = TextEditingController();
+  final _captionCtrl = TextEditingController();
+  File? _pickedImage;
   bool _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    _tabs = TabController(length: 2, vsync: this);
+  }
+
+  @override
   void dispose() {
-    _ctrl.dispose();
+    _tabs.dispose();
+    _textCtrl.dispose();
+    _captionCtrl.dispose();
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final xFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1200,
+      );
+      if (xFile != null && mounted) {
+        setState(() => _pickedImage = File(xFile.path));
+      }
+    } on PlatformException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.code == 'photo_access_denied'
+                  ? 'Permissão negada. Vá em Configurações e permita acesso à galeria.'
+                  : 'Não foi possível abrir a galeria.',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _save() async {
-    final text = _ctrl.text.trim();
-    if (text.isEmpty) return;
+    final isText = _tabs.index == 0;
+    if (isText && _textCtrl.text.trim().isEmpty) return;
+    if (!isText && _pickedImage == null) return;
+
     setState(() => _saving = true);
     try {
-      await ref
-          .read(bookClubRepositoryProvider)
-          .createTextStory(clubId: widget.clubId, content: text);
+      final repo = ref.read(bookClubRepositoryProvider);
+      if (isText) {
+        await repo.createTextStory(
+          clubId: widget.clubId,
+          content: _textCtrl.text.trim(),
+        );
+      } else {
+        await repo.createImageStory(
+          clubId: widget.clubId,
+          imageFile: _pickedImage!,
+          caption: _captionCtrl.text.trim(),
+        );
+      }
       widget.onCreated();
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erro ao publicar: $e')));
+          SnackBar(content: Text('Erro ao publicar: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -311,40 +382,57 @@ class _CreateStorySheetState extends ConsumerState<_CreateStorySheet> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Publicar Story',
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    color: cs.onSurface)),
-            const SizedBox(height: 4),
-            Text('Visível por 24 horas para os membros do clube.',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: cs.onSurface.withValues(alpha: 0.5))),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _ctrl,
-              maxLines: 5,
-              minLines: 3,
-              maxLength: 300,
-              autofocus: true,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                hintText: 'O que você quer compartilhar com o clube?',
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Cabeçalho ──────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Publicar Story',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        color: cs.onSurface)),
+                const SizedBox(height: 4),
+                Text('Visível por 24 horas para os membros do clube.',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: cs.onSurface.withValues(alpha: 0.5))),
+              ],
             ),
-            const SizedBox(height: 16),
-            Row(
+          ),
+          const SizedBox(height: 12),
+          // ── Abas ────────────────────────────────────────────────────────
+          TabBar(
+            controller: _tabs,
+            tabs: const [
+              Tab(icon: Icon(Icons.text_fields, size: 18), text: 'Texto'),
+              Tab(icon: Icon(Icons.photo_camera_outlined, size: 18), text: 'Foto'),
+            ],
+            labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            onTap: (_) => setState(() {}),
+          ),
+          const Divider(height: 1),
+          // ── Conteúdo da aba ─────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+            child: _tabs.index == 0
+                ? _TextTab(controller: _textCtrl)
+                : _PhotoTab(
+                    image: _pickedImage,
+                    captionController: _captionCtrl,
+                    onPick: _pickImage,
+                  ),
+          ),
+          // ── Ações ───────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+            child: Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
@@ -367,9 +455,119 @@ class _CreateStorySheetState extends ConsumerState<_CreateStorySheet> {
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+// ── Aba de texto ──────────────────────────────────────────────────────────────
+
+class _TextTab extends StatelessWidget {
+  final TextEditingController controller;
+  const _TextTab({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      maxLines: 5,
+      minLines: 3,
+      maxLength: 300,
+      autofocus: true,
+      textCapitalization: TextCapitalization.sentences,
+      decoration: InputDecoration(
+        hintText: 'O que você quer compartilhar com o clube?',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
+
+// ── Aba de foto ───────────────────────────────────────────────────────────────
+
+class _PhotoTab extends StatelessWidget {
+  final File? image;
+  final TextEditingController captionController;
+  final VoidCallback onPick;
+
+  const _PhotoTab({
+    required this.image,
+    required this.captionController,
+    required this.onPick,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Prévia / botão de seleção
+        GestureDetector(
+          onTap: onPick,
+          child: Container(
+            height: 200,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: cs.outlineVariant),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: image != null
+                ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.file(image!, fit: BoxFit.cover),
+                      Positioned(
+                        bottom: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text('Trocar',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_photo_alternate_outlined,
+                          size: 40,
+                          color: cs.onSurface.withValues(alpha: 0.35)),
+                      const SizedBox(height: 8),
+                      Text('Toque para escolher uma foto',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: cs.onSurface.withValues(alpha: 0.5))),
+                    ],
+                  ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Legenda opcional
+        TextField(
+          controller: captionController,
+          maxLines: 2,
+          maxLength: 120,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            hintText: 'Legenda (opcional)',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+      ],
     );
   }
 }

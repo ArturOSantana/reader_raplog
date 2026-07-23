@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/shell/main_shell.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../shared/widgets/skel_shimmer.dart';
+import '../../../../theme/readlog_components.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -53,15 +53,38 @@ class BookClubsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Clubes do Livro'),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
-          tooltip: 'Abrir menu',
-        ),
+      backgroundColor: ReadLogColors.paper,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SafeArea(
+            bottom: false,
+            child: ReadLogPageHeader(
+              kicker: 'SEÇÃO',
+              title: 'Clubes',
+              dark: false,
+              showMenuButton: true,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.search,
+                      size: 20, color: ReadLogColors.charcoal),
+                  onPressed: () {},
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add,
+                      size: 22, color: ReadLogColors.charcoal),
+                  onPressed: () {},
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+              ],
+            ),
+          ),
+          const Expanded(child: BookClubsBody()),
+        ],
       ),
-      body: const BookClubsBody(),
     );
   }
 }
@@ -139,20 +162,21 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
                     onChanged: (v) => setState(() => _search = v),
                   ),
                 ),
-                // ── Chips de filtro ────────────────────────────────────────
+                // ── Chips de filtro — ReadLogChip ──────────────────────────
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
                   child: Row(
                     children: _ClubFilter.values
                         .map(
                           (f) => Padding(
                             padding: const EdgeInsets.only(right: 8),
-                            child: _FilterChip(
+                            child: ReadLogChip(
                               label: f.label,
-                              active: _activeFilter == f,
-                              onTap: () => setState(() => _activeFilter = f),
+                              isSelected: _activeFilter == f,
+                              onTap: () =>
+                                  setState(() => _activeFilter = f),
                             ),
                           ),
                         )
@@ -168,18 +192,36 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
                           onJoin: () => _showJoinSheet(context),
                         )
                       : RefreshIndicator(
-                          onRefresh: () async =>
-                              ref.invalidate(_myClubsProvider),
-                          child: ListView.separated(
-                            padding:
-                                const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 10),
-                            itemBuilder: (_, i) =>
-                                _ClubCard(club: filtered[i]),
-                          ),
-                        ),
+                      onRefresh: () async =>
+                          ref.invalidate(_myClubsProvider),
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: 8),
+                        itemBuilder: (_, i) {
+                          final c = filtered[i];
+                          return ReadLogClubCard(
+                            clubName: c.name,
+                            currentBookTitle:
+                                c.currentBookTitle ?? 'Sem livro definido',
+                            currentBookAuthor:
+                                c.currentBookAuthor ?? '',
+                            progress: 0,
+                            memberCount: c.memberCount,
+                            streakDays: 0,
+                            status: c.isClosed
+                                ? ReadLogClubStatus.archived
+                                : c.isOnVacation
+                                    ? ReadLogClubStatus.vacation
+                                    : ReadLogClubStatus.active,
+                            isOwner: c.isOwner,
+                            onTap: () =>
+                                context.push('/clubs/${c.id}'),
+                          );
+                        },
+                      ),
+                    ),
                 ),
               ],
             );
@@ -273,259 +315,6 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
   }
 }
 
-// ── Filter Chip ───────────────────────────────────────────────────────────────
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: active
-              ? AppColors.forestGreen
-              : AppColors.surfaceVariant,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: active ? AppColors.forestGreen : AppColors.border,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: active ? Colors.white : AppColors.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Club Card ─────────────────────────────────────────────────────────────────
-
-class _ClubCard extends StatelessWidget {
-  final BookClub club;
-
-  const _ClubCard({required this.club});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/clubs/${club.id}'),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: club.isClosed
-                ? AppColors.border
-                : club.isOnVacation
-                    ? AppColors.warmGold.withValues(alpha: 0.35)
-                    : AppColors.border,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // Avatar
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: _iconBg(club),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.groups_outlined,
-                      color: _iconColor(club), size: 26),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Nome + badge de papel
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              club.name,
-                              style: AppTextStyles.titleMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          _RoleBadge(club),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      // Livro atual
-                      if (club.currentBookTitle != null)
-                        Text(
-                          club.currentBookTitle!,
-                          style: AppTextStyles.bodyMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        )
-                      else
-                        Text(
-                          'Nenhum livro definido',
-                          style: AppTextStyles.bodyMedium
-                              .copyWith(color: AppColors.textMuted),
-                        ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right,
-                    color: AppColors.textMuted, size: 20),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // ── Linha inferior: membros + status ─────────────────────────
-            Row(
-              children: [
-                const Icon(Icons.person_outline,
-                    size: 13, color: AppColors.textMuted),
-                const SizedBox(width: 3),
-                Text(
-                  '${club.memberCount} ${club.memberCount == 1 ? 'membro' : 'membros'}',
-                  style: AppTextStyles.labelMedium,
-                ),
-                const Spacer(),
-                _StatusBadge(club.status),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _iconBg(BookClub c) {
-    if (c.isClosed) return AppColors.surfaceVariant;
-    if (c.isOnVacation) return AppColors.warmGold.withValues(alpha: 0.1);
-    return AppColors.forestGreen.withValues(alpha: 0.1);
-  }
-
-  Color _iconColor(BookClub c) {
-    if (c.isClosed) return AppColors.textMuted;
-    if (c.isOnVacation) return AppColors.warmGold;
-    return AppColors.forestGreen;
-  }
-}
-
-// ── Status Badge ──────────────────────────────────────────────────────────────
-
-class _StatusBadge extends StatelessWidget {
-  final ClubStatus status;
-
-  const _StatusBadge(this.status);
-
-  @override
-  Widget build(BuildContext context) {
-    late final Color bg;
-    late final Color fg;
-    late final IconData icon;
-
-    switch (status) {
-      case ClubStatus.active:
-        bg = AppColors.success.withValues(alpha: 0.12);
-        fg = AppColors.success;
-        icon = Icons.circle;
-        break;
-      case ClubStatus.onVacation:
-        bg = AppColors.warmGold.withValues(alpha: 0.12);
-        fg = AppColors.warmGold;
-        icon = Icons.beach_access_outlined;
-        break;
-      case ClubStatus.closed:
-        bg = AppColors.surfaceVariant;
-        fg = AppColors.textMuted;
-        icon = Icons.lock_outline;
-        break;
-      case ClubStatus.archived:
-        bg = AppColors.surfaceVariant;
-        fg = AppColors.textMuted;
-        icon = Icons.archive_outlined;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: status == ClubStatus.active ? 7 : 12, color: fg),
-          const SizedBox(width: 4),
-          Text(
-            status.label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: fg,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Role Badge ────────────────────────────────────────────────────────────────
-
-class _RoleBadge extends StatelessWidget {
-  final BookClub club;
-
-  const _RoleBadge(this.club);
-
-  @override
-  Widget build(BuildContext context) {
-    if (club.isOwner) {
-      return _badge('Dono', AppColors.warmGold);
-    }
-    if (club.isAdmin) {
-      return _badge('Admin', AppColors.forestGreen);
-    }
-    return const SizedBox.shrink();
-  }
-
-  Widget _badge(String label, Color color) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
-      );
-}
-
 // ── Empty State ───────────────────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
@@ -547,40 +336,54 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.forestGreen.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.groups_outlined,
-                  size: 52, color: AppColors.forestGreen),
+            Icon(
+              Icons.library_add_outlined,
+              size: 48,
+              color: ReadLogColors.charcoal.withValues(alpha: 0.25),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Text(
-              hasClubs ? 'Nenhum clube encontrado' : 'Nenhum clube ainda',
-              style: AppTextStyles.headlineMedium,
+              hasClubs ? 'Nenhum clube encontrado' : 'Você ainda não\nestá em nenhum clube',
+              style: ReadLogType.display(size: 18, color: ReadLogColors.charcoal),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               hasClubs
                   ? 'Tente ajustar os filtros ou a busca.'
-                  : 'Crie um clube do livro, convide amigos\ne leiam juntos com calendário de encontros.',
-              style: AppTextStyles.bodyMedium,
+                  : 'Crie um clube, convide amigos\ne leiam juntos.',
+              style: ReadLogType.mono(
+                size: 12,
+                color: ReadLogColors.charcoal.withValues(alpha: 0.5),
+              ),
               textAlign: TextAlign.center,
             ),
             if (!hasClubs) ...[
               const SizedBox(height: 24),
-              FilledButton.icon(
+              OutlinedButton.icon(
                 onPressed: onCreate,
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add, size: 16),
                 label: const Text('Criar clube'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ReadLogColors.charcoal,
+                  side: const BorderSide(color: ReadLogColors.paperDeep),
+                  textStyle: ReadLogType.mono(size: 12, weight: FontWeight.w600),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(3)),
+                ),
               ),
               const SizedBox(height: 10),
               OutlinedButton.icon(
                 onPressed: onJoin,
-                icon: const Icon(Icons.login),
+                icon: const Icon(Icons.login, size: 16),
                 label: const Text('Entrar com código'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ReadLogColors.brass,
+                  side: BorderSide(color: ReadLogColors.brass.withValues(alpha: 0.5)),
+                  textStyle: ReadLogType.mono(size: 12, weight: FontWeight.w600),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(3)),
+                ),
               ),
             ],
           ],

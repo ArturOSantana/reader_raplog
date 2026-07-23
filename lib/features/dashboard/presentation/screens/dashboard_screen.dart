@@ -3,9 +3,9 @@ import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:flutter/material.dart';
-import '../../../../core/shell/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/readlog_theme.dart';
+import '../../../../theme/readlog_components.dart';
 import '../../../../shared/models/goal.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../shared/widgets/skel_shimmer.dart';
@@ -53,62 +53,6 @@ class DashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: ReadLogColors.paper,
-      appBar: AppBar(
-        backgroundColor: ReadLogColors.paper,
-        foregroundColor: ReadLogColors.charcoal,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
-          tooltip: 'Abrir menu',
-        ),
-        title: Text('Painel',
-            style: ReadLogType.display(
-                size: 19, color: ReadLogColors.charcoal)),
-        actions: [
-          if (data.hasValue)
-            IconButton(
-              icon: const Icon(Icons.share_rounded),
-              tooltip: 'Compartilhar estatísticas',
-              onPressed: () {
-                final d = data.value!;
-                final week = d['week'] as Map<String, dynamic>;
-                final month = d['month'] as Map<String, dynamic>;
-                final books = d['books'] as List;
-                final streak = d['streak'] as int;
-
-                final readBooks = books.where((b) {
-                  try {
-                    return (b as dynamic).status.dbValue == 'read';
-                  } catch (_) {
-                    return false;
-                  }
-                }).length;
-
-                final user = ref.read(currentUserProvider);
-                final userName =
-                    (user?.userMetadata?['full_name'] as String?) ??
-                    user?.email ??
-                    '';
-
-                showShareStatsSheet(
-                  context: context,
-                  streak: streak,
-                  weekMinutes:
-                      (week['total_minutes'] as num?)?.toInt() ?? 0,
-                  weekPages:
-                      (week['total_pages'] as num?)?.toInt() ?? 0,
-                  monthMinutes:
-                      (month['total_minutes'] as num?)?.toInt() ?? 0,
-                  monthPages:
-                      (month['total_pages'] as num?)?.toInt() ?? 0,
-                  monthBooks: readBooks,
-                  totalBooks: readBooks,
-                  userName: userName,
-                );
-              },
-            ),
-        ],
-      ),
       body: data.when(
         loading: () => const SkelScreenList(count: 8),
         error: (e, _) => Center(child: Text('Erro: $e')),
@@ -138,71 +82,117 @@ class DashboardScreen extends ConsumerWidget {
           return RefreshIndicator(
             color: ReadLogColors.brass,
             onRefresh: () => ref.refresh(_dashboardDataProvider.future),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-              children: [
-                // ── Hoje ─────────────────────────────────────────────
-                _SectionLabel(label: 'Hoje'),
-                const SizedBox(height: 12),
-                _SummaryGrid(
-                  streak: streak,
-                  todayMinutes: todayMinutes,
-                  todayPages: todayPages,
-                  readBooks: readBooks,
-                ),
-
-                // ── Metas ────────────────────────────────────────────
-                if (goals.isNotEmpty) ...[
-                  const SizedBox(height: 28),
-                  _SectionLabel(label: 'Metas'),
-                  const SizedBox(height: 12),
-                  _GoalProgressCard(
-                    goals: goals,
-                    todayMinutes: todayMinutes,
-                    todayPages: todayPages,
-                    yearlyBooksRead: readBooks,
-                    monthStats: month,
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: ReadLogPageHeader(
+                    kicker: 'PAINEL',
+                    title: 'Estatísticas',
+                    actions: [
+                      IconButton(
+                        icon: const Icon(Icons.share_rounded,
+                            size: 20, color: ReadLogColors.charcoal),
+                        tooltip: 'Compartilhar estatísticas',
+                        onPressed: () {
+                          final user = ref.read(currentUserProvider);
+                          final userName =
+                              (user?.userMetadata?['full_name'] as String?) ??
+                              user?.email ??
+                              '';
+                          showShareStatsSheet(
+                            context: context,
+                            streak: streak,
+                            weekMinutes:
+                                (week['total_minutes'] as num?)?.toInt() ?? 0,
+                            weekPages:
+                                (week['total_pages'] as num?)?.toInt() ?? 0,
+                            monthMinutes:
+                                (month['total_minutes'] as num?)?.toInt() ?? 0,
+                            monthPages:
+                                (month['total_pages'] as num?)?.toInt() ?? 0,
+                            monthBooks: readBooks,
+                            totalBooks: readBooks,
+                            userName: userName,
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ],
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // ── Hoje ─────────────────────────────────────────────
+                      _SectionLabel(label: 'Hoje'),
+                      const SizedBox(height: 12),
+                      _SummaryGrid(
+                        streak: streak,
+                        todayMinutes: todayMinutes,
+                        todayPages: todayPages,
+                        readBooks: readBooks,
+                      ),
 
-                // ── Esta semana ───────────────────────────────────────
-                const SizedBox(height: 28),
-                _SectionLabel(label: 'Esta semana'),
-                const SizedBox(height: 12),
-                _PeriodStats(data: week, showBooks: false),
+                      // ── Metas ────────────────────────────────────────────
+                      if (goals.isNotEmpty) ...[
+                        const SizedBox(height: 28),
+                        _SectionLabel(label: 'Metas'),
+                        const SizedBox(height: 12),
+                        _GoalProgressCard(
+                          goals: goals,
+                          todayMinutes: todayMinutes,
+                          todayPages: todayPages,
+                          yearlyBooksRead: readBooks,
+                          monthStats: month,
+                        ),
+                      ],
 
-                // ── Este mês ──────────────────────────────────────────
-                const SizedBox(height: 28),
-                _SectionLabel(label: 'Este mês'),
-                const SizedBox(height: 12),
-                _PeriodStats(
-                    data: month, showBooks: true, books: books),
+                      // ── Esta semana ───────────────────────────────────────
+                      const SizedBox(height: 28),
+                      _SectionLabel(label: 'Esta semana'),
+                      const SizedBox(height: 12),
+                      _PeriodStats(data: week, showBooks: false),
 
-                // ── Este ano ──────────────────────────────────────────
-                const SizedBox(height: 28),
-                _SectionLabel(label: 'Este ano'),
-                const SizedBox(height: 12),
-                _PeriodStats(
-                    data: year, showBooks: true, books: books),
+                      // ── Este mês ──────────────────────────────────────────
+                      const SizedBox(height: 28),
+                      _SectionLabel(label: 'Este mês'),
+                      const SizedBox(height: 12),
+                      _PeriodStats(
+                          data: month, showBooks: true, books: books),
 
-                // ── Calendário ────────────────────────────────────────
-                const SizedBox(height: 28),
-                _SectionLabel(label: 'Calendário de leitura'),
-                const SizedBox(height: 12),
-                _StreakCalendarWidget(
-                    heatmap: heatmap, streak: streak),
+                      // ── Este ano ──────────────────────────────────────────
+                      const SizedBox(height: 28),
+                      _SectionLabel(label: 'Este ano'),
+                      const SizedBox(height: 12),
+                      _PeriodStats(
+                          data: year, showBooks: true, books: books),
 
-                // ── Atividade (heatmap) ───────────────────────────────
-                const SizedBox(height: 28),
-                _SectionLabel(label: 'Atividade — 365 dias'),
-                const SizedBox(height: 12),
-                _HeatmapWidget(data: heatmap),
+                      // ── Calendário ────────────────────────────────────────
+                      const SizedBox(height: 28),
+                      _SectionLabel(label: 'Calendário de leitura'),
+                      const SizedBox(height: 12),
+                      _StreakCalendarWidget(
+                          heatmap: heatmap, streak: streak),
 
-                // ── Destaques ─────────────────────────────────────────
-                const SizedBox(height: 28),
-                _SectionLabel(label: 'Destaques'),
-                const SizedBox(height: 12),
-                _HighlightsWidget(heatmap: heatmap, year: year),
+                      // ── Atividade (heatmap) ───────────────────────────────
+                      const SizedBox(height: 28),
+                      _SectionLabel(label: 'Atividade — 365 dias'),
+                      const SizedBox(height: 12),
+                      ReadLogReadingHeatmap(
+                        data: {
+                          for (final e in heatmap)
+                            (e['date'] as String? ?? ''): (e['minutes'] as num?)?.toInt() ?? 0,
+                        },
+                      ),
+
+                      // ── Destaques ─────────────────────────────────────────
+                      const SizedBox(height: 28),
+                      _SectionLabel(label: 'Destaques'),
+                      const SizedBox(height: 12),
+                      _HighlightsWidget(heatmap: heatmap, year: year),
+                    ]),
+                  ),
+                ),
               ],
             ),
           );
@@ -1088,107 +1078,3 @@ class _HighlightRow extends StatelessWidget {
   }
 }
 
-// ── Heatmap de atividade ──────────────────────────────────────────────────────
-
-class _HeatmapWidget extends StatelessWidget {
-  final List<Map<String, dynamic>> data;
-
-  const _HeatmapWidget({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    if (data.isEmpty) {
-      return Container(
-        height: 80,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: ReadLogColors.cream,
-          borderRadius: BorderRadius.circular(3),
-        ),
-        child: Center(
-          child: Text(
-            'Nenhuma sessão registrada ainda',
-            style: ReadLogType.mono(
-                size: 12,
-                color: ReadLogColors.charcoal.withValues(alpha: 0.4)),
-          ),
-        ),
-      );
-    }
-
-    final maxMinutes = data
-        .map((d) => (d['total_minutes'] as num?)?.toDouble() ?? 0.0)
-        .fold<double>(1.0, (a, b) => a > b ? a : b);
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: ReadLogColors.cream,
-        borderRadius: BorderRadius.circular(3),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 3,
-            runSpacing: 3,
-            children: data.map((d) {
-              final minutes =
-                  (d['total_minutes'] as num?)?.toDouble() ?? 0.0;
-              final intensity =
-                  minutes > 0 ? (minutes / maxMinutes).clamp(0.15, 1.0) : 0.0;
-              return Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: intensity > 0
-                      ? ReadLogColors.stamp.withValues(alpha: intensity)
-                      : ReadLogColors.paperDeep.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 10),
-          // Legenda
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text('menos',
-                  style: ReadLogType.mono(
-                      size: 9,
-                      color:
-                          ReadLogColors.charcoal.withValues(alpha: 0.4))),
-              const SizedBox(width: 4),
-              ...List.generate(5, (i) {
-                final alpha = 0.15 + i * 0.17;
-                return Container(
-                  width: 10,
-                  height: 10,
-                  margin: const EdgeInsets.only(left: 2),
-                  decoration: BoxDecoration(
-                    color: ReadLogColors.stamp.withValues(alpha: alpha),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                );
-              }),
-              const SizedBox(width: 4),
-              Text('mais',
-                  style: ReadLogType.mono(
-                      size: 9,
-                      color:
-                          ReadLogColors.charcoal.withValues(alpha: 0.4))),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}

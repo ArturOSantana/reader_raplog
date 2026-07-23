@@ -282,7 +282,7 @@ class _CheckinForm extends StatelessWidget {
           const SizedBox(height: 8),
           Center(
             child: TextButton(
-              onPressed: onConfirm,
+              onPressed: loading ? null : onConfirm,
               child: Text(
                 'Pular',
                 style: AppTextStyles.labelMedium.copyWith(

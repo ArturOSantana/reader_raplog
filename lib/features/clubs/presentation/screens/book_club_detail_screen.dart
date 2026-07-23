@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../theme/readlog_components.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/models/club_extras.dart';
 import '../../../../shared/models/club_schedule_milestones_challenges.dart';
@@ -144,16 +145,7 @@ class _ClubDetailBody extends ConsumerWidget {
             .isNotEmpty;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(club.name),
-        actions: [
-          if (club.canManage)
-            PopupMenuButton<String>(
-              onSelected: (v) => _onMenuSelected(context, ref, v),
-              itemBuilder: (_) => _buildMenuItems(club),
-            ),
-        ],
-      ),
+      backgroundColor: ReadLogColors.ink,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_clubDetailProvider(clubId));
@@ -169,22 +161,32 @@ class _ClubDetailBody extends ConsumerWidget {
           ref.invalidate(_clubBetsProvider(clubId));
           ref.invalidate(_clubOpenPollsProvider(clubId));
         },
-        child: ListView(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 12,
-            bottom: MediaQuery.of(context).padding.bottom + 24,
-          ),
-          children: [
+        child: CustomScrollView(
+          slivers: [
+            // ── Header expansível 220px ───────────────────────────────
+            SliverToBoxAdapter(
+              child: _ClubHeroHeader(
+                club: club,
+                onMenu: club.canManage
+                    ? () => _showManageMenu(context, ref, club)
+                    : null,
+              ),
+            ),
+            SliverPadding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 12,
+                bottom: MediaQuery.of(context).padding.bottom + 24,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
             // ── Cabeçalho do clube ────────────────────────────────────
             if (!club.isActive) ...[
               _StatusBanner(club: club),
               const SizedBox(height: 12),
             ],
-            _ClubHeader(club: club),
-            const SizedBox(height: 12),
-            if (club.inviteCode != null && !club.isClosed) ...[
+                    if (club.inviteCode != null && !club.isClosed) ...[
               _InviteCodeCard(
                   inviteCode: club.inviteCode!, clubName: club.name),
               const SizedBox(height: 12),
@@ -207,15 +209,10 @@ class _ClubDetailBody extends ConsumerWidget {
             // ════════════════════════════════════════════════════════════
             _SectionLabel('Explorar'),
             const SizedBox(height: 8),
-            GridView.count(
-              crossAxisCount: 4,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 0.9,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                _ShortcutTile(
+            ReadLogSectionRail(
+              dark: true,
+              tiles: [
+                ReadLogSectionTile(
                   icon: Icons.dynamic_feed_outlined,
                   label: 'Feed',
                   onTap: () => context.push(
@@ -223,7 +220,7 @@ class _ClubDetailBody extends ConsumerWidget {
                     extra: {'clubName': club.name},
                   ),
                 ),
-                _ShortcutTile(
+                ReadLogSectionTile(
                   icon: Icons.emoji_events_outlined,
                   label: 'Desafios',
                   onTap: () {
@@ -235,7 +232,7 @@ class _ClubDetailBody extends ConsumerWidget {
                     }
                   },
                 ),
-                _ShortcutTile(
+                ReadLogSectionTile(
                   icon: Icons.casino_outlined,
                   label: 'Apostas',
                   hasBadge: hasBetBadge,
@@ -247,7 +244,7 @@ class _ClubDetailBody extends ConsumerWidget {
                     },
                   ),
                 ),
-                _ShortcutTile(
+                ReadLogSectionTile(
                   icon: Icons.how_to_vote_outlined,
                   label: 'Votações',
                   hasBadge: hasPollBadge,
@@ -259,7 +256,7 @@ class _ClubDetailBody extends ConsumerWidget {
                     },
                   ),
                 ),
-                _ShortcutTile(
+                ReadLogSectionTile(
                   icon: Icons.calendar_month_outlined,
                   label: 'Calendário',
                   onTap: () => context.push(
@@ -267,7 +264,7 @@ class _ClubDetailBody extends ConsumerWidget {
                     extra: {'clubName': club.name},
                   ),
                 ),
-                _ShortcutTile(
+                ReadLogSectionTile(
                   icon: Icons.verified_outlined,
                   label: 'Selos',
                   onTap: () {
@@ -286,7 +283,7 @@ class _ClubDetailBody extends ConsumerWidget {
                     });
                   },
                 ),
-                _ShortcutTile(
+                ReadLogSectionTile(
                   icon: Icons.auto_stories_outlined,
                   label: 'Stories',
                   onTap: () => context.push(
@@ -294,7 +291,7 @@ class _ClubDetailBody extends ConsumerWidget {
                     extra: {'clubName': club.name},
                   ),
                 ),
-                _ShortcutTile(
+                ReadLogSectionTile(
                   icon: Icons.people_outline,
                   label: 'Membros',
                   onTap: () {
@@ -341,7 +338,7 @@ class _ClubDetailBody extends ConsumerWidget {
             SizedBox(key: _membersKey, height: 0),
             Text('Membros',
                 style: AppTextStyles.headlineMedium
-                    .copyWith(color: Theme.of(context).colorScheme.onSurface)),
+                    .copyWith(color: ReadLogColors.cream)),
             const SizedBox(height: 12),
             _MembersList(club: club, clubId: clubId),
             const SizedBox(height: 24),
@@ -352,7 +349,7 @@ class _ClubDetailBody extends ConsumerWidget {
             ],
             Text('Histórico de leituras',
                 style: AppTextStyles.headlineMedium
-                    .copyWith(color: Theme.of(context).colorScheme.onSurface)),
+                    .copyWith(color: ReadLogColors.cream)),
             const SizedBox(height: 12),
             _BookHistoryList(clubId: clubId),
             const SizedBox(height: 24),
@@ -364,7 +361,35 @@ class _ClubDetailBody extends ConsumerWidget {
             if (club.isOwner && club.canBeDeleted)
               _DeleteClubButton(club: club, clubId: clubId),
             const SizedBox(height: 8),
+                ]),
+              ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Exibe o menu de gerenciamento via bottom sheet simples
+  void _showManageMenu(BuildContext context, WidgetRef ref, BookClub club) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: ReadLogColors.inkAlt,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: _buildMenuItems(club).whereType<PopupMenuItem<String>>().map((item) {
+            return InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                _onMenuSelected(context, ref, item.value!);
+              },
+              child: item.child ?? const SizedBox.shrink(),
+            );
+          }).toList(),
         ),
       ),
     );
@@ -717,151 +742,153 @@ class _InviteCodeCard extends StatelessWidget {
   }
 }
 
-// ── Club Header ───────────────────────────────────────────────────────────────
+// ── Club Hero Header (substitui _ClubHeader) ─────────────────────────────────
+// Header expansível 220px com fundo ink 85% + overlay + chips do clube
 
-class _ClubHeader extends ConsumerWidget {
+class _ClubHeroHeader extends ConsumerWidget {
   final BookClub club;
+  final VoidCallback? onMenu;
 
-  const _ClubHeader({required this.club});
+  const _ClubHeroHeader({required this.club, this.onMenu});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final streakAsync = ref.watch(_clubStreakProvider(club.id));
     final streak = streakAsync.valueOrNull ?? 0;
 
-    final iconBg = club.isClosed
-        ? cs.surfaceContainerHighest
+    // Cor da aba lateral pelo estado
+    final statusColor = club.isActive
+        ? ReadLogColors.sage
         : club.isOnVacation
-            ? AppColors.warmGold.withValues(alpha: isDark ? 0.18 : 0.1)
-            : AppColors.warmGold.withValues(alpha: isDark ? 0.18 : 0.1);
-    final iconFg = club.isClosed
-        ? cs.onSurfaceVariant
-        : club.isOnVacation
-            ? AppColors.warmGold
-            : cs.onSurface;
+            ? ReadLogColors.brass
+            : ReadLogColors.charcoal.withValues(alpha: 0.3);
 
-    return Row(
-      children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: iconBg,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Icon(Icons.groups, color: iconFg, size: 36),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(club.name,
-                  style: AppTextStyles.headlineMedium
-                      .copyWith(color: cs.onSurface)),
-              if (club.description != null && club.description!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    club.description!,
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: cs.onSurfaceVariant),
+    final statusLabel = club.isClosed
+        ? 'ENCERRADO'
+        : club.isOnVacation
+            ? 'FÉRIAS'
+            : 'ATIVO';
+
+    final roleLabel = club.isOwner
+        ? '♛ DONO'
+        : club.isAdmin
+            ? '★ ADMIN'
+            : 'MEMBRO';
+
+    return Container(
+      height: 220,
+      width: double.infinity,
+      color: ReadLogColors.ink,
+      child: Stack(
+        children: [
+          // Overlay escuro
+          Container(color: ReadLogColors.ink.withValues(alpha: 0.85)),
+
+          // Conteúdo
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Linha de navegação
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: const Icon(Icons.arrow_back,
+                            size: 20, color: ReadLogColors.cream),
+                      ),
+                      const Spacer(),
+                      if (onMenu != null)
+                        GestureDetector(
+                          onTap: onMenu,
+                          child: const Icon(Icons.more_horiz,
+                              size: 20, color: ReadLogColors.cream),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Kicker
+                  Text(
+                    'CLUBE · ${club.inviteCode?.toUpperCase() ?? club.id.substring(0, 6).toUpperCase()}',
+                    style: ReadLogType.mono(
+                      size: 10,
+                      color: ReadLogColors.brass,
+                    ).copyWith(letterSpacing: 2),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Nome do clube
+                  Text(
+                    club.name,
+                    style: ReadLogType.display(
+                        size: 22, color: ReadLogColors.cream),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Icon(Icons.person_outline,
-                      size: 13, color: cs.onSurfaceVariant),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${club.memberCount} ${club.memberCount == 1 ? 'membro' : 'membros'}',
-                    style: AppTextStyles.labelMedium
-                        .copyWith(color: cs.onSurfaceVariant),
+
+                  const Spacer(),
+
+                  // Chips: papel, estado, membros, streak
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      _HeroChip(label: roleLabel, color: ReadLogColors.brass),
+                      _HeroChip(
+                        label: '● $statusLabel',
+                        color: statusColor,
+                      ),
+                      _HeroChip(
+                        label: '${club.memberCount} MEMBROS',
+                        color: ReadLogColors.cream.withValues(alpha: 0.5),
+                      ),
+                      if (streak > 0)
+                        _HeroChip(
+                          label: '🔥 $streak DIAS',
+                          color: ReadLogColors.stamp,
+                        ),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  _statusChip(club),
-                  if (streak > 0) ...[
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text('🔥',
-                              style: TextStyle(fontSize: 11)),
-                          const SizedBox(width: 2),
-                          Text(
-                            '$streak',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.error,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _statusChip(BookClub c) {
-    late final Color bg, fg;
-    late final IconData icon;
-    switch (c.status) {
-      case ClubStatus.active:
-        bg = AppColors.success.withValues(alpha: 0.22);
-        fg = AppColors.success;
-        icon = Icons.circle;
-        break;
-      case ClubStatus.onVacation:
-        bg = AppColors.warmGold.withValues(alpha: 0.22);
-        fg = AppColors.warmGold;
-        icon = Icons.beach_access_outlined;
-        break;
-      case ClubStatus.closed:
-        bg = Colors.white.withValues(alpha: 0.12);
-        fg = Colors.white70;
-        icon = Icons.lock_outline;
-        break;
-      case ClubStatus.archived:
-        bg = Colors.white.withValues(alpha: 0.08);
-        fg = Colors.white54;
-        icon = Icons.archive_outlined;
-        break;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-          color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: c.isActive ? 7 : 12, color: fg),
-        const SizedBox(width: 4),
-        Text(c.status.label,
-            style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: fg)),
-      ]),
+        ],
+      ),
     );
   }
 }
+
+class _HeroChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _HeroChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(
+        label,
+        style: ReadLogType.mono(size: 10, color: color)
+            .copyWith(letterSpacing: 0.8),
+      ),
+    );
+  }
+}
+
+// ── _ClubHeader (mantida momentaneamente para compilar — pode ser removida) ───
+// REMOVIDA — substituída por _ClubHeroHeader
+
 
 // ── Current Book Card ─────────────────────────────────────────────────────────
 
@@ -1153,7 +1180,7 @@ class _MemberTile extends ConsumerWidget {
             : _initials(member.name ?? '?'),
       ),
       title: Text(member.name ?? 'Usuário',
-          style: AppTextStyles.titleMedium.copyWith(color: cs.onSurface)),
+          style: AppTextStyles.titleMedium.copyWith(color: ReadLogColors.cream)),
       subtitle: null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1165,7 +1192,7 @@ class _MemberTile extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: member.isAdmin
                     ? AppColors.warmGold.withValues(alpha: 0.22)
-                    : cs.surfaceContainerHighest,
+                    : ReadLogColors.cream.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -1175,7 +1202,7 @@ class _MemberTile extends ConsumerWidget {
                   fontWeight: FontWeight.w600,
                   color: member.isAdmin
                       ? AppColors.warmGold
-                      : cs.onSurfaceVariant,
+                      : ReadLogColors.cream.withValues(alpha: 0.75),
                 ),
               ),
             )
@@ -3169,7 +3196,6 @@ class _ChallengesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
     final challengesAsync = ref.watch(_clubChallengesProvider(clubId));
 
     return Column(
@@ -3182,7 +3208,7 @@ class _ChallengesSection extends ConsumerWidget {
             Expanded(
               child: Text(
                 'Desafios',
-                style: AppTextStyles.headlineMedium.copyWith(color: cs.onSurface),
+                style: AppTextStyles.headlineMedium.copyWith(color: ReadLogColors.cream),
               ),
             ),
             if (club.canManage)
@@ -3262,7 +3288,6 @@ class _ChallengeCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surface = isDark ? AppColors.darkSurface : Colors.white;
     final border = isDark ? AppColors.darkBorder : AppColors.border;
@@ -3315,7 +3340,9 @@ class _ChallengeCard extends ConsumerWidget {
                   Text(
                     challenge.title,
                     style: AppTextStyles.titleMedium.copyWith(
-                      color: isActive ? cs.onSurface : AppColors.textMuted,
+                      color: isActive
+                          ? ReadLogColors.cream
+                          : ReadLogColors.cream.withValues(alpha: 0.5),
                       fontSize: 13,
                     ),
                     maxLines: 1,
@@ -3324,7 +3351,9 @@ class _ChallengeCard extends ConsumerWidget {
                   const SizedBox(height: 2),
                   Text(
                     'Meta: ${challenge.goalValue} ${challenge.goalType.unit}',
-                    style: AppTextStyles.labelMedium,
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: ReadLogColors.cream.withValues(alpha: 0.65),
+                    ),
                   ),
                 ],
               ),
@@ -3351,12 +3380,16 @@ class _ChallengeCard extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   challenge.daysLeftLabel,
-                  style: AppTextStyles.labelMedium.copyWith(fontSize: 10),
+                  style: AppTextStyles.labelMedium.copyWith(
+                    fontSize: 10,
+                    color: ReadLogColors.cream.withValues(alpha: 0.65),
+                  ),
                 ),
               ],
             ),
             const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 16, color: cs.onSurfaceVariant),
+            Icon(Icons.chevron_right, size: 16,
+                color: ReadLogColors.cream.withValues(alpha: 0.45)),
           ],
         ),
       ),
@@ -4088,82 +4121,10 @@ class _SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         text.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-        ),
-      ),
-    );
-  }
-}
-
-// ── _ShortcutTile ─────────────────────────────────────────────────────────────
-
-class _ShortcutTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool hasBadge;
-  final VoidCallback onTap;
-
-  const _ShortcutTile({
-    required this.icon,
-    required this.label,
-    this.hasBadge = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.darkSurface : cs.surfaceContainerHighest;
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.border),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 22, color: cs.onSurface),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          if (hasBadge)
-            Positioned(
-              top: -2,
-              right: -2,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: AppColors.error,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
+        style: ReadLogType.mono(
+          size: 10,
+          color: ReadLogColors.cream.withValues(alpha: 0.55),
+        ).copyWith(letterSpacing: 1.5),
       ),
     );
   }

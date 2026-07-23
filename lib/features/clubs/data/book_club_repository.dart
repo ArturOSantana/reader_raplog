@@ -1214,6 +1214,34 @@ class BookClubRepository {
     return result as String;
   }
 
+  /// Faz upload de uma imagem e cria um story do tipo image.
+  /// Retorna o ID do story criado.
+  Future<String> createImageStory({
+    required String clubId,
+    required File imageFile,
+    String? caption,
+  }) async {
+    final ext = imageFile.path.split('.').last.toLowerCase();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final path = '$clubId/stories/$timestamp.$ext';
+
+    await _client.storage
+        .from('club-covers')
+        .upload(path, imageFile,
+            fileOptions: const FileOptions(upsert: false));
+
+    final imageUrl =
+        _client.storage.from('club-covers').getPublicUrl(path);
+
+    final result = await _client.rpc('create_club_story', params: {
+      'p_club_id': clubId,
+      'p_story_type': 'image',
+      'p_image_url': imageUrl,
+      if (caption != null && caption.isNotEmpty) 'p_caption': caption,
+    });
+    return result as String;
+  }
+
   /// Cria um story de progresso de livro.
   Future<String> createBookProgressStory({
     required String clubId,

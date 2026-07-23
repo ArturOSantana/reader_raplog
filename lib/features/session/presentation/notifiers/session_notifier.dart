@@ -86,13 +86,13 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
     // se o SQLite ficou desatualizado em relação ao Supabase.
     if (session.status != SessionStatus.active) return false;
 
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
 
-    // Sessões com mais de 12h sem ser finalizadas são consideradas órfãs.
+    // Sessões com mais de 4h sem ser finalizadas são consideradas órfãs.
     // O banco cancela automaticamente via cancel_orphan_sessions(), mas a
     // proteção local garante que o cliente não as restaure antes disso.
-    const maxSessionAge = Duration(hours: 12);
-    if (now.difference(session.startedAt) > maxSessionAge) {
+    const maxSessionAge = Duration(hours: 4);
+    if (now.difference(session.startedAt.toUtc()) > maxSessionAge) {
       // Cancela silenciosamente no repositório
       await ref
           .read(sessionRepositoryProvider)
@@ -101,7 +101,9 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
     }
 
     // Recalcula elapsed a partir de started_at menos pausas já acumuladas
-    final totalElapsed = now.difference(session.startedAt).inSeconds;
+    final totalElapsed =
+        now.difference(session.startedAt.toUtc()).inSeconds;
+    if (totalElapsed <= 0) return false;
     final netElapsed =
         (totalElapsed - session.pausedDurationSeconds).clamp(0, totalElapsed);
 

@@ -82,7 +82,7 @@ class OfflineSessionRepository {
       }
     }
 
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final id = _uuid.v4();
     final fields = {
       'id': id,

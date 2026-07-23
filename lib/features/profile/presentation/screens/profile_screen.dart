@@ -9,7 +9,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/local/local_database.dart';
-import '../../../../core/shell/main_shell.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/models/goal.dart';
@@ -17,6 +16,8 @@ import '../../../../shared/models/achievement.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/models/user_profile.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../theme/readlog_components.dart';
+import '../../../../core/shell/main_shell.dart' show openAppDrawer;
 
 // ── Providers ──────────────────────────────────────────────────────────────
 
@@ -60,6 +61,11 @@ final _friendsCountProvider = FutureProvider<int>((ref) async {
   return friends.length;
 });
 
+final _profileHeatmapProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(sessionRepositoryProvider).fetchHeatmap(days: 365);
+});
+
 // ══════════════════════════════════════════════════════════════════════════════
 // ProfileScreen
 // ══════════════════════════════════════════════════════════════════════════════
@@ -80,37 +86,19 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: ReadLogColors.paperAlt,
       appBar: AppBar(
         backgroundColor: ReadLogColors.paperAlt,
-        foregroundColor: ReadLogColors.charcoal,
+        elevation: 0,
+        automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
-          tooltip: 'Abrir menu',
+          icon: const Icon(Icons.menu, size: 22, color: ReadLogColors.charcoal),
+          tooltip: 'Menu',
+          onPressed: openAppDrawer,
         ),
-        title: Text(
-          'Perfil',
-          style: ReadLogType.display(size: 19, color: ReadLogColors.charcoal),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Editar perfil',
-            onPressed: () => _showEditSheet(
-              context,
-              ref,
-              profileAsync.valueOrNull,
-              fullName,
-              avatarUrl,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Configurações',
-            onPressed: () => _showSettingsSheet(context, ref),
-          ),
-        ],
+        title: Text('Perfil',
+            style: ReadLogType.display(
+                size: 18, color: ReadLogColors.charcoal, weight: FontWeight.w600)),
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: EdgeInsets.zero,
         children: [
           // ── Cabeçalho de identidade ──────────────────────────────────────
           _IdentityCard(
@@ -186,6 +174,54 @@ class ProfileScreen extends ConsumerWidget {
 
           _sectionGap(),
 
+          // ── Heatmap de atividade ─────────────────────────────────────────
+          _SectionHeader(label: 'Atividade — 365 dias'),
+          _ActivityHeatmapCard(),
+
+          _sectionGap(),
+
+          // ── Grade de atalhos — seções que não têm aba própria ────────────
+          _SectionHeader(label: 'Mais'),
+          _QuickLinksGrid(
+            links: [
+              _QuickLink(
+                icon: Icons.bar_chart_outlined,
+                label: 'Painel',
+                onTap: () => context.push('/dashboard'),
+              ),
+              _QuickLink(
+                icon: Icons.flag_outlined,
+                label: 'Metas',
+                onTap: () => context.push('/goals'),
+              ),
+              _QuickLink(
+                icon: Icons.dynamic_feed_outlined,
+                label: 'Feed Social',
+                onTap: () => context.push('/social'),
+              ),
+              _QuickLink(
+                icon: Icons.bookmark_border,
+                label: 'Desejos',
+                onTap: () => context.push('/wishlist'),
+              ),
+              _QuickLink(
+                icon: Icons.notifications_outlined,
+                label: 'Notificações',
+                onTap: () => context.push('/notifications'),
+              ),
+              _QuickLink(
+                icon: Icons.calendar_month_outlined,
+                label: 'Calendário',
+                onTap: () => context.push('/calendar'),
+              ),
+              _QuickLink(
+                icon: Icons.settings_outlined,
+                label: 'Config.',
+                onTap: () => _showSettingsSheet(context, ref),
+              ),
+            ],
+          ),
+
           const SizedBox(height: 40),
         ],
       ),
@@ -236,7 +272,8 @@ class ProfileScreen extends ConsumerWidget {
             context, ref,
             ref.read(_profileProvider).valueOrNull,
             ref.read(currentUserProvider)?.userMetadata?['full_name'] as String?,
-            (ref.read(_profileProvider).valueOrNull?.avatarUrl ?? ref.read(currentUserProvider)?.userMetadata?['avatar_url']) as String?,
+            (ref.read(_profileProvider).valueOrNull?.avatarUrl
+                ?? ref.read(currentUserProvider)?.userMetadata?['avatar_url']) as String?,
           );
         },
       ),
@@ -1357,6 +1394,106 @@ class _InitialsAvatar extends StatelessWidget {
     );
   }
 }
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// _QuickLinksGrid — grade 3×N de atalhos para seções sem aba própria
+// ══════════════════════════════════════════════════════════════════════════════
+
+class _QuickLink {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _QuickLink({required this.icon, required this.label, required this.onTap});
+}
+
+class _QuickLinksGrid extends StatelessWidget {
+  final List<_QuickLink> links;
+  const _QuickLinksGrid({required this.links});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 1.1,
+      ),
+      itemCount: links.length,
+      itemBuilder: (_, i) {
+        final link = links[i];
+        return GestureDetector(
+          onTap: link.onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              color: ReadLogColors.cream,
+              borderRadius: BorderRadius.circular(3),
+              border: Border.all(color: ReadLogColors.paperDeep.withValues(alpha: 0.5)),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(link.icon, size: 22, color: ReadLogColors.charcoal.withValues(alpha: 0.7)),
+                const SizedBox(height: 6),
+                Text(
+                  link.label,
+                  style: ReadLogType.mono(
+                    size: 10,
+                    color: ReadLogColors.charcoal.withValues(alpha: 0.75),
+                    weight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// _ActivityHeatmapCard — heatmap de atividade de leitura
+// ══════════════════════════════════════════════════════════════════════════════
+
+class _ActivityHeatmapCard extends ConsumerWidget {
+  const _ActivityHeatmapCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final heatmapAsync = ref.watch(_profileHeatmapProvider);
+
+    return heatmapAsync.when(
+      loading: () => const SizedBox(
+        height: 80,
+        child: Center(child: CircularProgressIndicator(color: ReadLogColors.brass)),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (heatmap) {
+        // Converte List<Map> (date, total_minutes) → Map<String,int>
+        final data = <String, int>{
+          for (final e in heatmap)
+            (e['date'] as String? ?? ''): (e['total_minutes'] as num?)?.toInt() ?? 0,
+        };
+        return _card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ReadLogReadingHeatmap(data: data),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 // _SettingsSheet

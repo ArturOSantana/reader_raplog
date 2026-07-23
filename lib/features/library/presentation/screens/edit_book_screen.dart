@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/providers/providers.dart';
@@ -25,6 +26,7 @@ class _EditBookScreenState extends ConsumerState<EditBookScreen> {
   late final TextEditingController _currentPageController;
   late final TextEditingController _ratingController;
   String? _coverUrl;
+  DateTime? _deadline;
   bool _isLoading = false;
 
   @override
@@ -42,6 +44,7 @@ class _EditBookScreenState extends ConsumerState<EditBookScreen> {
     _ratingController =
         TextEditingController(text: b.rating?.toString() ?? '');
     _coverUrl = b.coverUrl;
+    _deadline = b.deadline;
   }
 
   @override
@@ -54,6 +57,20 @@ class _EditBookScreenState extends ConsumerState<EditBookScreen> {
     _currentPageController.dispose();
     _ratingController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDeadline() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _deadline ?? now.add(const Duration(days: 7)),
+      firstDate: now,
+      lastDate: DateTime(now.year + 5),
+      helpText: 'Prazo para finalizar o livro',
+      confirmText: 'Confirmar',
+      cancelText: 'Cancelar',
+    );
+    if (picked != null) setState(() => _deadline = picked);
   }
 
   Future<void> _save() async {
@@ -82,6 +99,8 @@ class _EditBookScreenState extends ConsumerState<EditBookScreen> {
             ? null
             : int.tryParse(_ratingController.text),
         'cover_url': _coverUrl,
+        'deadline':
+            _deadline != null ? DateFormat('yyyy-MM-dd').format(_deadline!) : null,
       };
 
       await ref.read(bookRepositoryProvider).update(widget.book.id, fields);
@@ -213,6 +232,43 @@ class _EditBookScreenState extends ConsumerState<EditBookScreen> {
             TextFormField(
               controller: _publisherController,
               decoration: const InputDecoration(labelText: 'Editora'),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Prazo de leitura ────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Prazo de leitura', style: AppTextStyles.labelMedium),
+                      const SizedBox(height: 2),
+                      Text(
+                        _deadline != null
+                            ? DateFormat('dd/MM/yyyy').format(_deadline!)
+                            : 'Sem prazo definido',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: _deadline != null
+                              ? AppColors.textPrimary
+                              : AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_deadline != null)
+                  IconButton(
+                    onPressed: () => setState(() => _deadline = null),
+                    icon: const Icon(Icons.close, size: 18),
+                    tooltip: 'Remover prazo',
+                  ),
+                TextButton.icon(
+                  onPressed: _pickDeadline,
+                  icon: const Icon(Icons.calendar_today_outlined, size: 16),
+                  label: Text(_deadline != null ? 'Alterar' : 'Definir'),
+                ),
+              ],
             ),
             const SizedBox(height: 32),
             FilledButton(

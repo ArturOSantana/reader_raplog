@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/shell/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/readlog_theme.dart';
+import '../../../../theme/readlog_components.dart';
 import '../../../../shared/models/achievement.dart';
 import '../../../../shared/providers/providers.dart';
 
@@ -18,19 +18,6 @@ class AchievementsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: ReadLogColors.paperAlt,
-      appBar: AppBar(
-        backgroundColor: ReadLogColors.paperAlt,
-        foregroundColor: ReadLogColors.charcoal,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
-          tooltip: 'Abrir menu',
-        ),
-        title: Text(
-          'Conquistas',
-          style: ReadLogType.display(size: 19, color: ReadLogColors.charcoal),
-        ),
-      ),
       body: achievements.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: ReadLogColors.brass),
@@ -41,8 +28,17 @@ class AchievementsScreen extends ConsumerWidget {
           final locked = list.where((a) => !a.isUnlocked).toList();
 
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.zero,
             children: [
+              ReadLogPageHeader(
+                kicker: 'CONQUISTAS',
+                title: 'Carimbos',
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
               // Resumo: "X de Y carimbadas"
               Text(
                 '${unlocked.length} de ${list.length} carimbadas',
@@ -88,6 +84,9 @@ class AchievementsScreen extends ConsumerWidget {
                 const SizedBox(height: 14),
                 _AchievementsGrid(items: locked, unlocked: false),
               ],
+                  ],
+                ),
+              ),
             ],
           );
         },

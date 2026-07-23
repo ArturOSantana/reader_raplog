@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../core/shell/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../theme/readlog_theme.dart';
+import '../../../../theme/readlog_components.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../shared/widgets/skel_shimmer.dart';
@@ -24,27 +24,27 @@ class LibraryScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: ReadLogColors.paper,
-      appBar: AppBar(
-        backgroundColor: ReadLogColors.paper,
-        foregroundColor: ReadLogColors.charcoal,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
-          tooltip: 'Abrir menu',
-        ),
-        title: Text(
-          'Biblioteca',
-          style: ReadLogType.display(size: 19, color: ReadLogColors.charcoal),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => context.push('/library/add'),
-          ),
-        ],
-      ),
       body: Column(
         children: [
+          ReadLogPageHeader(
+            kicker: 'ACERVO',
+            title: 'Biblioteca',
+            showMenuButton: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.qr_code_scanner_outlined,
+                    size: 20, color: ReadLogColors.charcoal),
+                tooltip: 'Escanear ISBN',
+                onPressed: () {},
+              ),
+              IconButton(
+                icon: const Icon(Icons.add,
+                    size: 20, color: ReadLogColors.charcoal),
+                tooltip: 'Adicionar livro',
+                onPressed: () => context.push('/library/add'),
+              ),
+            ],
+          ),
           _StatusFilterBar(selected: selectedStatus),
           Expanded(
             child: books.when(
@@ -91,7 +91,7 @@ class LibraryScreen extends ConsumerWidget {
   }
 }
 
-/// Barra de filtros no estilo "chips de catálogo" — borda fina, texto mono
+/// Barra de filtros usando ReadLogChip do design system
 class _StatusFilterBar extends ConsumerWidget {
   final BookStatus? selected;
 
@@ -118,34 +118,14 @@ class _StatusFilterBar extends ConsumerWidget {
             final isSelected = selected == opt.$1;
             return Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
+              child: ReadLogChip(
+                label: opt.$2,
+                variant: isSelected
+                    ? ReadLogChipVariant.selected
+                    : ReadLogChipVariant.outline,
                 onTap: () => ref
                     .read(_selectedStatusProvider.notifier)
                     .state = opt.$1,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? ReadLogColors.charcoal
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(2),
-                    border: Border.all(
-                      color: isSelected
-                          ? ReadLogColors.charcoal
-                          : ReadLogColors.charcoal.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: Text(
-                    opt.$2.toUpperCase(),
-                    style: ReadLogType.mono(
-                      size: 10,
-                      color: isSelected
-                          ? ReadLogColors.paper
-                          : ReadLogColors.charcoal.withValues(alpha: 0.65),
-                    ).copyWith(letterSpacing: 0.5),
-                  ),
-                ),
               ),
             );
           }).toList(),

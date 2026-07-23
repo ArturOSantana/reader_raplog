@@ -9,9 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../../../core/shell/main_shell.dart';
 import '../../../../core/widgets/widget_manager.dart';
 import '../../../../theme/readlog_theme.dart';
+import '../../../../theme/readlog_components.dart';
 import '../../../../shared/models/achievement.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/models/reading_session.dart';
@@ -23,6 +23,7 @@ import '../../../inspiration/data/inspiration_service.dart';
 import '../../../inspiration/presentation/widgets/inspiration_card.dart';
 import '../notifiers/session_notifier.dart';
 import '../widgets/book_completion_card.dart';
+import '../../../../core/shell/main_shell.dart' show openAppDrawer;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SessionScreen
@@ -209,17 +210,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       sessionStartedAt: session.startedAt,
     );
 
+    // ── Navega para impressão de leitura se for livro de clube ────────────
+    final sourceClubId = _selectedBook?.sourceClubId;
+
     // Verifica conclusão do livro
     if (_selectedBook != null &&
         _selectedBook!.totalPages != null &&
         endPage >= _selectedBook!.totalPages! &&
         _selectedBook!.status == BookStatus.reading) {
-      if (mounted) _showCompleteBookDialog();
+      if (mounted) _showCompleteBookDialog(sourceClubId: sourceClubId, sessionId: finished.id);
       return;
     }
 
-    // ── Navega para impressão de leitura se for livro de clube ────────────
-    final sourceClubId = _selectedBook?.sourceClubId;
     if (sourceClubId != null && mounted) {
       final club = await ref
           .read(bookClubRepositoryProvider)
@@ -329,7 +331,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   // ── Concluir livro ────────────────────────────────────────────────────────
 
-  void _showCompleteBookDialog() {
+  void _showCompleteBookDialog({String? sourceClubId, String? sessionId}) {
     final book = _selectedBook!;
     showDialog(
       context: context,
@@ -340,11 +342,27 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Sessão registrada!')),
-              );
+              // Mesmo sem marcar como lido, abre check-in do clube se aplicável
+              if (sourceClubId != null && mounted) {
+                final club = await ref
+                    .read(bookClubRepositoryProvider)
+                    .fetchById(sourceClubId);
+                if (mounted) {
+                  context.push(
+                    '/clubs/$sourceClubId/checkin',
+                    extra: {
+                      'clubName': club?.name ?? 'Clube',
+                      'latestSessionId': sessionId,
+                    },
+                  );
+                }
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Sessão registrada!')),
+                );
+              }
             },
             child: const Text('Não'),
           ),
@@ -362,14 +380,29 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 elapsedSeconds: 0,
                 sessionStartedAt: DateTime.now(),
               );
-              if (mounted) {
-                await _showBookCompletionInspiration(book.title);
-              }
-              if (mounted) {
-                _showShareBottomSheet(book.copyWith(
-                  status: BookStatus.read,
-                  endDate: DateTime.now(),
-                ));
+              if (sourceClubId != null && mounted) {
+                final club = await ref
+                    .read(bookClubRepositoryProvider)
+                    .fetchById(sourceClubId);
+                if (mounted) {
+                  context.push(
+                    '/clubs/$sourceClubId/checkin',
+                    extra: {
+                      'clubName': club?.name ?? 'Clube',
+                      'latestSessionId': sessionId,
+                    },
+                  );
+                }
+              } else {
+                if (mounted) {
+                  await _showBookCompletionInspiration(book.title);
+                }
+                if (mounted) {
+                  _showShareBottomSheet(book.copyWith(
+                    status: BookStatus.read,
+                    endDate: DateTime.now(),
+                  ));
+                }
               }
             },
             child: const Text('Marcar como lido'),
@@ -448,10 +481,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             isRunning ? ReadLogColors.ink : ReadLogColors.paper,
         foregroundColor:
             isRunning ? ReadLogColors.cream : ReadLogColors.charcoal,
+        automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => mainScaffoldKey.currentState?.openDrawer(),
-          tooltip: 'Abrir menu',
+          icon: const Icon(Icons.menu, size: 22),
+          tooltip: 'Menu',
+          onPressed: openAppDrawer,
         ),
         title: Text(
           'Leitura',
@@ -622,10 +656,12 @@ class _GoalPicker extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: goals
-              .map((g) => _GoalChip(
+              .map((g) => ReadLogChip(
                     icon: g.$2,
                     label: g.$3,
-                    isSelected: selected == g.$1,
+                    variant: selected == g.$1
+                        ? ReadLogChipVariant.stamp
+                        : ReadLogChipVariant.outline,
                     onTap: () => onGoalChanged(g.$1),
                   ))
               .toList(),
@@ -656,53 +692,6 @@ class _GoalPicker extends StatelessWidget {
   }
 }
 
-class _GoalChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _GoalChip({
-    required this.icon,
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color =
-        isSelected ? ReadLogColors.stamp : ReadLogColors.charcoal.withValues(alpha: 0.5);
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? ReadLogColors.stamp.withValues(alpha: 0.1)
-              : ReadLogColors.cream,
-          borderRadius: BorderRadius.circular(3),
-          border: Border.all(
-            color: isSelected
-                ? ReadLogColors.stamp
-                : ReadLogColors.paperDeep,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
-            Text(label,
-                style: ReadLogType.mono(size: 11, color: color)),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // _ActiveSessionView
@@ -750,107 +739,235 @@ class _ActiveSessionView extends StatelessWidget {
       progress = null; // sem barra pois não sabemos a página atual ainda
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SizedBox(height: 16),
-          Text(
-            sessionState.bookTitle,
-            style: ReadLogType.display(size: 20,
-                italic: true, color: ReadLogColors.brassLight),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+    return Column(
+      children: [
+        // ── Conteúdo principal ────────────────────────────────────────
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Kicker da sessão
+                Text(
+                  isPaused ? 'PAUSADO' : 'EM LEITURA',
+                  style: ReadLogType.mono(
+                    size: 10,
+                    color: isPaused
+                        ? ReadLogColors.brassLight
+                        : ReadLogColors.sage,
+                  ).copyWith(letterSpacing: 2),
+                ),
+                const SizedBox(height: 16),
 
-          const SizedBox(height: 8),
-          if (isPaused)
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: ReadLogColors.brass.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(3),
-                border: Border.all(
-                    color: ReadLogColors.brass.withValues(alpha: 0.5)),
-              ),
-              child: Text(
-                'PAUSADO',
-                style: ReadLogType.mono(
-                    size: 11,
+                // Capa do livro placeholder (120×160)
+                Container(
+                  width: 120,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    color: ReadLogColors.inkAlt,
+                    borderRadius: BorderRadius.circular(3),
+                    border: Border.all(
+                        color: ReadLogColors.inkLine),
+                    boxShadow: [
+                      BoxShadow(
+                        color: ReadLogColors.paperShadow,
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.menu_book_outlined,
+                      size: 32,
+                      color: ReadLogColors.cream.withValues(alpha: 0.25),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Título do livro
+                Text(
+                  sessionState.bookTitle,
+                  style: ReadLogType.display(
+                    size: 18,
+                    italic: true,
                     color: ReadLogColors.brassLight,
-                    weight: FontWeight.w600),
-              ),
-            ),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'SESSÃO · ${_formatTime(elapsed)}',
+                  style: ReadLogType.mono(
+                    size: 10,
+                    color: ReadLogColors.cream.withValues(alpha: 0.4),
+                  ).copyWith(letterSpacing: 1.5),
+                ),
 
-          const SizedBox(height: 32),
+                const SizedBox(height: 28),
 
-          // Cronômetro principal — IBM Plex Mono 52px
-          Text(
-            _formatTime(elapsed),
-            style: ReadLogType.mono(
-              size: 52,
-              weight: FontWeight.w500,
-              color: isPaused ? ReadLogColors.brassLight : ReadLogColors.cream,
+                // Cronômetro — 42px (não 52px para dar espaço ao livro)
+                Text(
+                  _formatTime(elapsed),
+                  style: ReadLogType.mono(
+                    size: 42,
+                    weight: FontWeight.w500,
+                    color: isPaused
+                        ? ReadLogColors.brassLight
+                        : ReadLogColors.cream,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isPaused ? 'PAUSADO' : 'EM ANDAMENTO',
+                  style: ReadLogType.mono(
+                    size: 9,
+                    color: ReadLogColors.cream.withValues(alpha: 0.35),
+                  ).copyWith(letterSpacing: 1.5),
+                ),
+
+                if (sessionState.session?.startPage != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'desde a página ${sessionState.session!.startPage}',
+                    style: ReadLogType.mono(
+                      size: 10,
+                      color: ReadLogColors.cream.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+
+                // Barra de progresso do objetivo
+                if (progress != null || progressLabel != null) ...[
+                  const SizedBox(height: 20),
+                  _GoalProgressBar(
+                    progress: progress,
+                    label: progressLabel ?? '',
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+              ],
             ),
           ),
+        ),
 
-          if (sessionState.session?.startPage != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'desde a página ${sessionState.session!.startPage}',
-              style: ReadLogType.mono(
-                  size: 11,
-                  color: ReadLogColors.cream.withValues(alpha: 0.5)),
-            ),
-          ],
-
-          // Barra de progresso do objetivo
-          if (progress != null || progressLabel != null) ...[
-            const SizedBox(height: 24),
-            _GoalProgressBar(
-              progress: progress,
-              label: progressLabel ?? '',
-            ),
-          ],
-
-          const SizedBox(height: 24),
-
-          // Animação de leitura — ocupa o espaço central
-          Expanded(
-            child: _ReadingAnimation(isPaused: isPaused),
-          ),
-
-          // Botões de ação
-          Row(
+        // ── Botões principais ─────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+          child: Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onTogglePause,
-                  icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
-                  label: Text(isPaused ? 'Retomar' : 'Pausar'),
+                  icon: Icon(
+                    isPaused ? Icons.play_arrow : Icons.pause,
+                    size: 18,
+                  ),
+                  label: Text(isPaused ? 'RETOMAR' : 'PAUSAR'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: ReadLogColors.cream,
+                    side: const BorderSide(color: ReadLogColors.cream),
+                    textStyle: ReadLogType.mono(
+                        size: 12, weight: FontWeight.w600),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(3)),
+                    minimumSize: const Size(0, 52),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton.icon(
                   onPressed: onFinish,
-                  icon: const Icon(Icons.stop),
-                  label: const Text('Encerrar leitura'),
+                  icon: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: ReadLogColors.cream,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  label: const Text('ENCERRAR'),
                   style: FilledButton.styleFrom(
-                      backgroundColor: ReadLogColors.stamp),
+                    backgroundColor: ReadLogColors.stamp,
+                    foregroundColor: ReadLogColors.cream,
+                    textStyle: ReadLogType.mono(
+                        size: 12, weight: FontWeight.w600),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(3)),
+                    minimumSize: const Size(0, 52),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-        ],
-      ),
+        ),
+
+        // ── Mini-ações do rodapé ──────────────────────────────────────
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 10, 24, 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _MiniAction(
+                  label: '+ NOTA',
+                  icon: Icons.edit_outlined,
+                ),
+                _MiniAction(
+                  label: '+ TRECHO',
+                  icon: Icons.format_quote_outlined,
+                ),
+                _MiniAction(
+                  label: 'HUMOR',
+                  icon: Icons.mood_outlined,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _MiniAction — mini botão discreto no rodapé da sessão ativa
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MiniAction extends StatelessWidget {
+  final String label;
+  final IconData icon;
+
+  const _MiniAction({required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: ReadLogColors.cream.withValues(alpha: 0.45)),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          style: ReadLogType.mono(
+            size: 9,
+            color: ReadLogColors.cream.withValues(alpha: 0.45),
+            weight: FontWeight.w500,
+          ).copyWith(letterSpacing: 0.8),
+        ),
+      ],
+    );
+  }
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // _ReadingAnimation — Lottie sincronizado com o estado da sessão
@@ -994,7 +1111,6 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
   final _notesController = TextEditingController();
   final _miniReviewController = TextEditingController();
   SessionMood? _mood;
-  bool _extrasExpanded = false; // extras colapsáveis
   bool _saving = false;
 
   @override
@@ -1046,8 +1162,8 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
       padding: EdgeInsets.only(
         left: 24,
         right: 24,
-        top: 24,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+        top: 28,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + 32,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1066,79 +1182,96 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
             ),
           ),
 
-          // ── NÚCLEO MÍNIMO ─────────────────────────────────────────────
-          Text('Você terminou sua leitura?',
-              style: ReadLogType.display(
-                  size: 20, color: ReadLogColors.charcoal)),
-          const SizedBox(height: 6),
-          Text('Página inicial: $startPage',
-              style: ReadLogType.mono(
-                  size: 12,
-                  color: ReadLogColors.charcoal.withValues(alpha: 0.6))),
-
+          // ── Carimbo "SESSÃO" centralizado ─────────────────────────────
+          Center(
+            child: ReadLogEventStamp(
+              variant: ReadLogEventStampVariant.checkIn,
+              size: 96,
+              seedHash: elapsed.hashCode,
+            ),
+          ),
           const SizedBox(height: 20),
+
+          // ── Resumo em ReadLogLeaderRow ────────────────────────────────
+          ReadLogLeaderRow(label: 'Tempo de leitura', value: durationLabel),
+          const SizedBox(height: 4),
+          ReadLogLeaderRow(
+            label: 'Páginas lidas',
+            value: pagesEstimate > 0 ? '$pagesEstimate págs' : '—',
+          ),
+          if (speed != null) ...[
+            const SizedBox(height: 4),
+            ReadLogLeaderRow(label: 'Velocidade', value: '$speed pág/min'),
+          ],
+          const SizedBox(height: 20),
+
+          // ── Campo página final ───────────────────────────────────────
+          Text(
+            'PÁGINA FINAL',
+            style: ReadLogType.mono(
+              size: 10,
+              color: ReadLogColors.charcoal.withValues(alpha: 0.55),
+            ).copyWith(letterSpacing: 1.5),
+          ),
+          const SizedBox(height: 6),
           TextFormField(
             controller: _endPageController,
             keyboardType: TextInputType.number,
             autofocus: true,
-            decoration: const InputDecoration(labelText: 'Página final *'),
+            decoration: InputDecoration(
+              hintText: 'Ex: ${startPage + 20}',
+              hintStyle: ReadLogType.mono(
+                size: 13,
+                color: ReadLogColors.charcoal.withValues(alpha: 0.35),
+              ),
+            ),
+            style: ReadLogType.mono(size: 15, color: ReadLogColors.charcoal),
             onChanged: (_) => setState(() {}),
           ),
-
-          // Resumo em tempo real
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: ReadLogColors.cream,
-              borderRadius: BorderRadius.circular(3),
-              border: Border.all(color: ReadLogColors.paperDeep),
+
+          // ── Mini resenha ─────────────────────────────────────────────
+          Text(
+            'IMPRESSÃO RÁPIDA',
+            style: ReadLogType.mono(
+              size: 10,
+              color: ReadLogColors.charcoal.withValues(alpha: 0.55),
+            ).copyWith(letterSpacing: 1.5),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: _miniReviewController,
+            maxLines: 3,
+            maxLength: 500,
+            style: ReadLogType.display(
+              size: 14,
+              italic: true,
+              color: ReadLogColors.charcoal,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _SummaryItem(label: 'Tempo', value: durationLabel),
-                _SummaryItem(
-                    label: 'Páginas',
-                    value: pagesEstimate > 0 ? '$pagesEstimate' : '—'),
-                _SummaryItem(label: 'Pág/min', value: speed ?? '—'),
-              ],
+            decoration: InputDecoration(
+              hintText: '"Uma linha sobre o que você leu…"',
+              hintStyle: ReadLogType.display(
+                size: 14,
+                italic: true,
+                color: ReadLogColors.charcoal.withValues(alpha: 0.35),
+              ),
+              counterStyle: ReadLogType.mono(
+                size: 9,
+                color: ReadLogColors.charcoal.withValues(alpha: 0.4),
+              ),
             ),
           ),
+          const SizedBox(height: 16),
 
-          // ── EXTRAS COLAPSÁVEIS ────────────────────────────────────────
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () => setState(() => _extrasExpanded = !_extrasExpanded),
-            child: Row(
-              children: [
-                Icon(
-                  _extrasExpanded
-                      ? Icons.expand_less
-                      : Icons.expand_more,
-                  size: 18,
-                  color: ReadLogColors.charcoal.withValues(alpha: 0.5),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _extrasExpanded ? 'Menos detalhes' : 'Adicionar humor e impressão',
-                  style: ReadLogType.mono(
-                      size: 12,
-                      color: ReadLogColors.charcoal.withValues(alpha: 0.55)),
-                ),
-              ],
-            ),
+          // ── Humor (chips ReadLog) ────────────────────────────────────
+          Text(
+            'HUMOR',
+            style: ReadLogType.mono(
+              size: 10,
+              color: ReadLogColors.charcoal.withValues(alpha: 0.55),
+            ).copyWith(letterSpacing: 1.5),
           ),
-
-          if (_extrasExpanded) ...[
-            const SizedBox(height: 16),
-
-            // Mood
-            Text('Como foi a leitura?',
-                style: ReadLogType.mono(
-                    size: 12,
-                    color: ReadLogColors.charcoal.withValues(alpha: 0.7))),
-            const SizedBox(height: 10),
+          const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: SessionMood.values.map((m) {
@@ -1178,71 +1311,41 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
               }).toList(),
             ),
 
-            const SizedBox(height: 16),
-
-            // Mini resenha
-            Text('Impressão rápida (opcional)',
-                style: ReadLogType.mono(
-                    size: 12,
-                    color: ReadLogColors.charcoal.withValues(alpha: 0.7))),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: _miniReviewController,
-              maxLines: 3,
-              maxLength: 500,
-              decoration: const InputDecoration(
-                hintText:
-                    '"Hoje finalmente entendi a motivação do personagem."',
-              ),
+          // ── Notas internas ──────────────────────────────────────────
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _notesController,
+            maxLines: 2,
+            style: ReadLogType.mono(size: 13, color: ReadLogColors.charcoal),
+            decoration: InputDecoration(
+              labelText: 'NOTAS INTERNAS',
+              labelStyle: ReadLogType.mono(
+                size: 10,
+                color: ReadLogColors.charcoal.withValues(alpha: 0.5),
+              ).copyWith(letterSpacing: 1.2),
             ),
+          ),
 
-            const SizedBox(height: 8),
-
-            // Notas internas
-            TextFormField(
-              controller: _notesController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Notas internas (opcional)',
-              ),
-            ),
-          ],
-
-          // ── Botão salvar ──────────────────────────────────────────────
-          const SizedBox(height: 20),
+          // ── Botão registrar sessão ────────────────────────────────────
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
               onPressed: _saving ? null : _save,
-              child: const Text('Salvar sessão'),
+              style: FilledButton.styleFrom(
+                backgroundColor: ReadLogColors.stamp,
+                foregroundColor: ReadLogColors.cream,
+                textStyle: ReadLogType.mono(
+                    size: 13, weight: FontWeight.w700),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(3)),
+                minimumSize: const Size(0, 52),
+              ),
+              child: const Text('REGISTRAR SESSÃO'),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SummaryItem extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SummaryItem({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value,
-            style: ReadLogType.mono(
-                size: 15,
-                weight: FontWeight.w600,
-                color: ReadLogColors.stamp)),
-        Text(label,
-            style: ReadLogType.mono(
-                size: 10,
-                color: ReadLogColors.charcoal.withValues(alpha: 0.6))),
-      ],
     );
   }
 }

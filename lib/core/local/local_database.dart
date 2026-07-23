@@ -18,7 +18,7 @@ class LocalDatabase {
 
     return openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -41,6 +41,7 @@ class LocalDatabase {
         rating INTEGER,
         current_page INTEGER,
         source_club_id TEXT,
+        deadline TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         is_deleted INTEGER NOT NULL DEFAULT 0
@@ -158,6 +159,9 @@ class LocalDatabase {
       await db.execute('ALTER TABLE reading_sessions ADD COLUMN mood TEXT');
       await db.execute(
           'ALTER TABLE reading_sessions ADD COLUMN mini_review TEXT');
+    }
+    if (oldVersion < 7) {
+      await db.execute('ALTER TABLE books ADD COLUMN deadline TEXT');
     }
   }
 
