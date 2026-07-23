@@ -31,9 +31,29 @@ class OfflineSessionRepository {
             .order('started_at', ascending: false)
             .limit(1)
             .maybeSingle();
+
         if (data != null) {
+          final remote = ReadingSession.fromMap(data);
+
+          // Verifica se o SQLite local já marcou esta sessão como finalizada
+          // ou cancelada. Isso acontece quando o UPDATE chegou ao servidor com
+          // atraso (ex: reconexão de rede) e o Supabase ainda exibe 'active'.
+          // Nesse caso, o estado local é mais recente e deve ter prioridade.
+          final local = await localRepo.fetchById(remote.id);
+          if (local != null && local.status != SessionStatus.active) {
+            // Sincroniza o status correto para o servidor em background
+            try {
+              await _client
+                  .from('reading_sessions')
+                  .update({'status': local.status.name})
+                  .eq('id', remote.id)
+                  .eq('user_id', _userId);
+            } catch (_) {}
+            return null;
+          }
+
           await localRepo.insert(Map<String, dynamic>.from(data as Map));
-          return ReadingSession.fromMap(data);
+          return remote;
         }
         return null;
       } catch (_) {}

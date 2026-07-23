@@ -704,6 +704,10 @@ class ReadLogCatalogCard extends StatelessWidget {
   final double progress; // 0..1
   final Color tabColor;
   final VoidCallback? onTap;
+  /// Página atual do leitor (opcional). Quando informado junto com [totalPages]
+  /// exibe "X de Y págs · N restantes" abaixo da barra de progresso.
+  final int? currentPage;
+  final int? totalPages;
 
   const ReadLogCatalogCard({
     super.key,
@@ -712,10 +716,19 @@ class ReadLogCatalogCard extends StatelessWidget {
     required this.progress,
     this.tabColor = ReadLogColors.brass,
     this.onTap,
+    this.currentPage,
+    this.totalPages,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Linha de métricas de página (só aparece quando os dois campos existem)
+    final showPages = currentPage != null && totalPages != null && totalPages! > 0;
+    final remaining = showPages ? (totalPages! - currentPage!).clamp(0, totalPages!) : 0;
+    final percent = showPages
+        ? (progress * 100).toStringAsFixed(0)
+        : null;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Material(
@@ -733,7 +746,7 @@ class ReadLogCatalogCard extends StatelessWidget {
               // Aba de status colorida
               Container(
                 width: 6,
-                height: 64,
+                height: showPages ? 80 : 64,
                 decoration: BoxDecoration(
                   color: tabColor,
                   borderRadius:
@@ -776,6 +789,27 @@ class ReadLogCatalogCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (showPages) ...[
+                        const SizedBox(height: 5),
+                        Row(
+                          children: [
+                            Text(
+                              'pág. $currentPage / $totalPages',
+                              style: ReadLogType.mono(
+                                  size: 9,
+                                  color: ReadLogColors.charcoal
+                                      .withValues(alpha: 0.55)),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '$remaining restantes · $percent%',
+                              style: ReadLogType.mono(
+                                  size: 9,
+                                  color: ReadLogColors.brass),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

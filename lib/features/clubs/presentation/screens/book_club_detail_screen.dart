@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -391,6 +393,18 @@ class _ClubDetailBody extends ConsumerWidget {
       items.add(const PopupMenuDivider());
     }
 
+    if (club.isOwner && !club.isClosed) {
+      items.add(const PopupMenuItem(
+        value: 'edit_club',
+        child: ListTile(
+          leading: Icon(Icons.edit_outlined),
+          title: Text('Editar clube'),
+          contentPadding: EdgeInsets.zero,
+        ),
+      ));
+      items.add(const PopupMenuDivider());
+    }
+
     // Apenas o dono pode alterar status do clube (férias, reativar, encerrar)
     if (club.isOwner) {
       if (club.isActive) {
@@ -438,6 +452,9 @@ class _ClubDetailBody extends ConsumerWidget {
       case 'add_meeting':
         _showAddMeetingSheet(context, ref);
         break;
+      case 'edit_club':
+        _showEditClubSheet(context, ref);
+        break;
       case 'vacation':
         _confirmVacation(context, ref);
         break;
@@ -448,6 +465,21 @@ class _ClubDetailBody extends ConsumerWidget {
         _confirmClose(context, ref);
         break;
     }
+  }
+
+  void _showEditClubSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _EditClubSheet(
+        club: club,
+        onSaved: () => ref.invalidate(_clubDetailProvider(clubId)),
+      ),
+    );
   }
 
   void _showSetBookSheet(BuildContext context, WidgetRef ref) {
@@ -4225,6 +4257,220 @@ class _TimelineButton extends StatelessWidget {
         foregroundColor: cs.onSurface,
         side: BorderSide(color: cs.outlineVariant),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SHEET: EDITAR CLUBE
+// ════════════════════════════════════════════════════════════════════════════
+
+class _EditClubSheet extends ConsumerStatefulWidget {
+  final BookClub club;
+  final VoidCallback onSaved;
+
+  const _EditClubSheet({required this.club, required this.onSaved});
+
+  @override
+  ConsumerState<_EditClubSheet> createState() => _EditClubSheetState();
+}
+
+class _EditClubSheetState extends ConsumerState<_EditClubSheet> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _descController;
+  File? _coverFile;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.club.name);
+    _descController =
+        TextEditingController(text: widget.club.description ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickCover(ImageSource source) async {
+    try {
+      final xFile = await ImagePicker()
+          .pickImage(source: source, imageQuality: 85, maxWidth: 1024);
+      if (xFile != null && mounted) {
+        setState(() => _coverFile = File(xFile.path));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Não foi possível acessar a câmera ou galeria.')),
+        );
+      }
+    }
+  }
+
+  void _showCoverSourceSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Escolher da galeria'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickCover(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Tirar foto'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickCover(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
+    setState(() => _loading = true);
+    try {
+      String? coverUrl;
+      if (_coverFile != null) {
+        coverUrl = await ref
+            .read(bookClubRepositoryProvider)
+            .uploadClubCover(widget.club.id, _coverFile!);
+      }
+      await ref.read(bookClubRepositoryProvider).updateClub(
+            clubId: widget.club.id,
+            name: name,
+            description:
+                _descController.text.trim().isEmpty ? null : _descController.text.trim(),
+            coverUrl: coverUrl,
+          );
+      widget.onSaved();
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao salvar. Tente novamente.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final existingCoverUrl = widget.club.coverUrl;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Editar clube', style: AppTextStyles.headlineMedium),
+          const SizedBox(height: 20),
+          // ── Capa do clube ─────────────────────────────────────────────────
+          GestureDetector(
+            onTap: _showCoverSourceSheet,
+            child: Container(
+              height: 120,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+                image: _coverFile != null
+                    ? DecorationImage(
+                        image: FileImage(_coverFile!),
+                        fit: BoxFit.cover,
+                      )
+                    : (existingCoverUrl != null
+                        ? DecorationImage(
+                            image: NetworkImage(existingCoverUrl),
+                            fit: BoxFit.cover,
+                          )
+                        : null),
+              ),
+              child: (_coverFile == null && existingCoverUrl == null)
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_photo_alternate_outlined,
+                            size: 32, color: cs.onSurfaceVariant),
+                        const SizedBox(height: 4),
+                        Text('Adicionar capa',
+                            style: TextStyle(
+                                fontSize: 12, color: cs.onSurfaceVariant)),
+                      ],
+                    )
+                  : Align(
+                      alignment: Alignment.bottomRight,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: CircleAvatar(
+                          radius: 16,
+                          backgroundColor: cs.surface.withValues(alpha: 0.85),
+                          child: Icon(Icons.edit_outlined,
+                              size: 16, color: cs.onSurface),
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _nameController,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(labelText: 'Nome do clube'),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _descController,
+            maxLines: 3,
+            maxLength: 300,
+            textCapitalization: TextCapitalization.sentences,
+            decoration:
+                const InputDecoration(labelText: 'Descrição (opcional)'),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _loading ? null : _save,
+              child: _loading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Text('Salvar'),
+            ),
+          ),
+        ],
       ),
     );
   }

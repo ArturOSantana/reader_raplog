@@ -167,9 +167,14 @@ class _BookDetailBody extends ConsumerWidget {
         ),
         const SizedBox(height: 24),
 
-        // Progresso
+        // Progresso + métricas de página
         if (book.currentPage != null && book.totalPages != null) ...[
           _ProgressBar(current: book.currentPage!, total: book.totalPages!),
+          const SizedBox(height: 12),
+          _PageMetricsRow(
+              current: book.currentPage!, total: book.totalPages!),
+          const SizedBox(height: 16),
+        ] else if (book.currentPage != null || book.totalPages != null) ...[
           const SizedBox(height: 8),
         ],
 
@@ -295,6 +300,102 @@ class _ProgressBar extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PageMetricsRow extends StatelessWidget {
+  final int current;
+  final int total;
+
+  const _PageMetricsRow({required this.current, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = (total - current).clamp(0, total);
+    final pagesRead = current.clamp(0, total);
+
+    return Row(
+      children: [
+        Expanded(
+          child: _MetricCell(
+            label: 'Lidas',
+            value: '$pagesRead',
+            sub: 'págs',
+            valueColor: AppColors.forestGreen,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _MetricCell(
+            label: 'Restantes',
+            value: '$remaining',
+            sub: 'págs',
+            valueColor: AppColors.warmGold,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _MetricCell(
+            label: 'Total',
+            value: '$total',
+            sub: 'págs',
+            valueColor: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricCell extends StatelessWidget {
+  final String label;
+  final String value;
+  final String sub;
+  final Color valueColor;
+
+  const _MetricCell({
+    required this.label,
+    required this.value,
+    required this.sub,
+    required this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          Text(label, style: AppTextStyles.labelMedium),
+          const SizedBox(height: 4),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: value,
+                  style: AppTextStyles.titleMedium.copyWith(
+                    color: valueColor,
+                    fontSize: 20,
+                  ),
+                ),
+                TextSpan(
+                  text: ' $sub',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: AppColors.textMuted,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

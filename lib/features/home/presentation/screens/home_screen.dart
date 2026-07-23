@@ -139,6 +139,8 @@ class HomeScreen extends ConsumerWidget {
                         author: b.author ?? '',
                         progress: _progress(b),
                         tabColor: ReadLogColors.brass,
+                        currentPage: b.currentPage,
+                        totalPages: b.totalPages,
                         onTap: () =>
                             context.push('/library/book/${b.id}'),
                       )),

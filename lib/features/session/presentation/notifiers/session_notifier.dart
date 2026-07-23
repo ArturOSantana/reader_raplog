@@ -57,6 +57,9 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
   // Contador de ticks desde a última atualização de notificação
   int _ticksSinceNotification = 0;
 
+  // Evita que startSession e recoverActiveSession corram em paralelo
+  bool _sessionOpInProgress = false;
+
   @override
   ActiveSessionState build() {
     ref.onDispose(_cleanup);
@@ -68,14 +71,36 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
   /// Chamado pelo SessionScreen no initState para recuperar sessão interrompida.
   /// Retorna true se encontrou e restaurou uma sessão ativa.
   Future<bool> recoverActiveSession({required String bookTitle}) async {
-    if (state.hasActiveSession) return true;
-
+    if (state.hasActiveSession || _sessionOpInProgress) return state.hasActiveSession;
+    _sessionOpInProgress = true;
+    try {
     final session =
         await ref.read(sessionRepositoryProvider).fetchActiveSession();
     if (session == null) return false;
 
-    // Recalcula elapsed a partir de started_at menos pausas já acumuladas
+    // Reavalia após o await: startSession pode ter sido chamado enquanto
+    // fetchActiveSession aguardava resposta do banco/Supabase.
+    if (state.hasActiveSession) return true;
+
+    // Rejeita sessões que já foram finalizadas ou canceladas — podem aparecer
+    // se o SQLite ficou desatualizado em relação ao Supabase.
+    if (session.status != SessionStatus.active) return false;
+
     final now = DateTime.now();
+
+    // Sessões com mais de 12h sem ser finalizadas são consideradas órfãs.
+    // O banco cancela automaticamente via cancel_orphan_sessions(), mas a
+    // proteção local garante que o cliente não as restaure antes disso.
+    const maxSessionAge = Duration(hours: 12);
+    if (now.difference(session.startedAt) > maxSessionAge) {
+      // Cancela silenciosamente no repositório
+      await ref
+          .read(sessionRepositoryProvider)
+          .cancelSession(sessionId: session.id);
+      return false;
+    }
+
+    // Recalcula elapsed a partir de started_at menos pausas já acumuladas
     final totalElapsed = now.difference(session.startedAt).inSeconds;
     final netElapsed =
         (totalElapsed - session.pausedDurationSeconds).clamp(0, totalElapsed);
@@ -90,6 +115,9 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
     _startTicker();
     _scheduleInactivityTimers();
     return true;
+    } finally {
+      _sessionOpInProgress = false;
+    }
   }
 
   // ── Iniciar ───────────────────────────────────────────────────────────────
@@ -101,9 +129,10 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
     SessionGoal? goal,
     int? goalValue,
   }) async {
-    // Evita iniciar duas sessões simultâneas (guard em memória)
-    if (state.hasActiveSession) return;
-
+    // Evita iniciar duas sessões simultâneas (guard em memória ou operação em curso)
+    if (state.hasActiveSession || _sessionOpInProgress) return;
+    _sessionOpInProgress = true;
+    try {
     final session = await ref.read(sessionRepositoryProvider).startSession(
           bookId: bookId,
           startPage: startPage,
@@ -118,6 +147,9 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
     );
     _startTicker();
     _scheduleInactivityTimers();
+    } finally {
+      _sessionOpInProgress = false;
+    }
   }
 
   // ── Pausar ────────────────────────────────────────────────────────────────
