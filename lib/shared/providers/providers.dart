@@ -122,9 +122,35 @@ final notificationPrefsProvider = StateNotifierProvider<
       NotificationPrefsNotifier(ref.watch(notificationRepositoryProvider)),
 );
 
+// ── Club session refresh ──────────────────────────────────────────────────
+
+/// Incrementado toda vez que o usuário finaliza uma sessão de leitura.
+/// Providers de clube observam este valor para invalidar seu cache e
+/// exibir o progresso atualizado sem precisar de pull-to-refresh manual.
+final clubSessionRefreshProvider = StateProvider<int>((ref) => 0);
+
 // ── Inspiração do Dia ─────────────────────────────────────────────────────
 
 final dailyInspirationServiceProvider = Provider<DailyInspirationService>(
   (_) => DailyInspirationService(),
 );
+
+// ── Onboarding ────────────────────────────────────────────────────────────
+
+/// Estado síncrono do onboarding — alimentado pelo SplashScreen após carregar
+/// o perfil do repositório. Usado pelo redirect do router (síncrono).
+/// - null  → ainda não sabemos (splash está carregando)
+/// - false → usuário não completou o onboarding
+/// - true  → onboarding concluído
+final onboardingStatusProvider = StateProvider<bool?>((ref) => null);
+
+/// Carrega o valor inicial de onboarding_completed do repositório.
+/// O SplashScreen lê este FutureProvider e depois escreve o resultado em
+/// [onboardingStatusProvider] para que o redirect do router possa agir.
+final onboardingCompletedProvider = FutureProvider<bool>((ref) async {
+  final userId = ref.read(supabaseClientProvider).auth.currentUser?.id;
+  if (userId == null) return false;
+  final profile = await ref.read(profileRepositoryProvider).fetch();
+  return profile?.onboardingCompleted ?? false;
+});
 

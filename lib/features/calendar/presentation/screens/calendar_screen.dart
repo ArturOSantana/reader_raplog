@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/models/goal.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../shared/widgets/skel_shimmer.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -53,7 +54,7 @@ class CalendarScreen extends ConsumerWidget {
         ),
       ),
       body: data.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkelScreenList(),
         error: (e, _) => Center(child: Text('Erro: $e')),
         data: (d) {
           final heatmap = d['heatmap'] as List<Map<String, dynamic>>;
@@ -130,9 +131,10 @@ class _StreakBanner extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text(
-                '🔥',
-                style: TextStyle(fontSize: isActive ? 26 : 22),
+              child: Icon(
+                Icons.local_fire_department_rounded,
+                size: isActive ? 26 : 22,
+                color: Colors.white.withValues(alpha: isActive ? 1.0 : 0.5),
               ),
             ),
           ),
@@ -424,7 +426,7 @@ class _DayCell extends StatelessWidget {
               const Positioned(
                 top: 1,
                 right: 1,
-                child: Text('🔥', style: TextStyle(fontSize: 8)),
+                child: Icon(Icons.local_fire_department_rounded, size: 8),
               ),
           ],
         ),

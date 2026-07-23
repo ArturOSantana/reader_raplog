@@ -10,13 +10,13 @@ CREATE TABLE IF NOT EXISTS feed_reactions (
   user_id       UUID NOT NULL REFERENCES auth.users(id)   ON DELETE CASCADE,
   reaction_type TEXT NOT NULL
                   CHECK (reaction_type IN (
-                    'heart',      -- ❤️
-                    'book',       -- 📚
-                    'fire',       -- 🔥
-                    'clap',       -- 👏
-                    'brain',      -- 🧠
-                    'coffee',     -- ☕
-                    'love_eyes'   -- 😍
+                    'heart',
+                    'book',
+                    'fire',
+                    'clap',
+                    'brain',
+                    'coffee',
+                    'love_eyes'
                   )),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (feed_id, user_id, reaction_type)

@@ -2,10 +2,28 @@
     <!-- Permissão para exibir notificações (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <!-- Câmera: obrigatório para image_picker com ImageSource.camera -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- Galeria Android 13+ (API 33+): READ_MEDIA_IMAGES substitui READ_EXTERNAL_STORAGE -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <!-- Galeria Android <13 (API <33): necessário para acessar fotos -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
     <application
         android:label="readlog"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- FileProvider: obrigatório para image_picker_android >= 0.8.12 (câmera) -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.flutter.image_provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -128,6 +146,11 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- url_launcher: permitir abertura de links https (ex: Google Agenda) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 
 // ── Categorias ────────────────────────────────────────────────────────────────
 
@@ -27,16 +28,16 @@ extension NotificationCategoryX on NotificationCategory {
     }
   }
 
-  String get emoji {
+  IconData get icon {
     switch (this) {
-      case NotificationCategory.reading:      return '📖';
-      case NotificationCategory.streak:       return '🔥';
-      case NotificationCategory.goals:        return '🎯';
-      case NotificationCategory.clubs:        return '📚';
-      case NotificationCategory.friends:      return '👥';
-      case NotificationCategory.calendar:     return '📅';
-      case NotificationCategory.achievements: return '🏆';
-      case NotificationCategory.system:       return '📢';
+      case NotificationCategory.reading:      return Icons.menu_book_outlined;
+      case NotificationCategory.streak:       return Icons.local_fire_department_outlined;
+      case NotificationCategory.goals:        return Icons.flag_outlined;
+      case NotificationCategory.clubs:        return Icons.groups_outlined;
+      case NotificationCategory.friends:      return Icons.people_outline;
+      case NotificationCategory.calendar:     return Icons.calendar_month_outlined;
+      case NotificationCategory.achievements: return Icons.emoji_events_outlined;
+      case NotificationCategory.system:       return Icons.notifications_outlined;
     }
   }
 

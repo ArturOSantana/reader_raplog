@@ -385,6 +385,17 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# ── Edge Functions ─────────────────────────────────────────────────────────────
+# NOTA: os schedules (cron) dessas funções são configurados no Supabase Dashboard
+# em: Database > Extensions > pg_cron  OU  Edge Functions > (função) > Schedule
+# close-expired-polls: "*/15 * * * *"
+# reveal-due-capsules: "0 9 * * *"
+[functions.close-expired-polls]
+verify_jwt = false
+
+[functions.reveal-due-capsules]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

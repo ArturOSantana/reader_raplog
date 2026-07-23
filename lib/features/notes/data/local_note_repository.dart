@@ -15,12 +15,12 @@ class LocalNoteRepository {
     return Note.fromMap(rows.first);
   }
 
-  Future<List<Note>> fetchByBook(String bookId) async {
+  Future<List<Note>> fetchByBook(String bookId, String userId) async {
     final db = await LocalDatabase.instance.db;
     final rows = await db.query(
       'notes',
-      where: 'book_id = ? AND is_deleted = 0',
-      whereArgs: [bookId],
+      where: 'book_id = ? AND user_id = ? AND is_deleted = 0',
+      whereArgs: [bookId, userId],
       orderBy: 'created_at DESC',
     );
     return rows.map(Note.fromMap).toList();

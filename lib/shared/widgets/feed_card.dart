@@ -86,19 +86,19 @@ class FeedEventContent extends StatelessWidget {
         return _FinishedBookCard(item: item);
       case FeedEventType.startedBook:
         return _SimpleEventCard(
-          emoji: '📖',
+          icon: Icons.menu_book_outlined,
           color: AppColors.forestGreenLight,
           lines: ['Começou a ler', if (item.bookTitle != null) item.bookTitle!],
         );
       case FeedEventType.streak:
         return _SimpleEventCard(
-          emoji: '🔥',
+          icon: Icons.local_fire_department_outlined,
           color: AppColors.warmGold,
           lines: ['Ofensiva de', '${item.streakDays ?? 0} dias lendo!'],
         );
       case FeedEventType.achievement:
         return _SimpleEventCard(
-          emoji: '🏅',
+          icon: Icons.workspace_premium_outlined,
           color: AppColors.warmGoldLight,
           lines: [
             'Conquista desbloqueada',
@@ -107,7 +107,7 @@ class FeedEventContent extends StatelessWidget {
         );
       case FeedEventType.goalCompleted:
         return _SimpleEventCard(
-          emoji: '🎯',
+          icon: Icons.check_circle_outline,
           color: AppColors.forestGreen,
           lines: [
             'Completou a meta',
@@ -116,7 +116,7 @@ class FeedEventContent extends StatelessWidget {
         );
       case FeedEventType.readingSession:
         return _SimpleEventCard(
-          emoji: '📖',
+          icon: Icons.menu_book_outlined,
           color: AppColors.forestGreenLight,
           lines: [
             'Terminou uma sessão',
@@ -124,15 +124,71 @@ class FeedEventContent extends StatelessWidget {
             if (item.pagesRead != null && item.pagesRead! > 0)
               '${item.pagesRead} páginas · ${item.readingTimeLabel}',
             if (item.streakDays != null && item.streakDays! > 1)
-              '🔥 ${item.streakDays} dias de ofensiva',
+              '${item.streakDays} dias de ofensiva',
           ],
         );
       case FeedEventType.joinedClub:
         return _SimpleEventCard(
-          emoji: '📚',
+          icon: Icons.group_outlined,
           color: AppColors.warmGoldLight,
           lines: ['Entrou em um clube de leitura'],
         );
+      case FeedEventType.betResolved:
+        return _SimpleEventCard(
+          icon: Icons.emoji_events_outlined,
+          color: AppColors.warmGold,
+          lines: [
+            'Aposta resolvida',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.pollOpened:
+        return _SimpleEventCard(
+          icon: Icons.how_to_vote_outlined,
+          color: AppColors.forestGreenLight,
+          lines: [
+            'Nova votação aberta',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.pollClosed:
+        return _SimpleEventCard(
+          icon: Icons.poll_outlined,
+          color: AppColors.forestGreen,
+          lines: [
+            'Votação encerrada',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.challengeStarted:
+        return _SimpleEventCard(
+          icon: Icons.flag_outlined,
+          color: AppColors.warmGoldLight,
+          lines: [
+            'Desafio iniciado',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.challengeFinished:
+        return _SimpleEventCard(
+          icon: Icons.military_tech_outlined,
+          color: AppColors.warmGold,
+          lines: [
+            'Desafio concluído',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.sealAwarded:
+        return _SimpleEventCard(
+          icon: Icons.verified_outlined,
+          color: AppColors.warmGoldLight,
+          lines: [
+            'Selo atribuído',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.bookReview:
+        return _BookReviewCard(item: item);
     }
   }
 }
@@ -153,7 +209,8 @@ class _FinishedBookCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('✅', style: TextStyle(fontSize: 22)),
+          const Icon(Icons.check_circle_outline,
+              size: 22, color: AppColors.forestGreen),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -210,13 +267,137 @@ class _FinishedBookCard extends StatelessWidget {
   }
 }
 
+// ── Card de resenha construtiva ───────────────────────────────────────────────
+
+class _BookReviewCard extends StatefulWidget {
+  final FeedItem item;
+  const _BookReviewCard({required this.item});
+
+  @override
+  State<_BookReviewCard> createState() => _BookReviewCardState();
+}
+
+class _BookReviewCardState extends State<_BookReviewCard> {
+  bool _spoilerRevealed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final rating = item.rating ?? 0;
+    // O campo review no FeedItem armazena o "what_didnt" (texto com potencial de spoiler).
+    // O spoiler_level é inferido do título quando o evento é book_review —
+    // usa-se rating == 0 como sentinela de "sem review" (não possível por constraint).
+    // A presença do review já indica que há conteúdo.
+    final hasContent = item.review != null && item.review!.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.warmGold.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.warmGold.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Título + estrelas grandes
+          Row(
+            children: [
+              const Icon(Icons.rate_review_outlined,
+                  size: 18, color: AppColors.warmGold),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Resenha do livro',
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          if (item.bookTitle != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              item.bookTitle!,
+              style: AppTextStyles.bodyMedium.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          // Estrelas — grandes e visíveis no card
+          Row(
+            children: List.generate(5, (i) => Padding(
+              padding: const EdgeInsets.only(right: 2),
+              child: Icon(
+                i < rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                size: 22,
+                color: i < rating ? AppColors.warmGold : AppColors.border,
+              ),
+            )),
+          ),
+          // Conteúdo da review (what_didnt guardado em review no feed)
+          if (hasContent) ...[
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: _spoilerRevealed ? null : () => setState(() => _spoilerRevealed = true),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                child: _spoilerRevealed
+                    ? Text(
+                        '"${item.review!}"',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    : Stack(
+                        children: [
+                          Text(
+                            '"${item.review!}"',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.transparent,
+                            ),
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.warmGold.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                'Toque para revelar spoiler',
+                                style: AppTextStyles.labelMedium.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _SimpleEventCard extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final Color color;
   final List<String> lines;
 
   const _SimpleEventCard({
-    required this.emoji,
+    required this.icon,
     required this.color,
     required this.lines,
   });
@@ -232,7 +413,7 @@ class _SimpleEventCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 22)),
+          Icon(icon, size: 22, color: color),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

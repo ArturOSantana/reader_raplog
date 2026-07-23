@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/friend.dart';
 import '../../../../shared/models/social_feed.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../shared/widgets/skel_shimmer.dart';
 import '../../../clubs/presentation/screens/book_clubs_screen.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
@@ -96,7 +97,7 @@ class _FeedTab extends ConsumerWidget {
     final feedAsync = ref.watch(_feedProvider);
 
     return feedAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const SkelScreenList(),
       error: (e, _) => Center(child: Text('Erro: $e')),
       data: (items) {
         if (items.isEmpty) {
@@ -335,7 +336,7 @@ class _FeedEventContent extends StatelessWidget {
         return _FinishedBookCard(item: item);
       case FeedEventType.startedBook:
         return _EventCard(
-          emoji: '📖',
+          icon: Icons.menu_book_outlined,
           color: AppColors.forestGreenLight,
           lines: [
             'Começou a ler',
@@ -344,7 +345,7 @@ class _FeedEventContent extends StatelessWidget {
         );
       case FeedEventType.streak:
         return _EventCard(
-          emoji: '🔥',
+          icon: Icons.local_fire_department_outlined,
           color: AppColors.warmGold,
           lines: [
             'Ofensiva de',
@@ -353,7 +354,7 @@ class _FeedEventContent extends StatelessWidget {
         );
       case FeedEventType.achievement:
         return _EventCard(
-          emoji: '🏅',
+          icon: Icons.workspace_premium_outlined,
           color: AppColors.warmGoldLight,
           lines: [
             'Conquista desbloqueada',
@@ -362,7 +363,7 @@ class _FeedEventContent extends StatelessWidget {
         );
       case FeedEventType.goalCompleted:
         return _EventCard(
-          emoji: '🎯',
+          icon: Icons.flag_outlined,
           color: AppColors.forestGreen,
           lines: [
             'Completou a meta',
@@ -371,7 +372,7 @@ class _FeedEventContent extends StatelessWidget {
         );
       case FeedEventType.readingSession:
         return _EventCard(
-          emoji: '📖',
+          icon: Icons.menu_book_outlined,
           color: AppColors.forestGreenLight,
           lines: [
             'Terminou uma sessão',
@@ -379,14 +380,77 @@ class _FeedEventContent extends StatelessWidget {
             if (item.pagesRead != null && item.pagesRead! > 0)
               '${item.pagesRead} páginas · ${item.readingTimeLabel}',
             if (item.streakDays != null && item.streakDays! > 1)
-              '🔥 ${item.streakDays} dias de ofensiva',
+              '${item.streakDays} dias de ofensiva',
           ],
         );
       case FeedEventType.joinedClub:
         return _EventCard(
-          emoji: '📚',
+          icon: Icons.groups_outlined,
           color: AppColors.warmGoldLight,
           lines: ['Entrou em um clube de leitura'],
+        );
+      case FeedEventType.betResolved:
+        return _EventCard(
+          icon: Icons.emoji_events_outlined,
+          color: AppColors.warmGold,
+          lines: [
+            'Aposta resolvida',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.pollOpened:
+        return _EventCard(
+          icon: Icons.how_to_vote_outlined,
+          color: AppColors.forestGreenLight,
+          lines: [
+            'Nova votação aberta',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.pollClosed:
+        return _EventCard(
+          icon: Icons.poll_outlined,
+          color: AppColors.forestGreen,
+          lines: [
+            'Votação encerrada',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.challengeStarted:
+        return _EventCard(
+          icon: Icons.sports_score_outlined,
+          color: AppColors.warmGoldLight,
+          lines: [
+            'Desafio iniciado',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.challengeFinished:
+        return _EventCard(
+          icon: Icons.emoji_events_rounded,
+          color: AppColors.warmGold,
+          lines: [
+            'Desafio concluído',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.sealAwarded:
+        return _EventCard(
+          icon: Icons.workspace_premium_outlined,
+          color: AppColors.warmGoldLight,
+          lines: [
+            'Selo atribuído',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
+        );
+      case FeedEventType.bookReview:
+        return _EventCard(
+          icon: Icons.rate_review_outlined,
+          color: AppColors.warmGold,
+          lines: [
+            'Publicou uma resenha',
+            if (item.bookTitle != null) item.bookTitle!,
+          ],
         );
     }
   }
@@ -412,7 +476,7 @@ class _FinishedBookCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('✅', style: TextStyle(fontSize: 22)),
+          Icon(Icons.check_circle_outline, size: 22, color: AppColors.forestGreen),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -483,12 +547,12 @@ class _FinishedBookCard extends StatelessWidget {
 
 
 class _EventCard extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final Color color;
   final List<String> lines;
 
   const _EventCard({
-    required this.emoji,
+    required this.icon,
     required this.color,
     required this.lines,
   });
@@ -504,7 +568,7 @@ class _EventCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 22)),
+          Icon(icon, size: 22, color: color),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

@@ -103,7 +103,7 @@ BEGIN
       p_club_id,
       'clubs',
       'streak_at_risk',
-      'Ofensiva em risco! 🔥',
+      'Ofensiva em risco!',
       'Ninguém leu hoje no ' || v_club_name || '. Seja o primeiro!',
       '/clubs/' || p_club_id
     );

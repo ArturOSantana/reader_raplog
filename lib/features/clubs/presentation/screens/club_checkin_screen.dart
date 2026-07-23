@@ -149,7 +149,7 @@ class _CheckinForm extends StatelessWidget {
             ),
             child: Column(
               children: [
-                const Text('📖', style: TextStyle(fontSize: 40)),
+                const Icon(Icons.auto_stories_outlined, size: 40, color: AppColors.warmGold),
                 const SizedBox(height: 10),
                 Text(
                   'Como foi a sessão?',
@@ -331,7 +331,7 @@ class _SuccessView extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Sua sessão e impressão foram registradas.\nA ofensiva coletiva do clube continua! 🔥',
+                'Sua sessão e impressão foram registradas.\nA ofensiva coletiva do clube continua!',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodyMedium,
               ),

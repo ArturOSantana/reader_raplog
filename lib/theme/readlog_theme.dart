@@ -341,23 +341,42 @@ class _FadeSlidePageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    final curvedAnim = CurvedAnimation(
+    // Duração mais curta (220 ms) + curva de saída mais agressiva
+    // para dar sensação de resposta imediata ao toque.
+    final fast = CurvedAnimation(
       parent: animation,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
+      curve: Curves.easeOutQuart,
+      reverseCurve: Curves.easeInQuart,
     );
 
-    return SlideTransition(
-      position: Tween<Offset>(
-        begin: const Offset(0, 0.04),
-        end: Offset.zero,
-      ).animate(curvedAnim),
-      child: FadeTransition(
-        opacity: curvedAnim,
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: animation, curve: const Interval(0.0, 0.6)),
+      ),
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.035),
+          end: Offset.zero,
+        ).animate(fast),
         child: child,
       ),
     );
   }
+}
+
+// ── Duração global de transição ───────────────────────────────────────────────
+//
+// GoRouter usa MaterialPageRoute internamente; sobrescrevemos a duração via
+// extensão que o router chama em `buildPage`.
+
+class ReadLogPageRoute<T> extends MaterialPageRoute<T> {
+  ReadLogPageRoute({required super.builder, super.settings});
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 220);
+
+  @override
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 180);
 }
 
 /// -------------------- WIDGET: STAMP --------------------
@@ -1020,10 +1039,10 @@ class ReadLogPollBar extends StatelessWidget {
 /// -------------------- NOTIFICAÇÕES: LIST TILE --------------------
 ///
 /// Tile de notificação com borda esquerda stamp para não-lidas.
-/// Agrupa emoji + título + subtítulo + timestamp — sem badge genérico.
+/// Agrupa ícone + título + subtítulo + timestamp — sem badge genérico.
 
 class ReadLogNotificationTile extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final String title;
   final String subtitle;
   final String time;
@@ -1032,7 +1051,7 @@ class ReadLogNotificationTile extends StatelessWidget {
 
   const ReadLogNotificationTile({
     super.key,
-    required this.emoji,
+    required this.icon,
     required this.title,
     required this.subtitle,
     required this.time,
@@ -1067,7 +1086,7 @@ class ReadLogNotificationTile extends StatelessWidget {
                 color: ReadLogColors.paperDeep,
                 shape: BoxShape.circle,
               ),
-              child: Text(emoji, style: const TextStyle(fontSize: 14)),
+              child: Icon(icon, size: 16, color: ReadLogColors.charcoal),
             ),
             const SizedBox(width: 10),
             Expanded(

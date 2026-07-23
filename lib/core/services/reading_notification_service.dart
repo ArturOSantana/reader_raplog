@@ -62,7 +62,7 @@ class ReadingNotificationService {
 
     await _plugin.show(
       _sessionNotifId,
-      '📖 Lendo: $bookTitle',
+      'Lendo: $bookTitle',
       elapsed,
       const NotificationDetails(android: androidDetails),
     );

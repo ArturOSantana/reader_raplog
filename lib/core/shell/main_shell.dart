@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/local/local_database.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/widgets/offline_banner.dart';
 import '../../theme/readlog_theme.dart';
@@ -66,6 +67,12 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 
   Future<void> _signOut() async {
+    await LocalDatabase.instance.clearUserData();
+    ref.invalidate(bookRepositoryProvider);
+    ref.invalidate(sessionRepositoryProvider);
+    ref.invalidate(noteRepositoryProvider);
+    ref.invalidate(profileRepositoryProvider);
+    ref.invalidate(onboardingCompletedProvider);
     await GoogleSignIn().signOut();
     await Supabase.instance.client.auth.signOut();
   }

@@ -160,7 +160,7 @@ class _ClubReadingRoomScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '📖 Sala de Leitura',
+              'Sala de Leitura',
               style: AppTextStyles.titleMedium
                   .copyWith(color: cs.onSurface, fontSize: 16),
             ),

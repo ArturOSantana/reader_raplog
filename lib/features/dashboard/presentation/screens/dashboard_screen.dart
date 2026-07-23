@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/goal.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../shared/widgets/skel_shimmer.dart';
 import '../widgets/share_stats_sheet.dart';
 import '../../../goals/presentation/widgets/goal_achievement_card.dart';
 
@@ -109,9 +110,7 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: data.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: ReadLogColors.brass),
-        ),
+        loading: () => const SkelScreenList(count: 8),
         error: (e, _) => Center(child: Text('Erro: $e')),
         data: (d) {
           final daily = d['daily'] as Map<String, dynamic>;
@@ -596,7 +595,7 @@ class _GoalShareSheetState extends State<_GoalShareSheet> {
       await SharePlus.instance.share(
         ShareParams(
           files: [xFile],
-          text: '🎯 Atingi minha meta de $goalLabel: '
+          text: 'Atingi minha meta de $goalLabel: '
               '${widget.currentValue} $unit — registrado no ReadLog!',
         ),
       );

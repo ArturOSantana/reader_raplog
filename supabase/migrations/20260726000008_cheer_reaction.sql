@@ -13,14 +13,14 @@ ALTER TABLE feed_reactions
 ALTER TABLE feed_reactions
   ADD CONSTRAINT feed_reactions_reaction_type_check
   CHECK (reaction_type IN (
-    'heart',        -- ❤️
-    'book',         -- 📚
-    'fire',         -- 🔥
-    'clap',         -- 👏
-    'brain',        -- 🧠
-    'coffee',       -- ☕
-    'love_eyes',    -- 😍
-    'cheer'         -- 👐  reação específica de check-in de desafio
+    'heart',
+    'book',
+    'fire',
+    'clap',
+    'brain',
+    'coffee',
+    'love_eyes',
+    'cheer'
   ));
 
 -- ── 2. RPC: dar/remover cheer (toggle) ────────────────────────

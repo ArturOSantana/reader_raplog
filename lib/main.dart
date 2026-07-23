@@ -76,6 +76,16 @@ class ReadlogApp extends ConsumerWidget {
       darkTheme: ReadLogTheme.dark(),
       themeMode: ThemeMode.system,
       routerConfig: router,
+      // Bouncing scroll em todos os lists, mesmo no Android
+      scrollBehavior: _ReadlogScrollBehavior(),
     );
   }
+}
+
+/// Aplica [BouncingScrollPhysics] em todas as plataformas e mantém
+/// gestos de toque habilitados (padrão Material).
+class _ReadlogScrollBehavior extends MaterialScrollBehavior {
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 }

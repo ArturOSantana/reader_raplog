@@ -4,6 +4,15 @@ import '../../../../shared/models/reading_session.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../core/services/reading_notification_service.dart';
 
+// Duração máxima contínua sem interação antes de auto-pausar a sessão.
+const _kInactivityAutoPause = Duration(hours: 4);
+
+// Intervalo de tempo para avisar o usuário antes do auto-pause.
+const _kInactivityWarning = Duration(minutes: 30);
+
+// Intervalo de atualização da notificação persistente (bateria-friendly).
+const _kNotificationThrottle = Duration(seconds: 30);
+
 /// Estado imutável que a UI consome.
 class ActiveSessionState {
   final ReadingSession? session;
@@ -38,15 +47,49 @@ class ActiveSessionState {
 /// O [Timer] vive aqui — não no widget — então não é cancelado pelo dispose.
 class SessionNotifier extends Notifier<ActiveSessionState> {
   Timer? _ticker;
-  Timer? _inactivityTimer;
+  Timer? _inactivityWarningTimer;
+  Timer? _inactivityAutoPauseTimer;
+  Timer? _notificationThrottle;
 
   // Quando a sessão foi pausada pela última vez (para acumular paused_seconds)
   DateTime? _pausedAt;
+
+  // Contador de ticks desde a última atualização de notificação
+  int _ticksSinceNotification = 0;
 
   @override
   ActiveSessionState build() {
     ref.onDispose(_cleanup);
     return const ActiveSessionState();
+  }
+
+  // ── Boot recovery ─────────────────────────────────────────────────────────
+
+  /// Chamado pelo SessionScreen no initState para recuperar sessão interrompida.
+  /// Retorna true se encontrou e restaurou uma sessão ativa.
+  Future<bool> recoverActiveSession({required String bookTitle}) async {
+    if (state.hasActiveSession) return true;
+
+    final session =
+        await ref.read(sessionRepositoryProvider).fetchActiveSession();
+    if (session == null) return false;
+
+    // Recalcula elapsed a partir de started_at menos pausas já acumuladas
+    final now = DateTime.now();
+    final totalElapsed = now.difference(session.startedAt).inSeconds;
+    final netElapsed =
+        (totalElapsed - session.pausedDurationSeconds).clamp(0, totalElapsed);
+
+    state = ActiveSessionState(
+      session: session,
+      bookTitle: bookTitle,
+      elapsedSeconds: netElapsed,
+      isPaused: false,
+    );
+
+    _startTicker();
+    _scheduleInactivityTimers();
+    return true;
   }
 
   // ── Iniciar ───────────────────────────────────────────────────────────────
@@ -58,7 +101,7 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
     SessionGoal? goal,
     int? goalValue,
   }) async {
-    // Evita iniciar duas sessões simultâneas
+    // Evita iniciar duas sessões simultâneas (guard em memória)
     if (state.hasActiveSession) return;
 
     final session = await ref.read(sessionRepositoryProvider).startSession(
@@ -74,7 +117,7 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
       elapsedSeconds: 0,
     );
     _startTicker();
-    _scheduleInactivityReminder();
+    _scheduleInactivityTimers();
   }
 
   // ── Pausar ────────────────────────────────────────────────────────────────
@@ -82,9 +125,21 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
   void pause() {
     if (!state.hasActiveSession || state.isPaused) return;
     _ticker?.cancel();
-    _inactivityTimer?.cancel();
+    _ticker = null;
+    _inactivityWarningTimer?.cancel();
+    _inactivityAutoPauseTimer?.cancel();
+
     _pausedAt = DateTime.now();
     state = state.copyWith(isPaused: true);
+
+    // Persiste o timestamp de pausa no SQLite imediatamente
+    final session = state.session;
+    if (session != null) {
+      ref
+          .read(sessionRepositoryProvider)
+          .localRepo
+          .persistPausedAt(session.id, _pausedAt!);
+    }
 
     ReadingNotificationService.instance.showPaused(
       bookTitle: state.bookTitle,
@@ -107,6 +162,12 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
           state.session!.pausedDurationSeconds + addedPaused,
     );
 
+    // Persiste pausa acumulada no SQLite imediatamente
+    ref
+        .read(sessionRepositoryProvider)
+        .localRepo
+        .persistResumed(updatedSession.id, addedPaused);
+
     state = ActiveSessionState(
       session: updatedSession,
       bookTitle: state.bookTitle,
@@ -115,7 +176,7 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
     );
 
     _startTicker();
-    _scheduleInactivityReminder();
+    _scheduleInactivityTimers();
   }
 
   // ── Finalizar ─────────────────────────────────────────────────────────────
@@ -163,12 +224,15 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
 
   void _startTicker() {
     _ticker?.cancel();
+    _ticksSinceNotification = 0;
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       final newElapsed = state.elapsedSeconds + 1;
       state = state.copyWith(elapsedSeconds: newElapsed);
 
-      // Atualiza a notificação a cada minuto
-      if (newElapsed % 60 == 0) {
+      // Atualiza notificação com throttle de 30s (economia de bateria)
+      _ticksSinceNotification++;
+      if (_ticksSinceNotification >= _kNotificationThrottle.inSeconds) {
+        _ticksSinceNotification = 0;
         ReadingNotificationService.instance.show(
           bookTitle: state.bookTitle,
           elapsed: _formatTime(newElapsed),
@@ -183,13 +247,25 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
     );
   }
 
-  void _scheduleInactivityReminder() {
-    _inactivityTimer?.cancel();
-    _inactivityTimer = Timer(const Duration(minutes: 30), () {
+  void _scheduleInactivityTimers() {
+    _inactivityWarningTimer?.cancel();
+    _inactivityAutoPauseTimer?.cancel();
+
+    // Aviso em 30 min
+    _inactivityWarningTimer =
+        Timer(_kInactivityWarning, () {
       if (state.hasActiveSession && !state.isPaused) {
         ReadingNotificationService.instance.showInactivityAlert(
           bookTitle: state.bookTitle,
         );
+      }
+    });
+
+    // Auto-pausa em 4h — sessão não fica aberta para sempre
+    _inactivityAutoPauseTimer =
+        Timer(_kInactivityAutoPause, () {
+      if (state.hasActiveSession && !state.isPaused) {
+        pause();
       }
     });
   }
@@ -197,8 +273,12 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
   void _cleanup() {
     _ticker?.cancel();
     _ticker = null;
-    _inactivityTimer?.cancel();
-    _inactivityTimer = null;
+    _inactivityWarningTimer?.cancel();
+    _inactivityWarningTimer = null;
+    _inactivityAutoPauseTimer?.cancel();
+    _inactivityAutoPauseTimer = null;
+    _notificationThrottle?.cancel();
+    _notificationThrottle = null;
     ReadingNotificationService.instance.dismiss();
   }
 

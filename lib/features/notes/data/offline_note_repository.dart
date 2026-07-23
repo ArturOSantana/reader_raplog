@@ -29,7 +29,7 @@ class OfflineNoteRepository {
         return (data as List).map((e) => Note.fromMap(e)).toList();
       } catch (_) {}
     }
-    return _local.fetchByBook(bookId);
+    return _local.fetchByBook(bookId, _userId);
   }
 
   Future<Note> insert({

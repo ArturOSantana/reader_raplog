@@ -183,7 +183,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             );
       }
 
-      if (mounted) context.go('/home');
+      if (mounted) {
+        // Marca o status síncrono como concluído para o redirect do router
+        ref.read(onboardingStatusProvider.notifier).state = true;
+        context.go('/home');
+      }
     } catch (_) {
       if (mounted) {
         setState(() => _saving = false);
@@ -886,7 +890,7 @@ class _OnboardingFooter extends StatelessWidget {
                   : Text(_isWelcome
                       ? 'Começar configuração'
                       : _isLastPage
-                          ? 'Começar a ler 🎉'
+                          ? 'Começar a ler'
                           : 'Continuar'),
             ),
           ),

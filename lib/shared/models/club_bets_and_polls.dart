@@ -16,14 +16,25 @@ extension BetStakeTypeX on BetStakeType {
     }
   }
 
+  String get label {
+    switch (this) {
+      case BetStakeType.pizza:               return 'pizza';
+      case BetStakeType.cafe:                return 'café';
+      case BetStakeType.livro:               return 'livro';
+      case BetStakeType.valePresente:        return 'vale-presente';
+      case BetStakeType.dinheiroRegistrado:  return 'dinheiro';
+      case BetStakeType.outro:               return 'outro';
+    }
+  }
+
   String get emoji {
     switch (this) {
-      case BetStakeType.pizza:              return '🍕';
-      case BetStakeType.cafe:               return '☕';
-      case BetStakeType.livro:              return '📚';
-      case BetStakeType.valePresente:       return '🎁';
-      case BetStakeType.dinheiroRegistrado: return '💵';
-      case BetStakeType.outro:              return '🤝';
+      case BetStakeType.pizza:               return '🍕';
+      case BetStakeType.cafe:                return '☕';
+      case BetStakeType.livro:               return '📚';
+      case BetStakeType.valePresente:        return '🎁';
+      case BetStakeType.dinheiroRegistrado:  return '💰';
+      case BetStakeType.outro:               return '🎲';
     }
   }
 
@@ -176,11 +187,11 @@ class BetLeaderboardEntry extends Equatable {
 
   bool get isOnPodium => rank <= 3;
 
-  String get podiumEmoji {
+  String get podiumLabel {
     switch (rank) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
+      case 1:  return '1°';
+      case 2:  return '2°';
+      case 3:  return '3°';
       default: return '#$rank';
     }
   }

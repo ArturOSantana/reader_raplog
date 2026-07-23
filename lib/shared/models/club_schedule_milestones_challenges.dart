@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 
 // ── Entrada do cronograma de leitura ─────────────────────────────────────────
 
@@ -102,13 +103,13 @@ class ClubMilestone extends Equatable {
 
   String get label => title ?? '$milestonePct%';
 
-  String get emoji {
+  IconData get icon {
     switch (milestonePct) {
-      case 25:  return '🌱';
-      case 50:  return '📖';
-      case 75:  return '🔥';
-      case 100: return '🏆';
-      default:  return '📌';
+      case 25:  return Icons.eco_outlined;
+      case 50:  return Icons.menu_book_outlined;
+      case 75:  return Icons.local_fire_department_outlined;
+      case 100: return Icons.emoji_events_outlined;
+      default:  return Icons.flag_outlined;
     }
   }
 
@@ -309,11 +310,11 @@ class ChallengeProgressEntry extends Equatable {
 
   bool get isComplete => pctComplete >= 100;
 
-  String podiumEmoji() {
+  String podiumLabel() {
     switch (rank) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
+      case 1: return '1°';
+      case 2: return '2°';
+      case 3: return '3°';
       default: return '#$rank';
     }
   }

@@ -25,16 +25,12 @@ class ClubRankingEntry extends Equatable {
 
   bool get isOnPodium => position <= 3;
 
-  String get podiumEmoji {
+  String get podiumLabel {
     switch (position) {
-      case 1:
-        return '🥇';
-      case 2:
-        return '🥈';
-      case 3:
-        return '🥉';
-      default:
-        return '#$position';
+      case 1:  return '1°';
+      case 2:  return '2°';
+      case 3:  return '3°';
+      default: return '#$position';
     }
   }
 

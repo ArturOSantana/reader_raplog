@@ -46,7 +46,7 @@ class OfflineBookRepository {
         // Sem rede — usa cache
       }
     }
-    return _local.fetchAll(status: status);
+    return _local.fetchAll(_userId, status: status);
   }
 
   Future<Book?> fetchById(String id) async {

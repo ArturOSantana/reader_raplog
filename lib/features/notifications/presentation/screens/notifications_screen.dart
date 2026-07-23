@@ -147,14 +147,14 @@ class _CategoryFilterBar extends ConsumerWidget {
           children: [
             _FilterChip(
               label: 'Todas',
-              emoji: '🔔',
+              icon: Icons.notifications_outlined,
               selected: selected == null,
               onTap: () =>
                   ref.read(_inboxFilterProvider.notifier).state = null,
             ),
             ...NotificationCategory.values.map((cat) => _FilterChip(
                   label: cat.label,
-                  emoji: cat.emoji,
+                  icon: cat.icon,
                   selected: selected == cat,
                   onTap: () =>
                       ref.read(_inboxFilterProvider.notifier).state = cat,
@@ -168,13 +168,13 @@ class _CategoryFilterBar extends ConsumerWidget {
 
 class _FilterChip extends StatelessWidget {
   final String label;
-  final String emoji;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
   const _FilterChip({
     required this.label,
-    required this.emoji,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
@@ -199,7 +199,7 @@ class _FilterChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 12)),
+            Icon(icon, size: 12),
             const SizedBox(width: 4),
             Text(
               label.toUpperCase(),
@@ -278,7 +278,7 @@ class _NotifTile extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ReadLogNotificationTile(
-        emoji: item.category.emoji,
+        icon: item.category.icon,
         title: item.title,
         subtitle: item.body,
         time: _timeAgo(item.createdAt),
@@ -295,7 +295,7 @@ class _NotifTile extends ConsumerWidget {
             InspirationBottomSheet.show(
               context,
               quote: quote,
-              title: '${item.category.emoji} ${item.title.toUpperCase()}',
+              title: item.title.toUpperCase(),
             );
           }
         },

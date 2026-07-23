@@ -29,7 +29,25 @@ import '../../features/clubs/presentation/screens/club_reading_room_screen.dart'
 import '../../features/clubs/presentation/screens/club_checkin_screen.dart';
 import '../../features/clubs/presentation/screens/club_calendar_screen.dart';
 import '../../features/clubs/presentation/screens/challenge_detail_screen.dart';
+import '../../features/clubs/presentation/screens/challenge_heatmap_screen.dart';
+import '../../features/clubs/presentation/screens/challenge_result_screen.dart';
 import '../../features/clubs/presentation/screens/club_feed_screen.dart';
+import '../../features/clubs/presentation/screens/member_profile_screen.dart';
+import '../../features/clubs/presentation/screens/milestone_discussion_screen.dart';
+import '../../features/clubs/presentation/screens/club_seals_screen.dart';
+import '../../shared/models/club_seals.dart';
+import '../../features/clubs/presentation/screens/club_timeline_screen.dart';
+import '../../features/clubs/presentation/screens/book_diary_screen.dart';
+import '../../features/clubs/presentation/screens/club_stories_screen.dart';
+import '../../features/clubs/presentation/screens/club_time_capsule_screen.dart';
+import '../../features/clubs/presentation/screens/club_advanced_stats_screen.dart';
+import '../../features/clubs/presentation/screens/club_bets_screen.dart';
+import '../../features/clubs/presentation/screens/club_open_polls_screen.dart';
+import '../../features/clubs/presentation/screens/club_review_screen.dart';
+import '../../features/clubs/presentation/screens/club_book_reviews_screen.dart';
+import '../../shared/models/club_reviews.dart';
+
+import '../../shared/models/club_schedule_milestones_challenges.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/notifications/presentation/screens/notification_settings_screen.dart';
@@ -44,23 +62,16 @@ final initialRouteProvider = Provider<String?>((ref) => null);
 class _AuthNotifier extends ChangeNotifier {
   _AuthNotifier(this._ref) {
     _ref.listen(authStateProvider, (_, __) => notifyListeners());
+    _ref.listen(onboardingStatusProvider, (_, __) => notifyListeners());
   }
 
   final Ref _ref;
 
   bool get isLoggedIn =>
       _ref.read(authStateProvider).valueOrNull?.session != null;
-}
 
-/// Provider que carrega (e cacheia) se o usuário já completou o onboarding.
-/// Lê via repositório offline-first para refletir o estado mesmo sem rede.
-/// Exposto fora do router para que o SplashScreen possa invalidar após login.
-final onboardingCompletedProvider = FutureProvider<bool>((ref) async {
-  final userId = ref.read(supabaseClientProvider).auth.currentUser?.id;
-  if (userId == null) return false; // não logado → sem onboarding concluído
-  final profile = await ref.read(profileRepositoryProvider).fetch();
-  return profile?.onboardingCompleted ?? false;
-});
+  bool? get onboardingDone => _ref.read(onboardingStatusProvider);
+}
 
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = _AuthNotifier(ref);
@@ -71,15 +82,23 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: (context, state) {
       final isLoggedIn = notifier.isLoggedIn;
-      final onAuth = state.matchedLocation.startsWith('/auth');
-      final onSplash = state.matchedLocation == '/';
-      final onOnboarding = state.matchedLocation == '/onboarding';
+      final loc = state.matchedLocation;
+      final onAuth = loc.startsWith('/auth');
+      final onSplash = loc == '/';
+      final onOnboarding = loc == '/onboarding';
 
       if (onSplash) return null;
       if (!isLoggedIn && !onAuth) return '/auth/login';
       if (isLoggedIn && onAuth) return '/home';
-      // Permite que o SplashScreen gerencie o redirect para /onboarding
+
+      // Enquanto o status ainda não foi carregado, deixa o splash decidir.
       if (onOnboarding) return null;
+
+      // Bloqueia acesso às rotas internas enquanto onboarding não for concluído.
+      final done = notifier.onboardingDone;
+      if (isLoggedIn && done == false && !onOnboarding) {
+        return '/onboarding';
+      }
       return null;
     },
     routes: [
@@ -116,6 +135,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) => EditBookScreen(
                       book: state.extra as dynamic,
                     ),
+                  ),
+                  GoRoute(
+                    path: 'diary',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return BookDiaryScreen(
+                        bookId: state.pathParameters['id']!,
+                        bookTitle: extra['bookTitle'] as String? ?? 'Livro',
+                        bookAuthor: extra['bookAuthor'] as String?,
+                      );
+                    },
                   ),
                 ],
               ),
@@ -246,11 +277,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) {
                       final extra =
                           state.extra as Map<String, dynamic>? ?? {};
+                      final challenge = extra['challenge'] as ClubChallenge?;
                       return ChallengeDetailScreen(
                         clubId: state.pathParameters['clubId']!,
                         challengeId: state.pathParameters['challengeId']!,
-                        challengeTitle:
+                        challengeTitle: challenge?.title ??
                             extra['challengeTitle'] as String? ?? 'Desafio',
+                        challenge: challenge,
                       );
                     },
                   ),
@@ -262,6 +295,164 @@ final routerProvider = Provider<GoRouter>((ref) {
                       return ClubFeedScreen(
                         clubId: state.pathParameters['clubId']!,
                         clubName: extra['clubName'] ?? 'Clube',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'challenges/:challengeId/heatmap',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ChallengeHeatmapScreen(
+                        challenge: extra['challenge'] as ClubChallenge,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'challenges/:challengeId/result',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ChallengeResultScreen(
+                        challenge: extra['challenge'] as ClubChallenge,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'stories',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, String>? ?? {};
+                      return ClubStoriesScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] ?? 'Clube',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'capsule',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, String>? ?? {};
+                      return ClubTimeCapsuleScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] ?? 'Clube',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'stats',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, String>? ?? {};
+                      return ClubAdvancedStatsScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] ?? 'Clube',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'timeline',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, String>? ?? {};
+                      return ClubTimelineScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] ?? 'Clube',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'seals',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ClubSealsScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        isManager: extra['isManager'] as bool? ?? false,
+                        members: (extra['members'] as List<ClubMemberSummary>?) ?? const [],
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'milestones/:milestoneId/discussion',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return MilestoneDiscussionScreen(
+                        milestone: extra['milestone'] as ClubMilestone,
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'bets',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ClubBetsScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        canManage: extra['canManage'] as bool? ?? false,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'polls',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ClubOpenPollsScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        canManage: extra['canManage'] as bool? ?? false,
+                      );
+                    },
+                  ),
+                  // ── Resenhas ───────────────────────────────────────────
+                  GoRoute(
+                    path: 'reviews',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ClubBookReviewsScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        bookHistoryId:
+                            extra['bookHistoryId'] as String? ?? '',
+                        bookTitle:
+                            extra['bookTitle'] as String? ?? 'Livro',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'reviews/new',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ClubReviewScreen(
+                        clubId: extra['clubId'] as String? ??
+                            state.pathParameters['clubId']!,
+                        bookHistoryId:
+                            extra['bookHistoryId'] as String? ?? '',
+                        bookTitle:
+                            extra['bookTitle'] as String? ?? 'Livro',
+                        existing: extra['existing'] as ClubReview?,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'members/:userId/profile',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return MemberProfileScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        userId: state.pathParameters['userId']!,
+                        userName:
+                            extra['userName'] as String? ?? 'Membro',
+                        avatarUrl: extra['avatarUrl'] as String?,
                       );
                     },
                   ),

@@ -34,12 +34,62 @@ class LocalSessionRepository {
     return ReadingSession.fromMap(rows.first);
   }
 
-  Future<List<ReadingSession>> fetchByBook(String bookId) async {
+  /// Retorna a primeira sessão com status 'active' do usuário, se houver.
+  /// Usado no boot do app para recuperar sessão interrompida.
+  Future<ReadingSession?> fetchActiveSession(String userId) async {
     final db = await LocalDatabase.instance.db;
     final rows = await db.query(
       'reading_sessions',
-      where: 'book_id = ?',
-      whereArgs: [bookId],
+      where: "user_id = ? AND status = 'active'",
+      whereArgs: [userId],
+      orderBy: 'started_at DESC',
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return ReadingSession.fromMap(rows.first);
+  }
+
+  /// Persiste o timestamp de início de pausa sem alterar outros campos.
+  Future<void> persistPausedAt(String id, DateTime pausedAt) async {
+    final db = await LocalDatabase.instance.db;
+    await db.update(
+      'reading_sessions',
+      {'paused_at': pausedAt.toIso8601String()},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Acumula segundos de pausa e limpa o paused_at ao retomar.
+  Future<void> persistResumed(String id, int addedPausedSeconds) async {
+    final db = await LocalDatabase.instance.db;
+    // Lê o valor atual e soma
+    final rows = await db.query(
+      'reading_sessions',
+      columns: ['paused_duration_seconds'],
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (rows.isEmpty) return;
+    final current = (rows.first['paused_duration_seconds'] as int?) ?? 0;
+    await db.update(
+      'reading_sessions',
+      {
+        'paused_duration_seconds': current + addedPausedSeconds,
+        'paused_at': null,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<ReadingSession>> fetchByBook(String bookId, String userId) async {
+    final db = await LocalDatabase.instance.db;
+    final rows = await db.query(
+      'reading_sessions',
+      where: 'book_id = ? AND user_id = ?',
+      whereArgs: [bookId, userId],
       orderBy: 'started_at DESC',
     );
     return rows.map(ReadingSession.fromMap).toList();
@@ -74,10 +124,10 @@ class LocalSessionRepository {
       return Map<String, dynamic>.from(cached.first);
     }
 
-    // Calcula a partir das sessões locais do dia
+    // Calcula a partir das sessões locais do dia (apenas 'finished')
     final rows = await db.query(
       'reading_sessions',
-      where: 'user_id = ? AND started_at LIKE ?',
+      where: "user_id = ? AND status = 'finished' AND started_at LIKE ?",
       whereArgs: [userId, '$today%'],
     );
 
@@ -85,9 +135,7 @@ class LocalSessionRepository {
     int totalPages = 0;
     for (final row in rows) {
       totalMinutes += (row['duration_minutes'] as int?) ?? 0;
-      final start = (row['start_page'] as int?) ?? 0;
-      final end = (row['end_page'] as int?) ?? 0;
-      if (end > start) totalPages += end - start;
+      totalPages += (row['pages_read'] as int?) ?? 0;
     }
 
     return {
@@ -138,13 +186,13 @@ class LocalSessionRepository {
       return List<Map<String, dynamic>>.from(cached);
     }
 
-    // Fallback: agrega sessões locais por dia
+    // Fallback: agrega sessões locais por dia (apenas 'finished')
     final rows = await db.rawQuery('''
       SELECT
         substr(started_at, 1, 10) AS date,
         SUM(duration_minutes) AS total_minutes
       FROM reading_sessions
-      WHERE user_id = ? AND started_at >= ?
+      WHERE user_id = ? AND status = 'finished' AND started_at >= ?
       GROUP BY substr(started_at, 1, 10)
       ORDER BY date ASC
     ''', [userId, from]);
@@ -157,16 +205,14 @@ class LocalSessionRepository {
     final db = await LocalDatabase.instance.db;
     final rows = await db.query(
       'reading_sessions',
-      where: 'user_id = ? AND started_at >= ?',
+      where: "user_id = ? AND status = 'finished' AND started_at >= ?",
       whereArgs: [userId, fromDate],
     );
     int totalMinutes = 0;
     int totalPages = 0;
     for (final row in rows) {
       totalMinutes += (row['duration_minutes'] as int?) ?? 0;
-      final start = (row['start_page'] as int?) ?? 0;
-      final end = (row['end_page'] as int?) ?? 0;
-      if (end > start) totalPages += end - start;
+      totalPages += (row['pages_read'] as int?) ?? 0;
     }
     return {'total_minutes': totalMinutes, 'total_pages': totalPages};
   }
@@ -176,7 +222,7 @@ class LocalSessionRepository {
     final rows = await db.rawQuery('''
       SELECT DISTINCT substr(started_at, 1, 10) AS date
       FROM reading_sessions
-      WHERE user_id = ?
+      WHERE user_id = ? AND status = 'finished'
       ORDER BY date DESC
     ''', [userId]);
 

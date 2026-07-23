@@ -50,10 +50,7 @@ class ShareStatsCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(3),
                 ),
                 child: const Center(
-                  child: Text(
-                    '📚',
-                    style: TextStyle(fontSize: 18),
-                  ),
+                  child: Icon(Icons.menu_book_rounded, size: 18, color: ReadLogColors.paper),
                 ),
               ),
               const SizedBox(width: 10),
@@ -94,8 +91,8 @@ class ShareStatsCard extends StatelessWidget {
                 child: _StatBlock(
                   label: 'Esta semana',
                   rows: [
-                    _StatRow(icon: '⏱', text: _fmtTime(weekMinutes)),
-                    _StatRow(icon: '📄', text: '$weekPages pág.'),
+                    _StatRow(icon: '◷', text: _fmtTime(weekMinutes)),
+                    _StatRow(icon: '▪', text: '$weekPages pág.'),
                   ],
                 ),
               ),
@@ -104,9 +101,9 @@ class ShareStatsCard extends StatelessWidget {
                 child: _StatBlock(
                   label: 'Este mês',
                   rows: [
-                    _StatRow(icon: '⏱', text: _fmtTime(monthMinutes)),
-                    _StatRow(icon: '📄', text: '$monthPages pág.'),
-                    _StatRow(icon: '📖', text: '$monthBooks lidos'),
+                    _StatRow(icon: '◷', text: _fmtTime(monthMinutes)),
+                    _StatRow(icon: '▪', text: '$monthPages pág.'),
+                    _StatRow(icon: '▸', text: '$monthBooks lidos'),
                   ],
                 ),
               ),

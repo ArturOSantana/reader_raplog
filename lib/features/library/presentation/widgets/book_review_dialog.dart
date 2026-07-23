@@ -129,10 +129,10 @@ class _BookReviewSheetState extends ConsumerState<_BookReviewSheet> {
         ShareParams(
           files: [XFile(file.path)],
           subject: 'Terminei de ler ${widget.book.title}!',
-          text: '📚 Acabei de ler "${widget.book.title}"'
+          text: 'Acabei de ler "${widget.book.title}"'
               '${widget.book.author != null ? ' de ${widget.book.author}' : ''}'
-              '${_rating > 0 ? ' — ${'⭐' * _rating}' : ''}'
-              '\n\nRegistrado no ReadLog 📔',
+              '${_rating > 0 ? ' — ${_rating}/5 estrelas' : ''}'
+              '\n\nRegistrado no ReadLog',
         ),
       );
     } catch (e) {

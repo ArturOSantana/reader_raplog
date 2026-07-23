@@ -14,7 +14,7 @@ import '../../data/inspiration_quotes.dart';
 class InspirationCard extends StatelessWidget {
   final InspirationQuote quote;
 
-  /// Título principal exibido acima da linha — ex.: "🔥 Ofensiva mantida!"
+  /// Título principal exibido acima da linha — ex.: "Ofensiva mantida!"
   final String title;
 
   /// Subtítulo opcional — ex.: "20 dias consecutivos"

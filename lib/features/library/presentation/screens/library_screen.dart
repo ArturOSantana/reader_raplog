@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../shared/widgets/skel_shimmer.dart';
 
 final _selectedStatusProvider = StateProvider<BookStatus?>((ref) => null);
 
@@ -47,9 +48,7 @@ class LibraryScreen extends ConsumerWidget {
           _StatusFilterBar(selected: selectedStatus),
           Expanded(
             child: books.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: ReadLogColors.brass),
-              ),
+              loading: () => const SkelScreenList(),
               error: (e, _) => Center(child: Text('Erro: $e')),
               data: (list) {
                 if (list.isEmpty) {

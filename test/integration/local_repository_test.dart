@@ -24,7 +24,7 @@ Future<void> _openInMemoryDb() async {
   final db = await databaseFactoryFfi.openDatabase(
     inMemoryDatabasePath,
     options: OpenDatabaseOptions(
-      version: 3,
+      version: 6,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE books (
@@ -57,6 +57,7 @@ Future<void> _openInMemoryDb() async {
             ended_at TEXT,
             duration_minutes INTEGER,
             paused_duration_seconds INTEGER NOT NULL DEFAULT 0,
+            paused_at TEXT,
             start_page INTEGER,
             end_page INTEGER,
             pages_read INTEGER,
@@ -211,7 +212,7 @@ void main() {
       final repo = LocalBookRepository();
       await repo.upsert(_bookMap(id: 'b-1', title: 'Dom Casmurro'));
 
-      final books = await repo.fetchAll();
+      final books = await repo.fetchAll(_uid);
       expect(books.length, 1);
       expect(books.first.title, 'Dom Casmurro');
     });
@@ -232,7 +233,7 @@ void main() {
         _bookMap(id: 'b-3', title: 'Livro 3'),
       ]);
 
-      final books = await repo.fetchAll();
+      final books = await repo.fetchAll(_uid);
       expect(books.length, 3);
     });
 
@@ -241,7 +242,7 @@ void main() {
       await repo.upsert(_bookMap(id: 'b-1', title: 'Versão 1'));
       await repo.upsert(_bookMap(id: 'b-1', title: 'Versão 2'));
 
-      final books = await repo.fetchAll();
+      final books = await repo.fetchAll(_uid);
       expect(books.length, 1);
       expect(books.first.title, 'Versão 2');
     });
@@ -277,34 +278,34 @@ void main() {
     });
 
     test('fetchAll sem filtro retorna todos os livros', () async {
-      final books = await LocalBookRepository().fetchAll();
+      final books = await LocalBookRepository().fetchAll(_uid);
       expect(books.length, 5);
     });
 
     test('fetchAll(status: reading) retorna apenas os livros em leitura', () async {
       final books =
-          await LocalBookRepository().fetchAll(status: BookStatus.reading);
+          await LocalBookRepository().fetchAll(_uid, status: BookStatus.reading);
       expect(books.length, 2);
       expect(books.every((b) => b.status == BookStatus.reading), isTrue);
     });
 
     test('fetchAll(status: read) retorna apenas os lidos', () async {
       final books =
-          await LocalBookRepository().fetchAll(status: BookStatus.read);
+          await LocalBookRepository().fetchAll(_uid, status: BookStatus.read);
       expect(books.length, 1);
       expect(books.first.status, BookStatus.read);
     });
 
     test('fetchAll(status: wantToRead) retorna apenas os que deseja ler', () async {
       final books =
-          await LocalBookRepository().fetchAll(status: BookStatus.wantToRead);
+          await LocalBookRepository().fetchAll(_uid, status: BookStatus.wantToRead);
       expect(books.length, 1);
       expect(books.first.status, BookStatus.wantToRead);
     });
 
     test('fetchAll(status: abandoned) retorna apenas os abandonados', () async {
       final books =
-          await LocalBookRepository().fetchAll(status: BookStatus.abandoned);
+          await LocalBookRepository().fetchAll(_uid, status: BookStatus.abandoned);
       expect(books.length, 1);
       expect(books.first.status, BookStatus.abandoned);
     });
@@ -362,7 +363,7 @@ void main() {
       await repo.upsert(_bookMap(id: 'b-1'));
       await repo.markDeleted('b-1');
 
-      final books = await repo.fetchAll();
+      final books = await repo.fetchAll(_uid);
       expect(books.isEmpty, isTrue);
     });
 
@@ -383,7 +384,7 @@ void main() {
       ]);
       await repo.markDeleted('b-1');
 
-      final books = await repo.fetchAll();
+      final books = await repo.fetchAll(_uid);
       expect(books.length, 1);
       expect(books.first.title, 'Livre');
     });
@@ -410,7 +411,7 @@ void main() {
       await repo.insert(_sessionMap(id: 's-2', bookId: 'b-1'));
       await repo.insert(_sessionMap(id: 's-3', bookId: 'b-2'));
 
-      final sessions = await repo.fetchByBook('b-1');
+      final sessions = await repo.fetchByBook('b-1', _uid);
       expect(sessions.length, 2);
       expect(sessions.every((s) => s.bookId == 'b-1'), isTrue);
     });
@@ -421,7 +422,7 @@ void main() {
         _sessionMap(id: 's-1', bookId: 'b-1'),
         _sessionMap(id: 's-2', bookId: 'b-1'),
       ]);
-      final sessions = await repo.fetchByBook('b-1');
+      final sessions = await repo.fetchByBook('b-1', _uid);
       expect(sessions.length, 2);
     });
 

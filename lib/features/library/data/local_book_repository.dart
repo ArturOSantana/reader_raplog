@@ -3,15 +3,17 @@ import '../../../shared/models/book.dart';
 import '../../../core/local/local_database.dart';
 
 class LocalBookRepository {
-  Future<List<Book>> fetchAll({BookStatus? status}) async {
+  Future<List<Book>> fetchAll(String userId, {BookStatus? status}) async {
     final db = await LocalDatabase.instance.db;
-    final where = status != null
-        ? 'is_deleted = 0 AND status = ?'
-        : 'is_deleted = 0';
-    final args = status != null ? [status.dbValue] : null;
+    final conditions = ['user_id = ?', 'is_deleted = 0'];
+    final args = <Object>[userId];
+    if (status != null) {
+      conditions.add('status = ?');
+      args.add(status.dbValue);
+    }
     final rows = await db.query(
       'books',
-      where: where,
+      where: conditions.join(' AND '),
       whereArgs: args,
       orderBy: 'updated_at DESC',
     );

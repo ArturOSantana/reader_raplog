@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/providers/providers.dart';
 
@@ -21,14 +20,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     _navigated = true;
 
     if (session == null) {
+      // Reseta o status de onboarding ao fazer logout
+      ref.read(onboardingStatusProvider.notifier).state = null;
       context.go('/auth/login');
       return;
     }
 
-    // Usuário logado: força nova leitura do provider (invalida cache antigo)
+    // Usuário logado: força nova leitura do repositório
     ref.invalidate(onboardingCompletedProvider);
     final completed = await ref.read(onboardingCompletedProvider.future);
     if (!mounted) return;
+
+    // Escreve o resultado síncrono para que o redirect do router funcione
+    ref.read(onboardingStatusProvider.notifier).state = completed;
     context.go(completed ? '/home' : '/onboarding');
   }
 

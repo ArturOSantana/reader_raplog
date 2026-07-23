@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../shared/models/user_profile.dart';
 import '../../../core/local/sync_queue.dart';
@@ -83,5 +84,15 @@ class OfflineProfileRepository {
       onboardingCompleted: fields['onboarding_completed'] as bool? ?? false,
       updatedAt: DateTime.now(),
     );
+  }
+
+  /// Upload requer conexão — delega direto ao Supabase Storage.
+  Future<String> uploadAvatar(File imageFile) async {
+    final ext = imageFile.path.split('.').last.toLowerCase();
+    final path = '$_userId/avatar.$ext';
+    await _client.storage
+        .from('avatars')
+        .upload(path, imageFile, fileOptions: const FileOptions(upsert: true));
+    return _client.storage.from('avatars').getPublicUrl(path);
   }
 }

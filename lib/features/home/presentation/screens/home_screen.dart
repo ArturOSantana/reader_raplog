@@ -9,6 +9,7 @@ import '../../../../theme/readlog_theme.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/models/goal.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../shared/widgets/skel_shimmer.dart';
 
 final _homeDataProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final sessionRepo = ref.watch(sessionRepositoryProvider);
@@ -80,9 +81,7 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
       body: data.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: ReadLogColors.brass),
-        ),
+        loading: () => const SkelScreenList(count: 5),
         error: (e, _) => Center(
           child: Text('Erro: $e',
               style: ReadLogType.mono(color: ReadLogColors.cream)),

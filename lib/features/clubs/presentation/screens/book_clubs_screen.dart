@@ -5,6 +5,7 @@ import '../../../../core/shell/main_shell.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../shared/widgets/skel_shimmer.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
     return Stack(
       children: [
         clubsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkelScreenList(),
           error: (e, _) => Center(child: Text('Erro: $e')),
           data: (clubs) {
             final filtered = _applyFilter(clubs);

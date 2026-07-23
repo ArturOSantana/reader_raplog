@@ -539,27 +539,27 @@ class _ReaderSummary extends StatelessWidget {
       child: Column(
         children: [
           _StatRow(
-            emoji: '🔥',
+            icon: Icons.local_fire_department_outlined,
             label: 'Ofensiva',
             value: '${stats.streak} ${stats.streak == 1 ? "dia" : "dias"}',
           ),
           _StatRow(
-            emoji: '📚',
+            icon: Icons.menu_book_outlined,
             label: 'Livros concluídos',
             value: '${stats.booksCompleted}',
           ),
           _StatRow(
-            emoji: '📄',
+            icon: Icons.description_outlined,
             label: 'Páginas lidas',
             value: _formatNumber(stats.pagesRead),
           ),
           _StatRow(
-            emoji: '⏱',
+            icon: Icons.schedule_outlined,
             label: 'Tempo de leitura',
             value: '${(stats.readingMinutes / 60).floor()} horas',
           ),
           _StatRow(
-            emoji: '🏅',
+            icon: Icons.workspace_premium_outlined,
             label: 'Conquistas',
             value: '${stats.achievements}',
             last: true,
@@ -1043,13 +1043,13 @@ class _Section extends StatelessWidget {
 // ── StatRow ───────────────────────────────────────────────────────────────────
 
 class _StatRow extends StatelessWidget {
-  final String? emoji;
+  final IconData? icon;
   final String label;
   final String value;
   final bool last;
 
   const _StatRow({
-    this.emoji,
+    this.icon,
     required this.label,
     required this.value,
     this.last = false,
@@ -1063,8 +1063,8 @@ class _StatRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(
             children: [
-              if (emoji != null) ...[
-                Text(emoji!, style: const TextStyle(fontSize: 16)),
+              if (icon != null) ...[
+                Icon(icon!, size: 16, color: AppColors.textMuted),
                 const SizedBox(width: 10),
               ],
               Expanded(

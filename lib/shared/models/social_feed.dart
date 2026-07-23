@@ -8,6 +8,13 @@ enum FeedEventType {
   goalCompleted,
   readingSession,
   joinedClub,
+  betResolved,
+  pollOpened,
+  pollClosed,
+  challengeStarted,
+  challengeFinished,
+  sealAwarded,
+  bookReview,
 }
 
 extension FeedEventTypeX on FeedEventType {
@@ -27,6 +34,20 @@ extension FeedEventTypeX on FeedEventType {
         return 'reading_session';
       case FeedEventType.joinedClub:
         return 'joined_club';
+      case FeedEventType.betResolved:
+        return 'bet_resolved';
+      case FeedEventType.pollOpened:
+        return 'poll_opened';
+      case FeedEventType.pollClosed:
+        return 'poll_closed';
+      case FeedEventType.challengeStarted:
+        return 'challenge_started';
+      case FeedEventType.challengeFinished:
+        return 'challenge_finished';
+      case FeedEventType.sealAwarded:
+        return 'seal_awarded';
+      case FeedEventType.bookReview:
+        return 'book_review';
     }
   }
 
@@ -46,8 +67,22 @@ extension FeedEventTypeX on FeedEventType {
         return FeedEventType.readingSession;
       case 'joined_club':
         return FeedEventType.joinedClub;
+      case 'bet_resolved':
+        return FeedEventType.betResolved;
+      case 'poll_opened':
+        return FeedEventType.pollOpened;
+      case 'poll_closed':
+        return FeedEventType.pollClosed;
+      case 'challenge_started':
+        return FeedEventType.challengeStarted;
+      case 'challenge_finished':
+        return FeedEventType.challengeFinished;
+      case 'seal_awarded':
+        return FeedEventType.sealAwarded;
+      case 'book_review':
+        return FeedEventType.bookReview;
       default:
-        return FeedEventType.finishedBook;
+        return FeedEventType.readingSession;
     }
   }
 }

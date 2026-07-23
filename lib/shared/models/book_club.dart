@@ -103,6 +103,7 @@ class BookClub extends Equatable {
   final String? currentBookTitle;
   final String? currentBookAuthor;
   final String? currentBookId;
+  final String? currentBookCoverUrl;
   // Ciclo de leitura
   final String currentBookStatus; // none|voting|chosen|reading|finished
   final int? readingPacePerDay;
@@ -118,6 +119,11 @@ class BookClub extends Equatable {
   final int maxAdmins;
   final bool adminsCanPromote;
 
+  // Momento do Clube (V2)
+  final String? readingMomentTime;   // ex: "21:00"
+  final String? readingMomentLabel;  // ex: "Momento do Livro"
+  final bool? readingMomentActive;
+
   // Dados de membro (preenchido ao listar clubes do usuário)
   final String? memberRole; // 'owner' | 'admin' | 'member'
 
@@ -129,6 +135,7 @@ class BookClub extends Equatable {
     this.currentBookTitle,
     this.currentBookAuthor,
     this.currentBookId,
+    this.currentBookCoverUrl,
     this.currentBookStatus = 'none',
     this.readingPacePerDay,
     this.readingTargetEndDate,
@@ -142,6 +149,9 @@ class BookClub extends Equatable {
     this.inviteCode,
     this.maxAdmins = 5,
     this.adminsCanPromote = false,
+    this.readingMomentTime,
+    this.readingMomentLabel,
+    this.readingMomentActive,
     this.memberRole,
   });
 
@@ -178,6 +188,7 @@ class BookClub extends Equatable {
         currentBookTitle: map['current_book_title'] as String?,
         currentBookAuthor: map['current_book_author'] as String?,
         currentBookId: map['current_book_id'] as String?,
+        currentBookCoverUrl: map['current_book_cover_url'] as String?,
         currentBookStatus: map['current_book_status'] as String? ?? 'none',
         readingPacePerDay: (map['reading_pace_pages_per_day'] as num?)?.toInt(),
         readingTargetEndDate: map['reading_target_end_date'] != null
@@ -199,6 +210,9 @@ class BookClub extends Equatable {
         inviteCode: map['invite_code'] as String?,
         maxAdmins: (map['max_admins'] as num?)?.toInt() ?? 5,
         adminsCanPromote: map['admins_can_promote'] as bool? ?? false,
+        readingMomentTime: map['reading_moment_time'] as String?,
+        readingMomentLabel: map['reading_moment_label'] as String?,
+        readingMomentActive: map['reading_moment_active'] as bool?,
         memberRole: map['member_role'] as String?,
       );
 

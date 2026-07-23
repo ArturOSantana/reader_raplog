@@ -11,6 +11,7 @@ import '../../../../shared/models/book_club.dart';
 import '../../../../shared/models/club_extras.dart';
 import '../../../../shared/models/club_schedule_milestones_challenges.dart';
 import '../../../../shared/models/club_bets_and_polls.dart';
+import '../../../../shared/models/club_seals.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../library/data/book_search_result.dart';
 import '../../../library/data/book_search_service.dart';
@@ -116,22 +117,34 @@ class _ClubDetailBody extends ConsumerWidget {
   final BookClub club;
   final String clubId;
 
-  const _ClubDetailBody({required this.club, required this.clubId});
+  _ClubDetailBody({required this.club, required this.clubId});
+
+  final _membersKey    = GlobalKey();
+  final _challengesKey = GlobalKey();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Invalida progresso e desafios quando sessão finaliza.
+    ref.listen(clubSessionRefreshProvider, (_, __) {
+      ref.invalidate(_clubReadingProgressProvider(clubId));
+      ref.invalidate(_clubReadingNowProvider(clubId));
+      ref.invalidate(_clubStreakProvider(clubId));
+      ref.invalidate(_clubChallengesProvider(clubId));
+    });
+
+    final hasBetBadge =
+        (ref.watch(_clubBetsProvider(clubId)).valueOrNull ?? [])
+            .where((b) => b.isOpen)
+            .isNotEmpty;
+    final hasPollBadge =
+        (ref.watch(_clubOpenPollsProvider(clubId)).valueOrNull ?? [])
+            .where((p) => p.isOpen)
+            .isNotEmpty;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(club.name),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.dynamic_feed_outlined),
-            tooltip: 'Feed do clube',
-            onPressed: () => context.push(
-              '/clubs/$clubId/feed',
-              extra: {'clubName': club.name},
-            ),
-          ),
           if (club.canManage)
             PopupMenuButton<String>(
               onSelected: (v) => _onMenuSelected(context, ref, v),
@@ -154,88 +167,203 @@ class _ClubDetailBody extends ConsumerWidget {
           ref.invalidate(_clubBetsProvider(clubId));
           ref.invalidate(_clubOpenPollsProvider(clubId));
         },
-        child: Builder(builder: (context) {
-          final cs = Theme.of(context).colorScheme;
-          final sectionStyle = AppTextStyles.headlineMedium
-              .copyWith(color: cs.onSurface);
-          return ListView(
-          padding: const EdgeInsets.all(20),
+        child: ListView(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 12,
+            bottom: MediaQuery.of(context).padding.bottom + 24,
+          ),
           children: [
-            // ── Status banner ────────────────────────────────────────────
-            if (!club.isActive) _StatusBanner(club: club),
-            if (!club.isActive) const SizedBox(height: 16),
-            // ── Cabeçalho ────────────────────────────────────────────────
+            // ── Cabeçalho do clube ────────────────────────────────────
+            if (!club.isActive) ...[
+              _StatusBanner(club: club),
+              const SizedBox(height: 12),
+            ],
             _ClubHeader(club: club),
-            const SizedBox(height: 16),
-            // ── Código de convite ────────────────────────────────────────
-            if (club.inviteCode != null && !club.isClosed)
+            const SizedBox(height: 12),
+            if (club.inviteCode != null && !club.isClosed) ...[
               _InviteCodeCard(
                   inviteCode: club.inviteCode!, clubName: club.name),
-            if (club.inviteCode != null && !club.isClosed)
-              const SizedBox(height: 16),
-            // ── Livro atual ──────────────────────────────────────────────
-            _CurrentBookCard(club: club),
-            const SizedBox(height: 16),
-            // ── Progresso coletivo (só quando há livro em leitura) ───────
-            if (club.currentBookStatus == 'reading') ...[
-              _ReadingProgressSection(clubId: clubId),
-              const SizedBox(height: 16),
-              // ── Lendo agora ───────────────────────────────────────────
-              _ReadingNowSection(clubId: clubId),
-              const SizedBox(height: 24),
-            ],
-            // ── Votação de próximo livro ──────────────────────────────────
-            if (!club.isClosed) ...[
-              _BookPollSection(club: club, clubId: clubId),
-              const SizedBox(height: 24),
-            ],
-            // ── Encontros ────────────────────────────────────────────────
-            if (!club.isClosed) ...[
-              Text('Encontros', style: sectionStyle),
               const SizedBox(height: 12),
-              _MeetingsList(clubId: clubId),
-              const SizedBox(height: 24),
             ],
-            // ── Membros ──────────────────────────────────────────────────
-            Text('Membros', style: sectionStyle),
+            // ════════════════════════════════════════════════════════════
+            // NÍVEL 1 — HOJE
+            // ════════════════════════════════════════════════════════════
+            _SectionLabel('Hoje'),
+            const SizedBox(height: 8),
+            _CurrentBookCard(club: club),
+            if (club.currentBookStatus == 'reading') ...[
+              const SizedBox(height: 12),
+              _ReadingProgressSection(clubId: clubId),
+              const SizedBox(height: 8),
+              _ReadingNowSection(clubId: clubId),
+            ],
+            const SizedBox(height: 20),
+            // ════════════════════════════════════════════════════════════
+            // NÍVEL 2 — EXPLORAR (grid de atalhos)
+            // ════════════════════════════════════════════════════════════
+            _SectionLabel('Explorar'),
+            const SizedBox(height: 8),
+            GridView.count(
+              crossAxisCount: 4,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.9,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _ShortcutTile(
+                  icon: Icons.dynamic_feed_outlined,
+                  label: 'Feed',
+                  onTap: () => context.push(
+                    '/clubs/$clubId/feed',
+                    extra: {'clubName': club.name},
+                  ),
+                ),
+                _ShortcutTile(
+                  icon: Icons.emoji_events_outlined,
+                  label: 'Desafios',
+                  onTap: () {
+                    final ctx = _challengesKey.currentContext;
+                    if (ctx != null) {
+                      Scrollable.ensureVisible(ctx,
+                          duration: const Duration(milliseconds: 400),
+                          curve: Curves.easeInOut);
+                    }
+                  },
+                ),
+                _ShortcutTile(
+                  icon: Icons.casino_outlined,
+                  label: 'Apostas',
+                  hasBadge: hasBetBadge,
+                  onTap: () => context.push(
+                    '/clubs/$clubId/bets',
+                    extra: {
+                      'clubName': club.name,
+                      'canManage': club.canManage,
+                    },
+                  ),
+                ),
+                _ShortcutTile(
+                  icon: Icons.how_to_vote_outlined,
+                  label: 'Votações',
+                  hasBadge: hasPollBadge,
+                  onTap: () => context.push(
+                    '/clubs/$clubId/polls',
+                    extra: {
+                      'clubName': club.name,
+                      'canManage': club.canManage,
+                    },
+                  ),
+                ),
+                _ShortcutTile(
+                  icon: Icons.calendar_month_outlined,
+                  label: 'Calendário',
+                  onTap: () => context.push(
+                    '/clubs/$clubId/calendar',
+                    extra: {'clubName': club.name},
+                  ),
+                ),
+                _ShortcutTile(
+                  icon: Icons.verified_outlined,
+                  label: 'Selos',
+                  onTap: () {
+                    final members =
+                        (ref.read(_clubMembersProvider(clubId)).valueOrNull ?? [])
+                            .map((m) => ClubMemberSummary(
+                                  id: m.userId,
+                                  name: m.name ?? 'Membro',
+                                  avatarUrl: m.avatarUrl,
+                                ))
+                            .toList();
+                    context.push('/clubs/$clubId/seals', extra: {
+                      'clubName': club.name,
+                      'isManager': club.canManage,
+                      'members': members,
+                    });
+                  },
+                ),
+                _ShortcutTile(
+                  icon: Icons.auto_stories_outlined,
+                  label: 'Stories',
+                  onTap: () => context.push(
+                    '/clubs/$clubId/stories',
+                    extra: {'clubName': club.name},
+                  ),
+                ),
+                _ShortcutTile(
+                  icon: Icons.people_outline,
+                  label: 'Membros',
+                  onTap: () {
+                    final ctx = _membersKey.currentContext;
+                    if (ctx != null) {
+                      Scrollable.ensureVisible(ctx,
+                          duration: const Duration(milliseconds: 400),
+                          curve: Curves.easeInOut);
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // ════════════════════════════════════════════════════════════
+            // NÍVEL 3 — MEMÓRIA DO CLUBE
+            // ════════════════════════════════════════════════════════════
+            _SectionLabel('Memória do clube'),
+            const SizedBox(height: 8),
+            _MemoryAccordion(
+              icon: Icons.workspace_premium_outlined,
+              title: 'Hall da Fama, Linha do Tempo & Estatísticas',
+              child: Column(
+                children: [
+                  _HallOfFameSection(clubId: clubId),
+                  const SizedBox(height: 12),
+                  _TimelineButton(clubId: clubId, clubName: club.name),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            _MemoryAccordion(
+              icon: Icons.hourglass_empty_outlined,
+              title: 'Cápsula do Tempo',
+              onTap: () => context.push(
+                '/clubs/$clubId/capsule',
+                extra: {'clubName': club.name},
+              ),
+            ),
+            const SizedBox(height: 20),
+            // ════════════════════════════════════════════════════════════
+            // SEÇÕES SCROLL-DESTINO (abaixo do fold)
+            // ════════════════════════════════════════════════════════════
+            SizedBox(key: _membersKey, height: 0),
+            Text('Membros',
+                style: AppTextStyles.headlineMedium
+                    .copyWith(color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 12),
             _MembersList(club: club, clubId: clubId),
             const SizedBox(height: 24),
-            // ── Desafios ─────────────────────────────────────────────────
             if (!club.isClosed) ...[
+              SizedBox(key: _challengesKey, height: 0),
               _ChallengesSection(club: club, clubId: clubId),
               const SizedBox(height: 24),
             ],
-            // ── Apostas Amistosas ─────────────────────────────────────────
-            if (!club.isClosed) ...[
-              _BetsSection(club: club, clubId: clubId),
-              const SizedBox(height: 24),
-            ],
-            // ── Votações Livres ───────────────────────────────────────────
-            if (!club.isClosed) ...[
-              _OpenPollsSection(club: club, clubId: clubId),
-              const SizedBox(height: 24),
-            ],
-            // ── Histórico de livros ──────────────────────────────────────
-            Text('Histórico de leituras', style: sectionStyle),
+            Text('Histórico de leituras',
+                style: AppTextStyles.headlineMedium
+                    .copyWith(color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 12),
             _BookHistoryList(clubId: clubId),
-            const SizedBox(height: 24),
-            // ── Hall da Fama ──────────────────────────────────────────────
-            _HallOfFameSection(clubId: clubId),
             const SizedBox(height: 24),
             // ── Ações do membro ──────────────────────────────────────────
             if (club.isOwner && !club.isClosed)
               _LeaveAsOwnerButton(club: club, clubId: clubId),
             if (!club.isOwner && !club.isClosed)
               _LeaveButton(club: club, clubId: clubId),
-            // ── Excluir clube (dono, após carência) ──────────────────────
             if (club.isOwner && club.canBeDeleted)
               _DeleteClubButton(club: club, clubId: clubId),
             const SizedBox(height: 8),
           ],
-        );
-        }),
+        ),
       ),
     );
   }
@@ -911,223 +1039,6 @@ class _BookStatusChip extends StatelessWidget {
 }
 
 // ── Meetings List ─────────────────────────────────────────────────────────────
-
-class _MeetingsList extends ConsumerWidget {
-  final String clubId;
-
-  const _MeetingsList({required this.clubId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final meetingsAsync = ref.watch(_clubMeetingsProvider(clubId));
-
-    return meetingsAsync.when(
-      loading: () =>
-          const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      error: (e, _) => Text('Erro: $e',
-          style: AppTextStyles.bodyMedium.copyWith(color: cs.onSurface)),
-      data: (meetings) {
-        if (meetings.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.event_outlined,
-                    color: cs.onSurfaceVariant, size: 20),
-                const SizedBox(width: 10),
-                Text('Nenhum encontro agendado',
-                    style: TextStyle(color: cs.onSurfaceVariant)),
-              ],
-            ),
-          );
-        }
-        return Column(
-          children: meetings
-              .map((m) => _MeetingTile(meeting: m, clubId: clubId))
-              .toList(),
-        );
-      },
-    );
-  }
-}
-
-class _MeetingTile extends ConsumerWidget {
-  final BookClubMeeting meeting;
-  final String clubId;
-
-  const _MeetingTile({required this.meeting, required this.clubId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final fmt = DateFormat("d MMM 'às' HH:mm", 'pt_BR');
-    final isUpcoming = meeting.isUpcoming;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isUpcoming
-              ? AppColors.warmGold.withValues(alpha: 0.4)
-              : cs.outlineVariant,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(meeting.title,
-                    style: AppTextStyles.titleMedium
-                        .copyWith(color: cs.onSurface)),
-              ),
-              if (isUpcoming)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.warmGold.withValues(alpha: 0.22),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text('Em breve',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.warmGold)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Icon(Icons.calendar_today_outlined,
-                  size: 13, color: cs.onSurfaceVariant),
-              const SizedBox(width: 4),
-              Text(fmt.format(meeting.scheduledAt),
-                  style: AppTextStyles.labelMedium
-                      .copyWith(color: cs.onSurfaceVariant)),
-              if (meeting.location != null) ...[
-                const SizedBox(width: 12),
-                Icon(Icons.place_outlined,
-                    size: 13, color: cs.onSurfaceVariant),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(meeting.location!,
-                      style: AppTextStyles.labelMedium
-                          .copyWith(color: cs.onSurfaceVariant),
-                      overflow: TextOverflow.ellipsis),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text('✅ ${meeting.goingCount}  🤔 ${meeting.maybeCount}',
-                  style: AppTextStyles.labelMedium
-                      .copyWith(color: cs.onSurfaceVariant)),
-              const Spacer(),
-              if (isUpcoming) _RsvpButtons(meeting: meeting, clubId: clubId),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RsvpButtons extends ConsumerWidget {
-  final BookClubMeeting meeting;
-  final String clubId;
-
-  const _RsvpButtons({required this.meeting, required this.clubId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _RsvpChip(
-          label: 'Vou',
-          isActive: meeting.myRsvp == MeetingRsvp.going,
-          activeColor: AppColors.forestGreen,
-          onTap: () => _setRsvp(ref, MeetingRsvp.going),
-        ),
-        const SizedBox(width: 6),
-        _RsvpChip(
-          label: 'Talvez',
-          isActive: meeting.myRsvp == MeetingRsvp.maybe,
-          activeColor: AppColors.warmGold,
-          onTap: () => _setRsvp(ref, MeetingRsvp.maybe),
-        ),
-        const SizedBox(width: 6),
-        _RsvpChip(
-          label: 'Não',
-          isActive: meeting.myRsvp == MeetingRsvp.notGoing,
-          activeColor: AppColors.error,
-          onTap: () => _setRsvp(ref, MeetingRsvp.notGoing),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _setRsvp(WidgetRef ref, MeetingRsvp rsvp) async {
-    await ref.read(bookClubRepositoryProvider).setRsvp(
-          meetingId: meeting.id,
-          rsvp: rsvp,
-        );
-    ref.invalidate(_clubMeetingsProvider(clubId));
-  }
-}
-
-class _RsvpChip extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final Color activeColor;
-  final VoidCallback onTap;
-
-  const _RsvpChip({
-    required this.label,
-    required this.isActive,
-    required this.activeColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: isActive
-              ? activeColor.withValues(alpha: 0.15)
-              : AppColors.surfaceVariant,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: isActive ? activeColor : AppColors.border),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: isActive ? activeColor : AppColors.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ── Members List ──────────────────────────────────────────────────────────────
 
@@ -2047,94 +1958,6 @@ class _HofStat extends StatelessWidget {
   }
 }
 
-
-class _BookPollSection extends ConsumerWidget {
-  final BookClub club;
-  final String clubId;
-
-  const _BookPollSection({required this.club, required this.clubId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final pollsAsync = ref.watch(_clubPollsProvider(clubId));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text('Votação de livro',
-                  style: AppTextStyles.headlineMedium
-                      .copyWith(color: cs.onSurface)),
-            ),
-            if (club.canManage)
-              TextButton.icon(
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Nova votação'),
-                onPressed: () => _showCreatePollSheet(context, ref),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        pollsAsync.when(
-          loading: () =>
-              const Center(child: CircularProgressIndicator()),
-          error: (e, _) =>
-              Text('Erro ao carregar votações: $e',
-                  style: const TextStyle(color: AppColors.error)),
-          data: (polls) {
-            if (polls.isEmpty) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 24, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: cs.outlineVariant),
-                ),
-                child: Center(
-                  child: Text(
-                    'Nenhuma votação criada.',
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: cs.onSurfaceVariant),
-                  ),
-                ),
-              );
-            }
-            return ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: polls.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, i) => _PollCard(
-                poll: polls[i],
-                club: club,
-                clubId: clubId,
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  void _showCreatePollSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _CreatePollSheet(
-        clubId: clubId,
-        onSaved: () => ref.invalidate(_clubPollsProvider(clubId)),
-      ),
-    );
-  }
-}
 
 // ── Card de votação ───────────────────────────────────────────────────────────
 
@@ -3705,264 +3528,6 @@ class _CreateChallengesheetState extends ConsumerState<_CreateChallengeSheet> {
 // SEÇÃO: APOSTAS AMISTOSAS
 // ════════════════════════════════════════════════════════════════════════════
 
-class _BetsSection extends ConsumerWidget {
-  final BookClub club;
-  final String clubId;
-
-  const _BetsSection({required this.club, required this.clubId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final betsAsync = ref.watch(_clubBetsProvider(clubId));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text('🎲', style: TextStyle(fontSize: 18)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Apostas Amistosas',
-                style: AppTextStyles.headlineMedium.copyWith(color: cs.onSurface),
-              ),
-            ),
-            TextButton.icon(
-              onPressed: () => _showCreateSheet(context, ref),
-              icon: const Icon(Icons.add, size: 16),
-              label: const Text('Nova'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.forestGreen,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        betsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const SizedBox.shrink(),
-          data: (bets) {
-            if (bets.isEmpty) {
-              return _EmptyCard(
-                icon: '🤝',
-                message: 'Nenhuma aposta ainda.',
-                sub: 'Desafie um colega a uma aposta amistosa!',
-              );
-            }
-            return Column(
-              children: bets.take(5).map((b) => _BetCard(bet: b, clubId: clubId, ref: ref)).toList(),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  void _showCreateSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _CreateBetSheet(
-        clubId: clubId,
-        onSaved: () => ref.invalidate(_clubBetsProvider(clubId)),
-      ),
-    );
-  }
-}
-
-class _BetCard extends StatelessWidget {
-  final ClubBet bet;
-  final String clubId;
-  final WidgetRef ref;
-
-  const _BetCard({required this.bet, required this.clubId, required this.ref});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : Colors.white;
-    final border = isDark ? AppColors.darkBorder : AppColors.border;
-
-    Color statusColor;
-    String statusLabel;
-    switch (bet.status) {
-      case BetStatus.open:
-        statusColor = AppColors.forestGreen;
-        statusLabel = 'Aberta';
-        break;
-      case BetStatus.closed:
-        statusColor = AppColors.textMuted;
-        statusLabel = 'Fechada';
-        break;
-      case BetStatus.resolved:
-        statusColor = AppColors.warmGold;
-        statusLabel = 'Resolvida';
-        break;
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                bet.stakeType.emoji,
-                style: const TextStyle(fontSize: 20),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  bet.description,
-                  style: AppTextStyles.titleMedium.copyWith(
-                    color: cs.onSurface,
-                    fontSize: 13,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  statusLabel,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: statusColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _SideChip(label: bet.sideALabel, color: AppColors.forestGreen),
-              const SizedBox(width: 6),
-              Text('vs', style: AppTextStyles.labelMedium),
-              const SizedBox(width: 6),
-              _SideChip(label: bet.sideBLabel, color: AppColors.error),
-            ],
-          ),
-          if (bet.isResolved && bet.winnerLabel != null) ...[
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                const Icon(Icons.emoji_events_outlined,
-                    size: 14, color: AppColors.warmGold),
-                const SizedBox(width: 4),
-                Text(
-                  'Vencedor: ${bet.winnerLabel}',
-                  style: AppTextStyles.labelMedium.copyWith(
-                    color: AppColors.warmGold,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ],
-          if (bet.isOpen) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _joinBet(context, 'a'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.forestGreen,
-                      side: const BorderSide(color: AppColors.forestGreen),
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                    ),
-                    child: Text(bet.sideALabel,
-                        style: const TextStyle(fontSize: 12)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _joinBet(context, 'b'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                    ),
-                    child: Text(bet.sideBLabel,
-                        style: const TextStyle(fontSize: 12)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  void _joinBet(BuildContext context, String side) async {
-    try {
-      await ref.read(bookClubRepositoryProvider).joinBet(bet.id, side);
-      ref.invalidate(_clubBetsProvider(clubId));
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Você entrou na aposta!')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Erro: $e')));
-      }
-    }
-  }
-}
-
-class _SideChip extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _SideChip({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
 // ── Sheet: Criar Aposta ───────────────────────────────────────────────────────
 
 class _CreateBetSheet extends ConsumerStatefulWidget {
@@ -4109,84 +3674,6 @@ class _CreateBetSheetState extends ConsumerState<_CreateBetSheet> {
 // ════════════════════════════════════════════════════════════════════════════
 // SEÇÃO: VOTAÇÕES LIVRES (OPEN POLLS)
 // ════════════════════════════════════════════════════════════════════════════
-
-class _OpenPollsSection extends ConsumerWidget {
-  final BookClub club;
-  final String clubId;
-
-  const _OpenPollsSection({required this.club, required this.clubId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final pollsAsync = ref.watch(_clubOpenPollsProvider(clubId));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text('📊', style: TextStyle(fontSize: 18)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Votações',
-                style: AppTextStyles.headlineMedium.copyWith(color: cs.onSurface),
-              ),
-            ),
-            if (club.canManage)
-              TextButton.icon(
-                onPressed: () => _showCreateSheet(context, ref),
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Nova'),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF7c5cd8),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        pollsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const SizedBox.shrink(),
-          data: (polls) {
-            if (polls.isEmpty) {
-              return _EmptyCard(
-                icon: '🗳️',
-                message: 'Nenhuma votação aberta.',
-                sub: club.canManage
-                    ? 'Crie uma votação para ouvir o clube.'
-                    : 'Aguarde uma votação dos admins.',
-              );
-            }
-            return Column(
-              children: polls.take(5).map((p) => _OpenPollCard(
-                    poll: p,
-                    clubId: clubId,
-                  )).toList(),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  void _showCreateSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _CreateOpenPollSheet(
-        clubId: clubId,
-        onSaved: () => ref.invalidate(_clubOpenPollsProvider(clubId)),
-      ),
-    );
-  }
-}
 
 class _OpenPollCard extends ConsumerStatefulWidget {
   final ClubOpenPoll poll;
@@ -4535,6 +4022,209 @@ class _EmptyCard extends StatelessWidget {
                 textAlign: TextAlign.center),
           ],
         ],
+      ),
+    );
+  }
+}
+
+// ── _SectionLabel ─────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+      ),
+    );
+  }
+}
+
+// ── _ShortcutTile ─────────────────────────────────────────────────────────────
+
+class _ShortcutTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool hasBadge;
+  final VoidCallback onTap;
+
+  const _ShortcutTile({
+    required this.icon,
+    required this.label,
+    this.hasBadge = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkSurface : cs.surfaceContainerHighest;
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: isDark ? AppColors.darkBorder : AppColors.border),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 22, color: cs.onSurface),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          if (hasBadge)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: AppColors.error,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── _MemoryAccordion ──────────────────────────────────────────────────────────
+
+class _MemoryAccordion extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final Widget? child;
+  final VoidCallback? onTap;
+
+  const _MemoryAccordion({
+    required this.icon,
+    required this.title,
+    this.child,
+    this.onTap,
+  });
+
+  @override
+  State<_MemoryAccordion> createState() => _MemoryAccordionState();
+}
+
+class _MemoryAccordionState extends State<_MemoryAccordion> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.darkSurface : cs.surfaceContainerHighest;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: isDark ? AppColors.darkBorder : AppColors.border),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              if (widget.onTap != null) {
+                widget.onTap!();
+              } else if (widget.child != null) {
+                setState(() => _expanded = !_expanded);
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(widget.icon, size: 18, color: AppColors.warmGold),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: AppTextStyles.titleMedium
+                          .copyWith(color: cs.onSurface),
+                    ),
+                  ),
+                  Icon(
+                    widget.onTap != null
+                        ? Icons.chevron_right
+                        : (_expanded
+                            ? Icons.expand_less
+                            : Icons.expand_more),
+                    size: 20,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded && widget.child != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: widget.child!,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── _TimelineButton ───────────────────────────────────────────────────────────
+
+class _TimelineButton extends StatelessWidget {
+  final String clubId;
+  final String clubName;
+
+  const _TimelineButton({required this.clubId, required this.clubName});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return OutlinedButton.icon(
+      onPressed: () => context.push(
+        '/clubs/$clubId/timeline',
+        extra: {'clubName': clubName},
+      ),
+      icon: const Icon(Icons.timeline_outlined, size: 16),
+      label: const Text('Ver linha do tempo'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: cs.onSurface,
+        side: BorderSide(color: cs.outlineVariant),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       ),
     );
   }

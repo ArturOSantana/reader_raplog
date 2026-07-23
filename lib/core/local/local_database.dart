@@ -18,7 +18,7 @@ class LocalDatabase {
 
     return openDatabase(
       path,
-      version: 3,
+      version: 6,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -40,6 +40,7 @@ class LocalDatabase {
         end_date TEXT,
         rating INTEGER,
         current_page INTEGER,
+        source_club_id TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         is_deleted INTEGER NOT NULL DEFAULT 0
@@ -55,6 +56,7 @@ class LocalDatabase {
         ended_at TEXT,
         duration_minutes INTEGER,
         paused_duration_seconds INTEGER NOT NULL DEFAULT 0,
+        paused_at TEXT,
         start_page INTEGER,
         end_page INTEGER,
         pages_read INTEGER,
@@ -62,6 +64,8 @@ class LocalDatabase {
         status TEXT NOT NULL DEFAULT 'active',
         session_goal TEXT,
         goal_value INTEGER,
+        mood TEXT,
+        mini_review TEXT,
         created_at TEXT NOT NULL
       )
     ''');
@@ -142,6 +146,31 @@ class LocalDatabase {
       await db.execute(
           'ALTER TABLE profile ADD COLUMN onboarding_completed INTEGER NOT NULL DEFAULT 0');
     }
+    if (oldVersion < 4) {
+      await db.execute('ALTER TABLE books ADD COLUMN source_club_id TEXT');
+    }
+    if (oldVersion < 5) {
+      // Coluna para persistir o timestamp de início da pausa atual
+      await db.execute(
+          'ALTER TABLE reading_sessions ADD COLUMN paused_at TEXT');
+    }
+    if (oldVersion < 6) {
+      await db.execute('ALTER TABLE reading_sessions ADD COLUMN mood TEXT');
+      await db.execute(
+          'ALTER TABLE reading_sessions ADD COLUMN mini_review TEXT');
+    }
+  }
+
+  /// Remove todos os dados locais do usuário — chamado no logout para evitar
+  /// que uma conta diferente leia dados cacheados de outra conta.
+  Future<void> clearUserData() async {
+    final database = await db;
+    await database.delete('books');
+    await database.delete('reading_sessions');
+    await database.delete('notes');
+    await database.delete('profile');
+    await database.delete('sync_queue');
+    await database.delete('daily_stats_cache');
   }
 
   Future<void> close() async {

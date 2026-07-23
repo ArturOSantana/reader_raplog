@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../shared/models/user_profile.dart';
 
@@ -25,5 +26,15 @@ class ProfileRepository {
         .select()
         .single();
     return UserProfile.fromMap(data);
+  }
+
+  /// Faz upload da imagem para o bucket `avatars` e retorna a URL pública.
+  Future<String> uploadAvatar(File imageFile) async {
+    final ext = imageFile.path.split('.').last.toLowerCase();
+    final path = '$_userId/avatar.$ext';
+    await _client.storage
+        .from('avatars')
+        .upload(path, imageFile, fileOptions: const FileOptions(upsert: true));
+    return _client.storage.from('avatars').getPublicUrl(path);
   }
 }

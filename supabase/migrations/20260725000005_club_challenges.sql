@@ -121,7 +121,7 @@ BEGIN
     NEW.club_id,
     'clubs',
     'new_challenge',
-    'Novo desafio no clube! 💪',
+    'Novo desafio no clube!',
     NEW.title,
     '/clubs/' || NEW.club_id || '/challenges',
     NEW.created_by

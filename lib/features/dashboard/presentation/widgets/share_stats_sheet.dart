@@ -92,7 +92,7 @@ class _ShareStatsContentState extends State<_ShareStatsContent> {
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(file.path)],
-          text: '🔥 ${widget.streak} dias de sequência no ReadLog!\n'
+          text: '${widget.streak} dias de sequência no ReadLog!\n'
               'Esta semana: ${_fmtTime(widget.weekMinutes)} de leitura.\n'
               'Este mês: ${widget.monthBooks} livro${widget.monthBooks == 1 ? '' : 's'} lido${widget.monthBooks == 1 ? '' : 's'}.',
           sharePositionOrigin: shareOrigin,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/club_schedule_milestones_challenges.dart';
@@ -16,22 +17,45 @@ final _challengeProgressProvider =
       .fetchChallengeProgress(challengeId);
 });
 
+final _restDaysLeftProvider =
+    FutureProvider.family<int, String>((ref, challengeId) {
+  return ref
+      .read(bookClubRepositoryProvider)
+      .fetchRestDaysLeft(challengeId);
+});
+
+final _nudgeProvider =
+    FutureProvider.family<double?, String>((ref, challengeId) {
+  return ref
+      .read(bookClubRepositoryProvider)
+      .fetchWeeklyNudge(challengeId);
+});
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class ChallengeDetailScreen extends ConsumerWidget {
   final String clubId;
   final String challengeId;
   final String challengeTitle;
+  /// Objeto completo do desafio — necessário para heatmap e tela de resultado.
+  final ClubChallenge? challenge;
 
   const ChallengeDetailScreen({
     super.key,
     required this.clubId,
     required this.challengeId,
     required this.challengeTitle,
+    this.challenge,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Invalida o progresso do desafio ao finalizar qualquer sessão de leitura.
+    ref.listen(clubSessionRefreshProvider, (_, __) {
+      ref.invalidate(_challengeProgressProvider(challengeId));
+      ref.invalidate(_nudgeProvider(challengeId));
+    });
+
     final progressAsync = ref.watch(_challengeProgressProvider(challengeId));
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -51,16 +75,41 @@ class ChallengeDetailScreen extends ConsumerWidget {
                   .copyWith(color: cs.onSurface, fontSize: 15),
             ),
             Text(
-              '💪 Desafio',
-              style:
-                  AppTextStyles.labelMedium.copyWith(color: AppColors.textMuted),
+              'Desafio',
+              style: AppTextStyles.labelMedium
+                  .copyWith(color: AppColors.textMuted),
             ),
           ],
         ),
+        actions: [
+          if (challenge != null) ...[
+            // F-02/F-03 Heatmap
+            IconButton(
+              icon: const Icon(Icons.grid_view_outlined),
+              tooltip: 'Heatmap de leitura',
+              onPressed: () => context.push(
+                '/clubs/$clubId/challenges/$challengeId/heatmap',
+                extra: {'challenge': challenge},
+              ),
+            ),
+            // F-04 Resultado (só se encerrado)
+            if (challenge!.status == ChallengeStatus.finished)
+              IconButton(
+                icon: const Icon(Icons.emoji_events_outlined),
+                tooltip: 'Resultado',
+                onPressed: () => context.push(
+                  '/clubs/$clubId/challenges/$challengeId/result',
+                  extra: {'challenge': challenge},
+                ),
+              ),
+          ],
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_challengeProgressProvider(challengeId));
+          ref.invalidate(_restDaysLeftProvider(challengeId));
+          ref.invalidate(_nudgeProvider(challengeId));
         },
         child: progressAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -69,6 +118,7 @@ class ChallengeDetailScreen extends ConsumerWidget {
             entries: entries,
             clubId: clubId,
             challengeId: challengeId,
+            challenge: challenge,
           ),
         ),
       ),
@@ -82,11 +132,13 @@ class _ChallengeBody extends ConsumerWidget {
   final List<ChallengeProgressEntry> entries;
   final String clubId;
   final String challengeId;
+  final ClubChallenge? challenge;
 
   const _ChallengeBody({
     required this.entries,
     required this.clubId,
     required this.challengeId,
+    this.challenge,
   });
 
   @override
@@ -95,6 +147,14 @@ class _ChallengeBody extends ConsumerWidget {
     final currentUserId =
         ref.read(supabaseClientProvider).auth.currentUser?.id ?? '';
 
+    // F-01 Rest Days
+    final restDaysAsync = ref.watch(_restDaysLeftProvider(challengeId));
+    final restDaysLeft = restDaysAsync.valueOrNull ?? 0;
+
+    // F-08 Nudge
+    final nudgeAsync = ref.watch(_nudgeProvider(challengeId));
+    final nudge = nudgeAsync.valueOrNull;
+
     if (entries.isEmpty) {
       return const Center(
         child: Padding(
@@ -102,7 +162,7 @@ class _ChallengeBody extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('🎯', style: TextStyle(fontSize: 40)),
+              Icon(Icons.flag_outlined, size: 48, color: AppColors.textMuted),
               SizedBox(height: 12),
               Text(
                 'Nenhum progresso ainda.',
@@ -125,6 +185,22 @@ class _ChallengeBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
+        // F-08 Nudge de média
+        if (nudge != null) ...[
+          _NudgeBanner(diffPct: nudge),
+          const SizedBox(height: 16),
+        ],
+
+        // F-01 Rest Days (só mostra se o desafio está ativo e tem saldo)
+        if (challenge != null && challenge!.isOngoing) ...[
+          _RestDaysCard(
+            challengeId: challengeId,
+            daysLeft: restDaysLeft,
+            ref: ref,
+          ),
+          const SizedBox(height: 20),
+        ],
+
         // ── Meu progresso ────────────────────────────────────────────────────
         if (myEntry != null) ...[
           _MyProgressCard(entry: myEntry),
@@ -147,9 +223,143 @@ class _ChallengeBody extends ConsumerWidget {
         ...entries.map((e) => _LeaderboardTile(
               entry: e,
               isMe: e.userId == currentUserId,
+              clubId: clubId,
             )),
         const SizedBox(height: 24),
       ],
+    );
+  }
+}
+
+// ── F-08 Nudge banner ─────────────────────────────────────────────────────────
+
+class _NudgeBanner extends StatelessWidget {
+  final double diffPct;
+
+  const _NudgeBanner({required this.diffPct});
+
+  @override
+  Widget build(BuildContext context) {
+    final isAhead = diffPct >= 0;
+    final color = isAhead ? AppColors.forestGreen : AppColors.warmGold;
+    final icon = isAhead ? Icons.trending_up : Icons.trending_down;
+    final absPct = diffPct.abs().toStringAsFixed(0);
+    final text = isAhead
+        ? 'Você está $absPct% acima da média do clube esta semana!'
+        : 'Você está $absPct% abaixo da média do clube esta semana.';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyles.bodyMedium.copyWith(color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── F-01 Rest Days card ───────────────────────────────────────────────────────
+
+class _RestDaysCard extends StatefulWidget {
+  final String challengeId;
+  final int daysLeft;
+  final WidgetRef ref;
+
+  const _RestDaysCard({
+    required this.challengeId,
+    required this.daysLeft,
+    required this.ref,
+  });
+
+  @override
+  State<_RestDaysCard> createState() => _RestDaysCardState();
+}
+
+class _RestDaysCardState extends State<_RestDaysCard> {
+  bool _loading = false;
+
+  Future<void> _useRestDay() async {
+    setState(() => _loading = true);
+    final used = await widget.ref
+        .read(bookClubRepositoryProvider)
+        .useRestDay(widget.challengeId);
+    if (mounted) {
+      setState(() => _loading = false);
+      if (used) {
+        widget.ref.invalidate(_restDaysLeftProvider(widget.challengeId));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Dia de descanso registrado!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Nenhum dia de descanso disponível.')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.darkSurface : Colors.white;
+    final border = isDark ? AppColors.darkBorder : AppColors.border;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.self_improvement_outlined,
+              size: 22, color: AppColors.forestGreen),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Dias de descanso',
+                  style: AppTextStyles.titleMedium
+                      .copyWith(fontSize: 13),
+                ),
+                Text(
+                  widget.daysLeft > 0
+                      ? '${widget.daysLeft} disponível(is) — use um sem quebrar o streak'
+                      : 'Nenhum disponível',
+                  style: AppTextStyles.labelMedium,
+                ),
+              ],
+            ),
+          ),
+          if (widget.daysLeft > 0)
+            _loading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : TextButton(
+                    onPressed: _useRestDay,
+                    child: const Text('Usar hoje'),
+                  ),
+        ],
+      ),
     );
   }
 }
@@ -179,8 +389,8 @@ class _MyProgressCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                entry.podiumEmoji(),
-                style: const TextStyle(fontSize: 22),
+                entry.podiumLabel(),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -232,7 +442,7 @@ class _MyProgressCard extends StatelessWidget {
                     size: 14, color: AppColors.forestGreen),
                 const SizedBox(width: 4),
                 Text(
-                  'Meta concluída! 🎉',
+                  'Meta concluída!',
                   style: AppTextStyles.labelMedium.copyWith(
                     color: AppColors.forestGreen,
                     fontWeight: FontWeight.w600,
@@ -252,8 +462,13 @@ class _MyProgressCard extends StatelessWidget {
 class _LeaderboardTile extends StatelessWidget {
   final ChallengeProgressEntry entry;
   final bool isMe;
+  final String clubId;
 
-  const _LeaderboardTile({required this.entry, required this.isMe});
+  const _LeaderboardTile({
+    required this.entry,
+    required this.isMe,
+    required this.clubId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -264,7 +479,15 @@ class _LeaderboardTile extends StatelessWidget {
     final pct = (entry.pctComplete / 100).clamp(0.0, 1.0);
     final fmt = NumberFormat.decimalPattern('pt_BR');
 
-    return Container(
+    return GestureDetector(
+      onTap: () => context.push(
+        '/clubs/$clubId/members/${entry.userId}/profile',
+        extra: {
+          'userName': entry.userName ?? 'Membro',
+          'avatarUrl': entry.avatarUrl,
+        },
+      ),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -286,9 +509,9 @@ class _LeaderboardTile extends StatelessWidget {
               SizedBox(
                 width: 32,
                 child: Text(
-                  entry.podiumEmoji(),
+                  entry.podiumLabel(),
                   style: TextStyle(
-                    fontSize: entry.rank <= 3 ? 20 : 13,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: cs.onSurfaceVariant,
                   ),
@@ -354,6 +577,7 @@ class _LeaderboardTile extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

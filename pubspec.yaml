@@ -39,9 +39,14 @@ dependencies:
   flutter_local_notifications: ^18.0.1
 
   # UI
+  image_picker: ^1.1.2
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   fl_chart: ^0.68.0
+  lottie: ^3.1.2
+
+  # URL / Deep links
+  url_launcher: ^6.3.1
 
   # Share
   share_plus: ^13.0.0
@@ -71,6 +76,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/animations/
     - .env
   fonts:
     - family: Fraunces

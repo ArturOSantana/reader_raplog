@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:ui' as ui;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/shell/main_shell.dart';
@@ -66,6 +69,19 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         _startPageController.text = '${_selectedBook!.currentPage}';
       }
     });
+
+    // Após carregar os livros, tenta recuperar sessão interrompida pelo SO.
+    // Só atua se o notifier ainda não tem sessão ativa em memória.
+    if (!mounted) return;
+    final notifier = ref.read(sessionNotifierProvider);
+    if (!notifier.hasActiveSession) {
+      // Usa o título do livro selecionado como fallback; o título real
+      // será sobrescrito ao confirmar o endPage no FinishSheet.
+      final bookTitle = _selectedBook?.title ?? '';
+      await ref
+          .read(sessionNotifierProvider.notifier)
+          .recoverActiveSession(bookTitle: bookTitle);
+    }
   }
 
   // ── Iniciar ───────────────────────────────────────────────────────────────
@@ -103,17 +119,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Future<void> _cancelSession() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Excluir sessão?'),
         content: const Text(
             'A sessão atual será descartada e não será salva.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Não'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             style: FilledButton.styleFrom(
                 backgroundColor: ReadLogColors.stamp),
             child: const Text('Sim, excluir'),
@@ -168,6 +184,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     }
 
     ref.read(homeRefreshTriggerProvider.notifier).state++;
+    ref.read(clubSessionRefreshProvider.notifier).state++;
 
     // ── Atualiza widgets nativos com o novo estado do livro ───────────────
     final book = _selectedBook;
@@ -198,6 +215,24 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         endPage >= _selectedBook!.totalPages! &&
         _selectedBook!.status == BookStatus.reading) {
       if (mounted) _showCompleteBookDialog();
+      return;
+    }
+
+    // ── Navega para impressão de leitura se for livro de clube ────────────
+    final sourceClubId = _selectedBook?.sourceClubId;
+    if (sourceClubId != null && mounted) {
+      final club = await ref
+          .read(bookClubRepositoryProvider)
+          .fetchById(sourceClubId);
+      if (mounted) {
+        context.push(
+          '/clubs/$sourceClubId/checkin',
+          extra: {
+            'clubName': club?.name ?? 'Clube',
+            'latestSessionId': finished.id,
+          },
+        );
+      }
       return;
     }
 
@@ -247,16 +282,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   ) {
     switch (ctx) {
       case InspirationContext.morningReading:
-        return ('☀️ BOM DIA, LEITOR', 'Que o dia seja produtivo.');
+        return ('BOM DIA, LEITOR', 'Que o dia seja produtivo.');
       case InspirationContext.eveningReading:
-        return ('🌙 LEITURA NOTURNA', 'Descanse bem.');
+        return ('LEITURA NOTURNA', 'Descanse bem.');
       case InspirationContext.longSession:
         return (
-          '📖 ${durationMinutes}min DE LEITURA',
+          '${durationMinutes}min DE LEITURA',
           'Uma hora investida em você.',
         );
       default:
-        return ('📖 SESSÃO REGISTRADA', null);
+        return ('SESSÃO REGISTRADA', null);
     }
   }
 
@@ -269,7 +304,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     InspirationBottomSheet.show(
       context,
       quote: quote,
-      title: '🏆 CONQUISTA DESBLOQUEADA',
+      title: 'CONQUISTA DESBLOQUEADA',
       subtitle: achievement.name,
       closing: 'Continue assim.',
     );
@@ -284,7 +319,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     InspirationBottomSheet.show(
       context,
       quote: quote,
-      title: '📚 LIVRO CONCLUÍDO',
+      title: 'LIVRO CONCLUÍDO',
       subtitle: bookTitle,
       closing: 'Seu próximo livro já está esperando por você.',
     );
@@ -781,7 +816,12 @@ class _ActiveSessionView extends StatelessWidget {
             ),
           ],
 
-          const Spacer(),
+          const SizedBox(height: 24),
+
+          // Animação de leitura — ocupa o espaço central
+          Expanded(
+            child: _ReadingAnimation(isPaused: isPaused),
+          ),
 
           // Botões de ação
           Row(
@@ -811,6 +851,77 @@ class _ActiveSessionView extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _ReadingAnimation — Lottie sincronizado com o estado da sessão
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ReadingAnimation extends StatefulWidget {
+  final bool isPaused;
+
+  const _ReadingAnimation({required this.isPaused});
+
+  @override
+  State<_ReadingAnimation> createState() => _ReadingAnimationState();
+}
+
+class _ReadingAnimationState extends State<_ReadingAnimation>
+    with SingleTickerProviderStateMixin {
+  // ── Lista de animações disponíveis ──────────────────────────────────────────
+  // Para adicionar ou remover animações, edite apenas esta lista.
+  static const _animations = [
+    'assets/animations/reading_scene_1.json',
+    'assets/animations/reading_scene_2.json',
+    'assets/animations/reading_scene_3.json',
+    'assets/animations/reading_scene_4.json',
+  ];
+
+  late AnimationController _controller;
+  late String _selectedAsset;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+    // Sorteia uma vez por sessão — não muda enquanto a tela estiver aberta.
+    _selectedAsset = _animations[Random().nextInt(_animations.length)];
+  }
+
+  @override
+  void didUpdateWidget(covariant _ReadingAnimation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_loaded) return;
+    if (widget.isPaused) {
+      _controller.stop();
+    } else {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Lottie.asset(
+      _selectedAsset,
+      controller: _controller,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+      onLoaded: (composition) {
+        _controller.duration = composition.duration;
+        _loaded = true;
+        if (!widget.isPaused) _controller.repeat();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+}
+
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // _GoalProgressBar
@@ -1207,7 +1318,7 @@ class _ShareCompletionSheetState extends State<_ShareCompletionSheet> {
       final file = await _writeFile('$tmpDir/readlog_share.png', bytes);
       await SharePlus.instance.share(ShareParams(
         files: [XFile(file)],
-        text: 'Acabei de terminar "${widget.book.title}" 📚',
+        text: 'Acabei de terminar "${widget.book.title}"',
       ));
     } catch (_) {
       if (mounted) {

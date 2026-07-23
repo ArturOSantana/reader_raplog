@@ -1,10 +1,14 @@
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/local/local_database.dart';
 import '../../../../core/shell/main_shell.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book.dart';
@@ -95,6 +99,7 @@ class ProfileScreen extends ConsumerWidget {
               ref,
               profileAsync.valueOrNull,
               fullName,
+              avatarUrl,
             ),
           ),
           IconButton(
@@ -113,7 +118,7 @@ class ProfileScreen extends ConsumerWidget {
             fullName: fullName,
             email: email,
             profileAsync: profileAsync,
-            onEdit: () => _showEditSheet(context, ref, profileAsync.valueOrNull, fullName),
+            onEdit: () => _showEditSheet(context, ref, profileAsync.valueOrNull, fullName, avatarUrl),
           ),
 
           _sectionGap(),
@@ -196,6 +201,7 @@ class ProfileScreen extends ConsumerWidget {
     WidgetRef ref,
     UserProfile? profile,
     String? displayName,
+    String? avatarUrl,
   ) {
     showModalBottomSheet(
       context: context,
@@ -207,6 +213,7 @@ class ProfileScreen extends ConsumerWidget {
       builder: (_) => _EditProfileSheet(
         profile: profile,
         displayName: displayName,
+        currentAvatarUrl: avatarUrl,
         onSaved: () => ref.invalidate(_profileProvider),
       ),
     );
@@ -225,8 +232,12 @@ class ProfileScreen extends ConsumerWidget {
         profileAsync: ref.read(_profileProvider),
         onEditProfile: () {
           Navigator.pop(context);
-          _showEditSheet(context, ref, ref.read(_profileProvider).valueOrNull,
-              ref.read(currentUserProvider)?.userMetadata?['full_name'] as String?);
+          _showEditSheet(
+            context, ref,
+            ref.read(_profileProvider).valueOrNull,
+            ref.read(currentUserProvider)?.userMetadata?['full_name'] as String?,
+            (ref.read(_profileProvider).valueOrNull?.avatarUrl ?? ref.read(currentUserProvider)?.userMetadata?['avatar_url']) as String?,
+          );
         },
       ),
     );
@@ -1445,6 +1456,13 @@ class _SettingsSheet extends ConsumerWidget {
             onPressed: () async {
               Navigator.pop(context);
               Navigator.pop(context);
+              await LocalDatabase.instance.clearUserData();
+              ref.invalidate(bookRepositoryProvider);
+              ref.invalidate(sessionRepositoryProvider);
+              ref.invalidate(noteRepositoryProvider);
+              ref.invalidate(profileRepositoryProvider);
+              ref.invalidate(onboardingCompletedProvider);
+              await GoogleSignIn().signOut();
               await Supabase.instance.client.auth.signOut();
             },
             child: Text('Sair', style: ReadLogType.mono(size: 13, color: AppColors.error)),
@@ -1462,11 +1480,13 @@ class _SettingsSheet extends ConsumerWidget {
 class _EditProfileSheet extends StatefulWidget {
   final UserProfile? profile;
   final String? displayName;
+  final String? currentAvatarUrl;
   final VoidCallback onSaved;
 
   const _EditProfileSheet({
     required this.profile,
     required this.displayName,
+    required this.currentAvatarUrl,
     required this.onSaved,
   });
 
@@ -1484,6 +1504,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final TextEditingController _favoriteBookController;
   bool _loading = false;
   String? _errorMessage;
+  File? _pickedImage;
 
   @override
   void initState() {
@@ -1507,10 +1528,53 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     super.dispose();
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final xFile = await picker.pickImage(source: source, imageQuality: 85, maxWidth: 512);
+      if (xFile != null && mounted) {
+        setState(() => _pickedImage = File(xFile.path));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível acessar a câmera ou galeria.')),
+        );
+      }
+    }
+  }
+
+  void _showImageSourceSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Escolher da galeria'),
+              onTap: () { Navigator.pop(context); _pickImage(ImageSource.gallery); },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Tirar foto'),
+              onTap: () { Navigator.pop(context); _pickImage(ImageSource.camera); },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _save(WidgetRef ref) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() { _loading = true; _errorMessage = null; });
     try {
+      String? avatarUrl = widget.profile?.avatarUrl;
+      if (_pickedImage != null) {
+        avatarUrl = await ref.read(profileRepositoryProvider).uploadAvatar(_pickedImage!);
+      }
       await ref.read(profileRepositoryProvider).upsert({
         'name': _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
         'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
@@ -1518,6 +1582,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         'favorite_genre': _genreController.text.trim().isEmpty ? null : _genreController.text.trim(),
         'favorite_authors': _authorsController.text.trim().isEmpty ? null : _authorsController.text.trim(),
         'favorite_book': _favoriteBookController.text.trim().isEmpty ? null : _favoriteBookController.text.trim(),
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
       });
       widget.onSaved();
       if (mounted) Navigator.pop(context);
@@ -1530,6 +1595,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final initials = _Avatar._initials(
+      widget.profile?.name ?? widget.displayName ?? widget.currentAvatarUrl ?? '?',
+    );
     return Consumer(
       builder: (context, ref, _) => Padding(
         padding: EdgeInsets.only(
@@ -1544,6 +1612,44 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Editar perfil', style: ReadLogType.display(size: 18, color: ReadLogColors.charcoal)),
+                const SizedBox(height: 20),
+                // ── Avatar picker ──────────────────────────────────────────
+                Center(
+                  child: GestureDetector(
+                    onTap: _showImageSourceSheet,
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 44,
+                          backgroundColor: ReadLogColors.ink.withValues(alpha: 0.12),
+                          child: _pickedImage != null
+                              ? ClipOval(child: Image.file(_pickedImage!, width: 88, height: 88, fit: BoxFit.cover))
+                              : (widget.currentAvatarUrl != null && widget.currentAvatarUrl!.isNotEmpty)
+                                  ? ClipOval(
+                                      child: CachedNetworkImage(
+                                        imageUrl: widget.currentAvatarUrl!,
+                                        width: 88, height: 88, fit: BoxFit.cover,
+                                        errorWidget: (_, __, ___) => _InitialsAvatar(initials: initials, radius: 44),
+                                      ),
+                                    )
+                                  : _InitialsAvatar(initials: initials, radius: 44),
+                        ),
+                        Positioned(
+                          bottom: 0, right: 0,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: ReadLogColors.ink,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            padding: const EdgeInsets.all(5),
+                            child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 20),
                 TextFormField(
                   controller: _nameController,

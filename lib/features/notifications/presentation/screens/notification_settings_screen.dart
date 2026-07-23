@@ -149,8 +149,7 @@ class _CategoryToggle extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Row(
             children: [
-              Text(category.emoji,
-                  style: const TextStyle(fontSize: 20)),
+              Icon(category.icon, size: 20, color: AppColors.textPrimary),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(

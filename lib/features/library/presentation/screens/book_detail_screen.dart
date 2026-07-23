@@ -11,6 +11,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/models/reading_session.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../shared/widgets/skel_shimmer.dart';
 import '../widgets/book_review_dialog.dart';
 import '../widgets/book_share_card.dart';
 
@@ -69,7 +70,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
         ],
       ),
       body: book.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkelScreenList(),
         error: (e, _) => Center(child: Text('Erro: $e')),
         data: (b) => _BookDetailBody(book: b),
       ),

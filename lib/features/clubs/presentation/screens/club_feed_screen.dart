@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/social_feed.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../shared/widgets/feed_card.dart';
+import '../../../../shared/widgets/skel_shimmer.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -53,7 +54,7 @@ class ClubFeedScreen extends ConsumerWidget {
         ),
       ),
       body: feedAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkelScreenList(),
         error: (e, _) => Center(child: Text('Erro: $e')),
         data: (items) => _FeedList(
           items: items,
@@ -103,16 +104,11 @@ class _FeedList extends ConsumerWidget {
         ),
         itemBuilder: (_, i) {
           final item = items[i];
-          return FeedCardWidget(
+          return _FeedItemWithCheer(
             key: ValueKey(item.id),
             item: item,
-            showComments: true,
-            onLikeToggle: () async {
-              await ref
-                  .read(socialFeedRepositoryProvider)
-                  .toggleLike(item.id, currentlyLiked: item.likedByMe);
-              ref.invalidate(_clubFeedProvider(clubId));
-            },
+            clubId: clubId,
+            onRefresh: onRefresh,
           );
         },
       ),
@@ -133,7 +129,7 @@ class _EmptyFeed extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('📭', style: TextStyle(fontSize: 48)),
+            const Icon(Icons.dynamic_feed_outlined, size: 48, color: AppColors.textMuted),
             const SizedBox(height: 16),
             Text(
               'Nenhuma atividade ainda.',
@@ -149,6 +145,96 @@ class _EmptyFeed extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── F-06 Cheer — card com botão de torcida ────────────────────────────────────
+
+class _FeedItemWithCheer extends ConsumerStatefulWidget {
+  final FeedItem item;
+  final String clubId;
+  final Future<void> Function() onRefresh;
+
+  const _FeedItemWithCheer({
+    super.key,
+    required this.item,
+    required this.clubId,
+    required this.onRefresh,
+  });
+
+  @override
+  ConsumerState<_FeedItemWithCheer> createState() =>
+      _FeedItemWithCheerState();
+}
+
+class _FeedItemWithCheerState extends ConsumerState<_FeedItemWithCheer> {
+  bool _cheering = false;
+  bool _cheeredByMe = false;
+  // O count exato exigiria uma query extra; usamos flag local para feedback imediato.
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FeedCardWidget(
+          item: widget.item,
+          showComments: true,
+          onLikeToggle: () async {
+            await ref
+                .read(socialFeedRepositoryProvider)
+                .toggleLike(widget.item.id, currentlyLiked: widget.item.likedByMe);
+            widget.onRefresh();
+          },
+        ),
+        // Botão de cheer (reação rápida de um toque — toggle_cheer RPC)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: _cheering
+                ? null
+                : () async {
+                    setState(() => _cheering = true);
+                    final added = await ref
+                        .read(bookClubRepositoryProvider)
+                        .toggleCheer(widget.item.id);
+                    if (mounted) {
+                      setState(() {
+                        _cheering = false;
+                        _cheeredByMe = added;
+                      });
+                    }
+                  },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                   Icons.volunteer_activism_outlined,
+                   size: 16,
+                   color: _cheeredByMe || _cheering
+                       ? AppColors.warmGold
+                       : AppColors.textMuted,
+                 ),
+                 const SizedBox(width: 4),
+                 Text(
+                   _cheeredByMe ? 'Torcendo!' : 'Torcer',
+                   style: AppTextStyles.labelMedium.copyWith(
+                     fontSize: 12,
+                     color: _cheeredByMe || _cheering
+                         ? AppColors.warmGold
+                         : AppColors.textMuted,
+                   ),
+                 ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

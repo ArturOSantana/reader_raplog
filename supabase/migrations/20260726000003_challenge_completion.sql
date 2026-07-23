@@ -175,7 +175,7 @@ BEGIN
     v_club_id,
     'clubs',
     'challenge_finished',
-    'Desafio encerrado! Veja o resultado 🏆',
+    'Desafio encerrado! Veja o resultado',
     v_title,
     '/clubs/' || v_club_id || '/challenges/' || p_challenge_id || '/result',
     auth.uid()

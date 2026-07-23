@@ -8,7 +8,7 @@ import 'local_session_repository.dart';
 class OfflineSessionRepository {
   final SupabaseClient _client;
   final bool Function() _isOnline;
-  final LocalSessionRepository _local = LocalSessionRepository();
+  final LocalSessionRepository localRepo = LocalSessionRepository();
   final _uuid = const Uuid();
 
   OfflineSessionRepository(this._client, this._isOnline);
@@ -17,12 +17,51 @@ class OfflineSessionRepository {
 
   // ── Start / Finish / Cancel ───────────────────────────────────────────────
 
+  /// Retorna a sessão ativa pendente do usuário, se houver.
+  /// Chamado no boot para recuperar sessão interrompida pelo sistema.
+  Future<ReadingSession?> fetchActiveSession() async {
+    // Tenta primeiro no servidor (fonte de verdade)
+    if (_isOnline()) {
+      try {
+        final data = await _client
+            .from('reading_sessions')
+            .select()
+            .eq('user_id', _userId)
+            .eq('status', 'active')
+            .order('started_at', ascending: false)
+            .limit(1)
+            .maybeSingle();
+        if (data != null) {
+          await localRepo.insert(Map<String, dynamic>.from(data as Map));
+          return ReadingSession.fromMap(data);
+        }
+        return null;
+      } catch (_) {}
+    }
+    return localRepo.fetchActiveSession(_userId);
+  }
+
   Future<ReadingSession> startSession({
     required String bookId,
     required int startPage,
     SessionGoal? goal,
     int? goalValue,
   }) async {
+    // Guard de sessão única: cancela qualquer sessão active anterior no local
+    final orphan = await localRepo.fetchActiveSession(_userId);
+    if (orphan != null) {
+      await localRepo.update(orphan.id, {'status': 'cancelled'});
+      if (_isOnline()) {
+        try {
+          await _client
+              .from('reading_sessions')
+              .update({'status': 'cancelled'})
+              .eq('id', orphan.id)
+              .eq('user_id', _userId);
+        } catch (_) {}
+      }
+    }
+
     final now = DateTime.now();
     final id = _uuid.v4();
     final fields = {
@@ -38,7 +77,7 @@ class OfflineSessionRepository {
       if (goalValue != null) 'goal_value': goalValue,
     };
 
-    await _local.insert(fields);
+    await localRepo.insert(fields);
 
     if (_isOnline()) {
       try {
@@ -47,7 +86,7 @@ class OfflineSessionRepository {
             .insert(fields)
             .select()
             .single();
-        await _local.insert(data);
+        await localRepo.insert(data);
         return ReadingSession.fromMap(data);
       } catch (_) {}
     }
@@ -70,7 +109,7 @@ class OfflineSessionRepository {
   }) async {
     final now = DateTime.now();
 
-    final localSession = await _local.fetchById(sessionId);
+    final localSession = await localRepo.fetchById(sessionId);
     final startedAt = localSession?.startedAt ?? now;
 
     final totalSeconds = now.difference(startedAt).inSeconds;
@@ -94,7 +133,7 @@ class OfflineSessionRepository {
         'mini_review': miniReview,
     };
 
-    await _local.update(sessionId, updateFields);
+    await localRepo.update(sessionId, updateFields);
 
     if (_isOnline()) {
       try {
@@ -105,7 +144,7 @@ class OfflineSessionRepository {
             .eq('user_id', _userId)
             .select()
             .single();
-        await _local.update(sessionId, data);
+        await localRepo.update(sessionId, data);
         return ReadingSession.fromMap(data);
       } catch (_) {}
     }
@@ -115,11 +154,11 @@ class OfflineSessionRepository {
       operation: 'update',
       payload: {'id': sessionId, ...updateFields},
     );
-    return (await _local.fetchById(sessionId))!;
+    return (await localRepo.fetchById(sessionId))!;
   }
 
   Future<void> cancelSession({required String sessionId}) async {
-    await _local.update(sessionId, {'status': 'cancelled'});
+    await localRepo.update(sessionId, {'status': 'cancelled'});
 
     if (_isOnline()) {
       try {
@@ -151,14 +190,14 @@ class OfflineSessionRepository {
             .eq('book_id', bookId)
             .neq('status', 'cancelled')
             .order('started_at', ascending: false);
-        await _local
+        await localRepo
             .upsertAll(List<Map<String, dynamic>>.from(data as List));
         return (data as List)
             .map((e) => ReadingSession.fromMap(e))
             .toList();
       } catch (_) {}
     }
-    return _local.fetchByBook(bookId);
+    return localRepo.fetchByBook(bookId, _userId);
   }
 
   Future<Map<String, dynamic>> fetchDailyStats() async {
@@ -174,7 +213,7 @@ class OfflineSessionRepository {
         final result = data ??
             {'total_minutes': 0, 'total_pages': 0, 'session_count': 0};
 
-        await _local.upsertDailyStats(
+        await localRepo.upsertDailyStats(
           userId: _userId,
           date: today,
           totalMinutes: result['total_minutes'] as int,
@@ -184,7 +223,7 @@ class OfflineSessionRepository {
         return result;
       } catch (_) {}
     }
-    return _local.fetchDailyStats(_userId);
+    return localRepo.fetchDailyStats(_userId);
   }
 
   Future<int> fetchStreak() async {
@@ -195,7 +234,7 @@ class OfflineSessionRepository {
         return (data as int?) ?? 0;
       } catch (_) {}
     }
-    return _local.fetchStreak(_userId);
+    return localRepo.fetchStreak(_userId);
   }
 
   Future<Map<String, dynamic>> fetchPeriodStats({required String period}) async {
@@ -236,7 +275,7 @@ class OfflineSessionRepository {
         return {'total_minutes': totalMinutes, 'total_pages': totalPages};
       } catch (_) {}
     }
-    return _local.fetchPeriodStats(_userId, fromDate);
+    return localRepo.fetchPeriodStats(_userId, fromDate);
   }
 
   /// Retorna {total_minutes, total_sessions} somando todas as sessões do livro.
@@ -257,7 +296,7 @@ class OfflineSessionRepository {
         return {'total_minutes': totalMinutes, 'total_sessions': list.length};
       } catch (_) {}
     }
-    final sessions = await _local.fetchByBook(bookId);
+    final sessions = await localRepo.fetchByBook(bookId, _userId);
     int totalMinutes = 0;
     int count = 0;
     for (final s in sessions) {
@@ -282,6 +321,6 @@ class OfflineSessionRepository {
         return List<Map<String, dynamic>>.from(data as List);
       } catch (_) {}
     }
-    return _local.fetchHeatmap(_userId, days);
+    return localRepo.fetchHeatmap(_userId, days);
   }
 }

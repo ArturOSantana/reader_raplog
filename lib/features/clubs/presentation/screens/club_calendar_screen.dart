@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/models/club_schedule_milestones_challenges.dart';
@@ -36,7 +38,7 @@ class _CalEvent {
   final String title;
   final String subtitle;
   final DateTime date;
-  final String emoji;
+  final IconData icon;
   final Color color;
 
   const _CalEvent({
@@ -44,9 +46,35 @@ class _CalEvent {
     required this.title,
     required this.subtitle,
     required this.date,
-    required this.emoji,
+    required this.icon,
     required this.color,
   });
+}
+
+// ── Utilitário Google Calendar ────────────────────────────────────────────────
+
+Future<void> _addToGoogleCalendar(_CalEvent event) async {
+  // Google Calendar exige datas no formato YYYYMMDDTHHmmssZ (UTC)
+  final fmt = DateFormat("yyyyMMdd'T'HHmmss'Z'");
+  final start = fmt.format(event.date.toUtc());
+  // Duração padrão: 1 hora para encontros e desafios, 30 min para cronograma
+  final endDate = event.date.add(
+    event.type == _CalEventType.schedule
+        ? const Duration(minutes: 30)
+        : const Duration(hours: 1),
+  );
+  final end = fmt.format(endDate.toUtc());
+
+  final uri = Uri.https('calendar.google.com', '/calendar/render', {
+    'action': 'TEMPLATE',
+    'text': event.title,
+    'dates': '$start/$end',
+    'details': event.subtitle,
+  });
+
+  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    debugPrint('Não foi possível abrir Google Agenda: $uri');
+  }
 }
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -97,7 +125,7 @@ class ClubCalendarScreen extends ConsumerWidget {
           title: s.displayTitle,
           subtitle: s.notes ?? 'Ritmo de leitura',
           date: s.targetDate!,
-          emoji: '📖',
+          icon: Icons.menu_book_outlined,
           color: AppColors.forestGreen,
         ));
       }
@@ -110,7 +138,7 @@ class ClubCalendarScreen extends ConsumerWidget {
         title: m.title,
         subtitle: m.location ?? m.onlineLink ?? 'Encontro do clube',
         date: m.scheduledAt,
-        emoji: '🗓️',
+        icon: Icons.event_outlined,
         color: AppColors.warmGold,
       ));
     }
@@ -122,7 +150,7 @@ class ClubCalendarScreen extends ConsumerWidget {
         title: c.title,
         subtitle: 'Prazo: ${c.daysLeftLabel}',
         date: c.endsAt,
-        emoji: '💪',
+        icon: Icons.flag_outlined,
         color: AppColors.error,
       ));
     }
@@ -159,9 +187,13 @@ class ClubCalendarScreen extends ConsumerWidget {
             // ── Marcos de progresso do livro ────────────────────────────
             if (milestones.isNotEmpty) ...[
               _SectionHeader(
-                  title: 'Marcos de leitura', emoji: '🏁'),
+                  title: 'Marcos de leitura', icon: Icons.flag_rounded),
               const SizedBox(height: 10),
-              _MilestonesRow(milestones: milestones),
+              _MilestonesRow(
+                milestones: milestones,
+                clubId: clubId,
+                clubName: clubName,
+              ),
               const SizedBox(height: 28),
             ],
 
@@ -170,7 +202,7 @@ class ClubCalendarScreen extends ConsumerWidget {
                 title: upcoming.isEmpty
                     ? 'Nenhum evento agendado'
                     : 'Próximos eventos',
-                emoji: '⏰'),
+                icon: Icons.schedule_outlined),
             const SizedBox(height: 10),
             if (upcoming.isEmpty)
               _EmptyEventsCard()
@@ -181,7 +213,7 @@ class ClubCalendarScreen extends ConsumerWidget {
             // ── Eventos passados ────────────────────────────────────────
             if (past.isNotEmpty) ...[
               const SizedBox(height: 28),
-              _SectionHeader(title: 'Passados', emoji: '📌'),
+              _SectionHeader(title: 'Passados', icon: Icons.history_outlined),
               const SizedBox(height: 10),
               ...past.take(10).map((e) => _EventCard(event: e, isPast: true)),
             ],
@@ -201,7 +233,7 @@ class ClubCalendarScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '🗓️ Calendário',
+            'Calendário',
             style: AppTextStyles.titleMedium
                 .copyWith(color: cs.onSurface, fontSize: 16),
           ),
@@ -219,16 +251,16 @@ class ClubCalendarScreen extends ConsumerWidget {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
-  final String emoji;
+  final IconData icon;
 
-  const _SectionHeader({required this.title, required this.emoji});
+  const _SectionHeader({required this.title, required this.icon});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Text(emoji),
+        Icon(icon, size: 18, color: AppColors.textMuted),
         const SizedBox(width: 8),
         Text(
           title,
@@ -285,8 +317,7 @@ class _EventCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
-                  child: Text(event.emoji,
-                      style: const TextStyle(fontSize: 18))),
+                  child: Icon(event.icon, size: 20, color: event.color)),
             ),
             const SizedBox(width: 12),
             // Título e subtítulo
@@ -314,7 +345,7 @@ class _EventCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            // Data
+            // Data + botão de agenda (só para próximos eventos)
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -340,6 +371,42 @@ class _EventCard extends StatelessWidget {
                     style: AppTextStyles.labelMedium.copyWith(fontSize: 10),
                     textAlign: TextAlign.right,
                   ),
+                if (!isPast) ...[
+                  const SizedBox(height: 6),
+                  GestureDetector(
+                    onTap: () => _addToGoogleCalendar(event),
+                    child: Tooltip(
+                      message: 'Adicionar ao Google Agenda',
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.warmGold.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: AppColors.warmGold.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.calendar_month_outlined,
+                                size: 11, color: AppColors.warmGold),
+                            const SizedBox(width: 3),
+                            Text(
+                              'Agenda',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.warmGold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ],
@@ -353,8 +420,14 @@ class _EventCard extends StatelessWidget {
 
 class _MilestonesRow extends StatelessWidget {
   final List<ClubMilestone> milestones;
+  final String clubId;
+  final String clubName;
 
-  const _MilestonesRow({required this.milestones});
+  const _MilestonesRow({
+    required this.milestones,
+    required this.clubId,
+    required this.clubName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -363,7 +436,11 @@ class _MilestonesRow extends StatelessWidget {
           .map((m) => Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: _MilestoneChip(milestone: m),
+                  child: _MilestoneChip(
+                    milestone: m,
+                    clubId: clubId,
+                    clubName: clubName,
+                  ),
                 ),
               ))
           .toList(),
@@ -373,8 +450,14 @@ class _MilestonesRow extends StatelessWidget {
 
 class _MilestoneChip extends StatelessWidget {
   final ClubMilestone milestone;
+  final String clubId;
+  final String clubName;
 
-  const _MilestoneChip({required this.milestone});
+  const _MilestoneChip({
+    required this.milestone,
+    required this.clubId,
+    required this.clubName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -383,7 +466,7 @@ class _MilestoneChip extends StatelessWidget {
     final surface = isDark ? AppColors.darkSurface : Colors.white;
     final border = isDark ? AppColors.darkBorder : AppColors.border;
 
-    return Container(
+    final chip = Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
       decoration: BoxDecoration(
         color: locked ? surface : AppColors.forestGreen.withValues(alpha: 0.1),
@@ -396,10 +479,9 @@ class _MilestoneChip extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(milestone.emoji,
-              style: TextStyle(
-                  fontSize: 18,
-                  color: locked ? AppColors.textMuted : null)),
+          Icon(milestone.icon,
+              size: 18,
+              color: locked ? AppColors.textMuted : null),
           const SizedBox(height: 4),
           Text(
             '${milestone.milestonePct}%',
@@ -411,8 +493,32 @@ class _MilestoneChip extends StatelessWidget {
                   : AppColors.forestGreen,
             ),
           ),
+          if (!locked)
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Text(
+                'ver',
+                style: TextStyle(
+                  fontSize: 9,
+                  color: AppColors.forestGreen.withValues(alpha: 0.7),
+                ),
+              ),
+            ),
         ],
       ),
+    );
+
+    if (locked) return chip;
+
+    return GestureDetector(
+      onTap: () => context.go(
+        '/clubs/$clubId/milestones/${milestone.id}/discussion',
+        extra: {
+          'milestone': milestone,
+          'clubName': clubName,
+        },
+      ),
+      child: chip,
     );
   }
 }
