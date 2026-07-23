@@ -2,17 +2,61 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _kLastRouteKey = 'last_route';
 
-/// Rotas que não devem ser persistidas (ex: tela de login).
+/// Rotas que devem ser restauradas ao reabrir o app.
+///
+/// Apenas rotas "simples" (sem dados em memória via `extra`) são permitidas.
+/// Rotas que dependem de `extra` (objetos em memória que não sobrevivem ao
+/// cold start) causam crash ao tentar restaurar — ex: EditBookScreen, que
+/// espera um objeto `Book` via `state.extra`.
+const _kAllowedRoutes = {
+  '/home',
+  '/library',
+  '/dashboard',
+  '/achievements',
+  '/goals',
+  '/wishlist',
+  '/profile',
+  '/friends',
+  '/calendar',
+  '/social',
+  '/clubs',
+  '/notifications',
+  '/notifications/settings',
+};
+
+/// Retorna `true` se a rota pode ser persistida com segurança.
 bool _shouldPersist(String? location) {
   if (location == null) return false;
   if (location.startsWith('/auth')) return false;
-  return true;
+  // Verifica correspondência exata ou prefixo permitido
+  for (final allowed in _kAllowedRoutes) {
+    if (location == allowed || location.startsWith('$allowed/')) {
+      // Rotas de detalhe dentro de /library ou /friends ou /clubs são ok
+      // se não houver segmentos que dependam de `extra`
+      if (location.startsWith('/library/book/') &&
+          location.endsWith('/edit')) {
+        return false; // EditBookScreen depende de extra
+      }
+      if (location == '/notifications/schedule') {
+        return false; // ReadingScheduleScreen depende de extra
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 Future<String?> loadLastRoute() async {
   final prefs = await SharedPreferences.getInstance();
   final saved = prefs.getString(_kLastRouteKey);
-  if (!_shouldPersist(saved)) return null;
+  if (!_shouldPersist(saved)) {
+    // Limpa automaticamente rotas inválidas/não-restauráveis salvas por
+    // versões anteriores do app, evitando crash no cold start.
+    if (saved != null) {
+      await prefs.remove(_kLastRouteKey);
+    }
+    return null;
+  }
   return saved;
 }
 
