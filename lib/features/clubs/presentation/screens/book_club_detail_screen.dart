@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book_club.dart';
+import '../../../../shared/models/club_extras.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../library/data/book_search_result.dart';
 import '../../../library/data/book_search_service.dart';
@@ -36,6 +37,21 @@ final _clubHistoryProvider =
 final _clubPollsProvider =
     FutureProvider.family<List<ClubBookPoll>, String>((ref, clubId) {
   return ref.watch(bookClubRepositoryProvider).listPolls(clubId);
+});
+
+final _clubReadingNowProvider =
+    FutureProvider.family<List<ClubReadingNowEntry>, String>((ref, clubId) {
+  return ref.watch(bookClubRepositoryProvider).fetchReadingNow(clubId);
+});
+
+final _clubReadingProgressProvider =
+    FutureProvider.family<ClubReadingProgress?, String>((ref, clubId) {
+  return ref.watch(bookClubRepositoryProvider).fetchReadingProgress(clubId);
+});
+
+final _clubHallOfFameProvider =
+    FutureProvider.family<List<ClubHallOfFameEntry>, String>((ref, clubId) {
+  return ref.watch(bookClubRepositoryProvider).fetchHallOfFame(clubId);
 });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -99,6 +115,9 @@ class _ClubDetailBody extends ConsumerWidget {
           ref.invalidate(_clubMeetingsProvider(clubId));
           ref.invalidate(_clubHistoryProvider(clubId));
           ref.invalidate(_clubPollsProvider(clubId));
+          ref.invalidate(_clubReadingNowProvider(clubId));
+          ref.invalidate(_clubReadingProgressProvider(clubId));
+          ref.invalidate(_clubHallOfFameProvider(clubId));
         },
         child: Builder(builder: (context) {
           final cs = Theme.of(context).colorScheme;
@@ -120,7 +139,15 @@ class _ClubDetailBody extends ConsumerWidget {
               const SizedBox(height: 16),
             // ── Livro atual ──────────────────────────────────────────────
             _CurrentBookCard(club: club),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            // ── Progresso coletivo (só quando há livro em leitura) ───────
+            if (club.currentBookStatus == 'reading') ...[
+              _ReadingProgressSection(clubId: clubId),
+              const SizedBox(height: 16),
+              // ── Lendo agora ───────────────────────────────────────────
+              _ReadingNowSection(clubId: clubId),
+              const SizedBox(height: 24),
+            ],
             // ── Votação de próximo livro ──────────────────────────────────
             if (!club.isClosed) ...[
               _BookPollSection(club: club, clubId: clubId),
@@ -142,6 +169,9 @@ class _ClubDetailBody extends ConsumerWidget {
             Text('Histórico de leituras', style: sectionStyle),
             const SizedBox(height: 12),
             _BookHistoryList(clubId: clubId),
+            const SizedBox(height: 24),
+            // ── Hall da Fama ──────────────────────────────────────────────
+            _HallOfFameSection(clubId: clubId),
             const SizedBox(height: 24),
             // ── Ações do membro ──────────────────────────────────────────
             if (club.isOwner && !club.isClosed)
@@ -182,6 +212,7 @@ class _ClubDetailBody extends ConsumerWidget {
       items.add(const PopupMenuDivider());
     }
 
+    // Apenas o dono pode alterar status do clube (férias, reativar, encerrar)
     if (club.isOwner) {
       if (club.isActive) {
         items.add(const PopupMenuItem(
@@ -215,17 +246,6 @@ class _ClubDetailBody extends ConsumerWidget {
           ),
         ));
       }
-    }
-
-    if (!club.isOwner && club.isOnVacation) {
-      items.add(const PopupMenuItem(
-        value: 'reactivate',
-        child: ListTile(
-          leading: Icon(Icons.play_circle_outline),
-          title: Text('Reativar clube'),
-          contentPadding: EdgeInsets.zero,
-        ),
-      ));
     }
 
     return items;
@@ -602,6 +622,7 @@ class _CurrentBookCard extends StatelessWidget {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 44,
@@ -622,10 +643,17 @@ class _CurrentBookCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Leitura atual',
-                  style: AppTextStyles.labelMedium
-                      .copyWith(color: cs.onSurfaceVariant),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Leitura atual',
+                        style: AppTextStyles.labelMedium
+                            .copyWith(color: cs.onSurfaceVariant),
+                      ),
+                    ),
+                    if (hasBook) _BookStatusChip(club.currentBookStatus),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -644,10 +672,64 @@ class _CurrentBookCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                if (hasBook && club.readingPacePerDay != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    '${club.readingPacePerDay} pág/dia',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: AppColors.forestGreen,
+                    ),
+                  ),
+                ],
+                if (hasBook && club.readingTargetEndDate != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Meta: ${DateFormat('dd/MM/yyyy', 'pt_BR').format(club.readingTargetEndDate!)}',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Chip de status do ciclo de leitura ────────────────────────────────────────
+
+class _BookStatusChip extends StatelessWidget {
+  final String status; // none|voting|chosen|reading|finished
+
+  const _BookStatusChip(this.status);
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (status) {
+      'voting'   => ('Votação', AppColors.warmGold),
+      'chosen'   => ('Escolhido', AppColors.forestGreenLight),
+      'reading'  => ('Em leitura', AppColors.forestGreen),
+      'finished' => ('Finalizado', AppColors.textSecondary),
+      _          => ('', Colors.transparent),
+    };
+    if (label.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
       ),
     );
   }
@@ -1448,6 +1530,348 @@ class _DeleteClubButton extends ConsumerWidget {
 }
 
 // ── Seção de votação de próximo livro ─────────────────────────────────────────
+
+
+// ── Progresso Coletivo ────────────────────────────────────────────────────────
+
+class _ReadingProgressSection extends ConsumerWidget {
+  final String clubId;
+
+  const _ReadingProgressSection({required this.clubId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final progressAsync = ref.watch(_clubReadingProgressProvider(clubId));
+
+    return progressAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (progress) {
+        if (progress == null) return const SizedBox.shrink();
+        final pct = progress.percentComplete.clamp(0.0, 100.0);
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.bar_chart_outlined, size: 16),
+                  const SizedBox(width: 6),
+                  Text('Progresso do grupo',
+                      style: AppTextStyles.labelMedium
+                          .copyWith(color: cs.onSurfaceVariant)),
+                  const Spacer(),
+                  Text(
+                    '${pct.toStringAsFixed(0)}%',
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: AppColors.forestGreen,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: pct / 100,
+                  minHeight: 6,
+                  backgroundColor: cs.outlineVariant,
+                  color: AppColors.forestGreen,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _StatPill(
+                    icon: Icons.menu_book_outlined,
+                    label: '${progress.totalPagesRead} pág lidas',
+                  ),
+                  _StatPill(
+                    icon: Icons.people_outline,
+                    label: '${progress.membersReadToday} hoje',
+                  ),
+                  _StatPill(
+                    icon: Icons.auto_stories_outlined,
+                    label: 'pág ${progress.avgCurrentPage.toStringAsFixed(0)} em média',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StatPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _StatPill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: cs.onSurfaceVariant),
+        const SizedBox(width: 4),
+        Text(label,
+            style: AppTextStyles.labelMedium
+                .copyWith(color: cs.onSurfaceVariant)),
+      ],
+    );
+  }
+}
+
+// ── Lendo Agora ───────────────────────────────────────────────────────────────
+
+class _ReadingNowSection extends ConsumerWidget {
+  final String clubId;
+
+  const _ReadingNowSection({required this.clubId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final nowAsync = ref.watch(_clubReadingNowProvider(clubId));
+
+    return nowAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (readers) {
+        if (readers.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppColors.forestGreen,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Lendo agora (${readers.length})',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: AppColors.forestGreen,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: readers.map((r) => _ReaderChip(reader: r)).toList(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ReaderChip extends StatelessWidget {
+  final ClubReadingNowEntry reader;
+
+  const _ReaderChip({required this.reader});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final name = reader.userName ?? 'Leitor';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.forestGreen.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+            color: AppColors.forestGreen.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 10,
+            backgroundColor: AppColors.forestGreen.withValues(alpha: 0.3),
+            backgroundImage: reader.avatarUrl != null
+                ? NetworkImage(reader.avatarUrl!)
+                : null,
+            child: reader.avatarUrl == null
+                ? Text(
+                    name[0].toUpperCase(),
+                    style: const TextStyle(fontSize: 9, color: Colors.white),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name,
+                  style: AppTextStyles.labelMedium.copyWith(
+                      color: cs.onSurface, fontWeight: FontWeight.w600)),
+              Text(reader.elapsedLabel,
+                  style: TextStyle(
+                      fontSize: 10, color: cs.onSurfaceVariant)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Hall da Fama ──────────────────────────────────────────────────────────────
+
+class _HallOfFameSection extends ConsumerWidget {
+  final String clubId;
+
+  const _HallOfFameSection({required this.clubId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final hofAsync = ref.watch(_clubHallOfFameProvider(clubId));
+
+    return hofAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (entries) {
+        if (entries.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.workspace_premium_outlined,
+                    size: 18, color: AppColors.warmGold),
+                const SizedBox(width: 6),
+                Text('Hall da Fama',
+                    style: AppTextStyles.headlineMedium
+                        .copyWith(color: cs.onSurface)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...entries.map((e) => _HofCard(entry: e)),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _HofCard extends StatelessWidget {
+  final ClubHallOfFameEntry entry;
+
+  const _HofCard({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final fmt = DateFormat('MMM/yyyy', 'pt_BR');
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.warmGold.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: AppColors.warmGold.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.menu_book_outlined,
+                  size: 16, color: AppColors.warmGold),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  entry.bookTitle,
+                  style: AppTextStyles.titleMedium
+                      .copyWith(color: cs.onSurface),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                fmt.format(entry.seasonEndedAt),
+                style: AppTextStyles.labelMedium
+                    .copyWith(color: cs.onSurfaceVariant),
+              ),
+            ],
+          ),
+          if (entry.bookAuthor != null) ...[
+            const SizedBox(height: 2),
+            Text(entry.bookAuthor!,
+                style: AppTextStyles.bodyMedium
+                    .copyWith(color: cs.onSurfaceVariant)),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            children: [
+              if (entry.topReaderName != null)
+                _HofStat('📖 +leu', entry.topReaderName!,
+                    sub: '${entry.topReaderPages ?? 0} pág'),
+              if (entry.topSessionsName != null)
+                _HofStat('⏱ +sessões', entry.topSessionsName!,
+                    sub: '${entry.topSessionsCount ?? 0}×'),
+              _HofStat('👥 Membros', '${entry.totalMembers}'),
+              _HofStat('📄 Páginas', '${entry.totalPages}'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HofStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? sub;
+
+  const _HofStat(this.label, this.value, {this.sub});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+        Text(value,
+            style: AppTextStyles.labelMedium
+                .copyWith(fontWeight: FontWeight.w600, color: cs.onSurface)),
+        if (sub != null)
+          Text(sub!,
+              style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+      ],
+    );
+  }
+}
+
 
 class _BookPollSection extends ConsumerWidget {
   final BookClub club;

@@ -275,12 +275,12 @@ class ReadLogTheme {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(3),
           borderSide: BorderSide(
-              color: ReadLogColors.cream.withValues(alpha: 0.2)),
+              color: ReadLogColors.cream.withValues(alpha: 0.45)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(3),
           borderSide: BorderSide(
-              color: ReadLogColors.cream.withValues(alpha: 0.2)),
+              color: ReadLogColors.cream.withValues(alpha: 0.45)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(3),
@@ -289,13 +289,17 @@ class ReadLogTheme {
         ),
         labelStyle: TextStyle(
             fontFamily: 'IBM Plex Mono',
-            fontSize: 12,
-            color: ReadLogColors.cream.withValues(alpha: 0.6)),
-        hintStyle: TextStyle(
+            fontSize: 13,
+            color: ReadLogColors.cream.withValues(alpha: 0.75)),
+        floatingLabelStyle: const TextStyle(
             fontFamily: 'IBM Plex Mono',
             fontSize: 12,
-            color: ReadLogColors.cream.withValues(alpha: 0.4)),
-        suffixStyle: TextStyle(
+            color: ReadLogColors.brassLight),
+        hintStyle: TextStyle(
+            fontFamily: 'IBM Plex Mono',
+            fontSize: 13,
+            color: ReadLogColors.cream.withValues(alpha: 0.5)),
+        suffixStyle: const TextStyle(
             fontFamily: 'IBM Plex Mono',
             fontSize: 14,
             color: ReadLogColors.cream),

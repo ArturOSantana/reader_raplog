@@ -17,11 +17,11 @@ class BookClubRepository {
         .from('book_club_members')
         .select(
           'role, club:book_clubs(id, name, description, cover_url, '
-          'current_book_id, current_book_title, current_book_author, '
-          'current_book_status, reading_pace_pages_per_day, '
-          'reading_target_end_date, reading_started_at, '
-          'status, closed_at, visibility, invite_code, '
-          'max_admins, admins_can_promote, created_at)',
+            'current_book_id, current_book_title, current_book_author, '
+            'current_book_status, reading_pace_pages_per_day, '
+            'reading_target_end_date, reading_started_at, '
+            'status, closed_at, visibility, category, invite_code, '
+            'max_admins, admins_can_promote, created_at)',
         )
         .eq('user_id', _userId);
 
@@ -202,11 +202,14 @@ class BookClubRepository {
       }
     }
 
+    final now = DateTime.now().toIso8601String();
     await _client.from('book_clubs').update({
       'current_book_title': bookTitle,
       'current_book_author': bookAuthor,
       'current_book_id': bookId,
-      'updated_at': DateTime.now().toIso8601String(),
+      'current_book_status': 'reading',
+      'reading_started_at': now,
+      'updated_at': now,
     }).eq('id', clubId);
 
     // Cria entrada no histórico para o novo livro
@@ -253,6 +256,50 @@ class BookClubRepository {
       'user_id': _userId,
       'role': 'member',
     });
+  }
+
+  // ── Solicitações de entrada (clube privado) ──────────────────────────────
+
+  /// Envia solicitação para entrar num clube privado.
+  Future<void> requestToJoin(String clubId, {String? message}) async {
+    await _client.from('club_join_requests').insert({
+      'club_id': clubId,
+      'user_id': _userId,
+      if (message != null && message.isNotEmpty) 'message': message,
+    });
+  }
+
+  /// Lista solicitações pendentes do clube (visível para managers).
+  Future<List<Map<String, dynamic>>> listJoinRequests(String clubId) async {
+    final data = await _client
+        .from('club_join_requests')
+        .select(
+          'id, club_id, user_id, status, message, created_at, '
+          'profile:profiles!club_join_requests_user_id_fkey(name, avatar_url)',
+        )
+        .eq('club_id', clubId)
+        .eq('status', 'pending')
+        .order('created_at', ascending: true);
+    return List<Map<String, dynamic>>.from(data as List);
+  }
+
+  /// Aprova uma solicitação de entrada (manager).
+  Future<void> approveJoinRequest(String requestId) async {
+    await _client.rpc('approve_join_request', params: {'p_request_id': requestId});
+  }
+
+  /// Rejeita uma solicitação de entrada (manager).
+  Future<void> rejectJoinRequest(String requestId) async {
+    await _client.rpc('reject_join_request', params: {'p_request_id': requestId});
+  }
+
+  /// Cancela a própria solicitação pendente.
+  Future<void> cancelJoinRequest(String requestId) async {
+    await _client
+        .from('club_join_requests')
+        .delete()
+        .eq('id', requestId)
+        .eq('user_id', _userId);
   }
 
   /// Saída de membro ou admin (não-dono).

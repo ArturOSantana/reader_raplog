@@ -128,21 +128,67 @@ class _FeedTab extends ConsumerWidget {
   }
 }
 
-class _FeedCard extends StatelessWidget {
+class _FeedCard extends ConsumerStatefulWidget {
   final FeedItem item;
   final VoidCallback onLikeToggle;
 
   const _FeedCard({required this.item, required this.onLikeToggle});
 
   @override
+  ConsumerState<_FeedCard> createState() => _FeedCardState();
+}
+
+class _FeedCardState extends ConsumerState<_FeedCard> {
+  // Reações do usuário atual neste post (carregadas lazy)
+  Set<String> _myReactions = {};
+  bool _reactionsLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMyReactions();
+  }
+
+  Future<void> _loadMyReactions() async {
+    final reactions = await ref
+        .read(socialFeedRepositoryProvider)
+        .fetchMyReactions(widget.item.id);
+    if (mounted) setState(() { _myReactions = reactions; _reactionsLoaded = true; });
+  }
+
+  Future<void> _toggleReaction(FeedReactionType type) async {
+    final wasActive = _myReactions.contains(type.dbValue);
+    setState(() {
+      if (wasActive) {
+        _myReactions = Set.from(_myReactions)..remove(type.dbValue);
+      } else {
+        _myReactions = Set.from(_myReactions)..add(type.dbValue);
+      }
+    });
+    await ref
+        .read(socialFeedRepositoryProvider)
+        .toggleReaction(widget.item.id, type);
+  }
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'agora';
+    if (diff.inMinutes < 60) return 'há ${diff.inMinutes}min';
+    if (diff.inHours < 24) return 'há ${diff.inHours}h';
+    if (diff.inDays == 1) return 'ontem';
+    return 'há ${diff.inDays} dias';
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final item = widget.item;
     final timeAgo = _timeAgo(item.createdAt);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar
           _MiniAvatar(
             url: item.userAvatarUrl,
             name: item.userName ?? '?',
@@ -165,19 +211,26 @@ class _FeedCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
-                // Conteúdo do evento
                 _FeedEventContent(item: item),
                 const SizedBox(height: 10),
-                // Like
+                // ── Barra de reações tipadas ──────────────────────────────
+                if (_reactionsLoaded)
+                  _ReactionsBar(
+                    myReactions: _myReactions,
+                    summary: item.reactionsSummary,
+                    onToggle: _toggleReaction,
+                  ),
+                // Like clássico (mantido para compatibilidade)
+                const SizedBox(height: 6),
                 GestureDetector(
-                  onTap: onLikeToggle,
+                  onTap: widget.onLikeToggle,
                   child: Row(
                     children: [
                       Icon(
                         item.likedByMe
                             ? Icons.favorite
                             : Icons.favorite_border,
-                        size: 18,
+                        size: 16,
                         color: item.likedByMe
                             ? AppColors.error
                             : AppColors.textMuted,
@@ -187,6 +240,14 @@ class _FeedCard extends StatelessWidget {
                         '${item.likesCount}',
                         style: AppTextStyles.labelMedium,
                       ),
+                      if (item.commentsCount > 0) ...[
+                        const SizedBox(width: 12),
+                        Icon(Icons.comment_outlined,
+                            size: 16, color: AppColors.textMuted),
+                        const SizedBox(width: 4),
+                        Text('${item.commentsCount}',
+                            style: AppTextStyles.labelMedium),
+                      ],
                     ],
                   ),
                 ),
@@ -197,14 +258,68 @@ class _FeedCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  String _timeAgo(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'agora';
-    if (diff.inMinutes < 60) return 'há ${diff.inMinutes}min';
-    if (diff.inHours < 24) return 'há ${diff.inHours}h';
-    if (diff.inDays == 1) return 'ontem';
-    return 'há ${diff.inDays} dias';
+// ── Barra de reações tipadas ───────────────────────────────────────────────────
+
+class _ReactionsBar extends StatelessWidget {
+  final Set<String> myReactions;
+  final Map<String, int> summary;
+  final void Function(FeedReactionType) onToggle;
+
+  const _ReactionsBar({
+    required this.myReactions,
+    required this.summary,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: FeedReactionType.values.map((type) {
+        final isActive = myReactions.contains(type.dbValue);
+        final count = summary[type.dbValue] ?? 0;
+        return GestureDetector(
+          onTap: () => onToggle(type),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? AppColors.warmGold.withValues(alpha: 0.2)
+                  : AppColors.textMuted.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isActive
+                    ? AppColors.warmGold.withValues(alpha: 0.6)
+                    : Colors.transparent,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(type.emoji, style: const TextStyle(fontSize: 14)),
+                if (count > 0) ...[
+                  const SizedBox(width: 3),
+                  Text(
+                    '$count',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isActive
+                          ? AppColors.warmGold
+                          : AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 }
 

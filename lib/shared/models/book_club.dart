@@ -41,6 +41,53 @@ extension ClubStatusX on ClubStatus {
 
 // ── Visibilidade ──────────────────────────────────────────────────────────────
 
+// ── Categoria ─────────────────────────────────────────────────────────────────
+
+enum ClubCategory {
+  general,
+  fiction,
+  nonfiction,
+  fantasy,
+  scifi,
+  romance,
+  mystery,
+  biography,
+  history,
+  selfhelp,
+  children,
+  classics,
+}
+
+extension ClubCategoryX on ClubCategory {
+  String get dbValue => name;
+
+  String get label {
+    switch (this) {
+      case ClubCategory.general:    return 'Geral';
+      case ClubCategory.fiction:    return 'Ficção';
+      case ClubCategory.nonfiction: return 'Não-ficção';
+      case ClubCategory.fantasy:    return 'Fantasia';
+      case ClubCategory.scifi:      return 'Ficção Científica';
+      case ClubCategory.romance:    return 'Romance';
+      case ClubCategory.mystery:    return 'Mistério';
+      case ClubCategory.biography:  return 'Biografias';
+      case ClubCategory.history:    return 'História';
+      case ClubCategory.selfhelp:   return 'Autoajuda';
+      case ClubCategory.children:   return 'Infantojuvenil';
+      case ClubCategory.classics:   return 'Clássicos';
+    }
+  }
+
+  static ClubCategory fromDb(String? value) {
+    return ClubCategory.values.firstWhere(
+      (c) => c.name == value,
+      orElse: () => ClubCategory.general,
+    );
+  }
+}
+
+// ── Visibilidade ──────────────────────────────────────────────────────────────
+
 enum ClubVisibility { public, private }
 
 extension ClubVisibilityX on ClubVisibility {
@@ -72,6 +119,7 @@ class BookClub extends Equatable {
   final ClubStatus status;
   final DateTime? closedAt;
   final ClubVisibility visibility;
+  final ClubCategory category;
   final String? inviteCode;
   final int maxAdmins;
   final bool adminsCanPromote;
@@ -96,6 +144,7 @@ class BookClub extends Equatable {
     this.status = ClubStatus.active,
     this.closedAt,
     this.visibility = ClubVisibility.private,
+    this.category = ClubCategory.general,
     this.inviteCode,
     this.maxAdmins = 5,
     this.adminsCanPromote = false,
@@ -151,6 +200,8 @@ class BookClub extends Equatable {
             : null,
         visibility:
             ClubVisibilityX.fromDb(map['visibility'] as String?),
+        category:
+            ClubCategoryX.fromDb(map['category'] as String?),
         inviteCode: map['invite_code'] as String?,
         maxAdmins: (map['max_admins'] as num?)?.toInt() ?? 5,
         adminsCanPromote: map['admins_can_promote'] as bool? ?? false,
