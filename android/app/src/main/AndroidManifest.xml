@@ -18,7 +18,7 @@
         android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
         android:minSdkVersion="34"/>
     <application
-        android:label="readlog"
+        android:label="Lumen"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <!-- FileProvider: obrigatório para image_picker_android >= 0.8.12 (câmera) -->

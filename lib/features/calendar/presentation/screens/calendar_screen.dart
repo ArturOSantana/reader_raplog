@@ -80,9 +80,9 @@ class CalendarScreen extends ConsumerWidget {
                   ...meetings.take(5).map((m) => _MeetingCard(meeting: m)),
                   const SizedBox(height: 24),
                 ],
-                // ── Metas ────────────────────────────────────────────────
+                // ── Missões ────────────────────────────────────────────────
                 if (goals.isNotEmpty) ...[
-                  Text('Metas ativas', style: AppTextStyles.headlineMedium),
+                  Text('Missões ativas', style: AppTextStyles.headlineMedium),
                   const SizedBox(height: 12),
                   ...goals.map((g) => _GoalChip(goal: g)),
                 ],

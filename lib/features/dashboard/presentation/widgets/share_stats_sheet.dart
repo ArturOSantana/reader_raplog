@@ -21,7 +21,7 @@ Future<void> showShareStatsSheet({
 }) {
   return showModalBottomSheet(
     context: context,
-    backgroundColor: ReadLogColors.ink,
+    backgroundColor: ReadLogColors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),

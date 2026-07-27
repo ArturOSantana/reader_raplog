@@ -87,7 +87,7 @@ class GoalAchievementCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(2),
                       ),
                       child: Text(
-                        'META ATINGIDA',
+                        'MISSÃO CONCLUÍDA',
                         style: ReadLogType.mono(
                           size: 9,
                           weight: FontWeight.w600,
@@ -171,7 +171,7 @@ class GoalAchievementCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Meta: ${goal.targetValue} ${goal.type.unit}',
+                      'Missão: ${goal.targetValue} ${goal.type.unit}',
                       style: ReadLogType.mono(
                         size: 10,
                         color: ReadLogColors.cream.withValues(alpha: 0.4),

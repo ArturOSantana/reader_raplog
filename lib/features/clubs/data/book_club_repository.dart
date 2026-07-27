@@ -3,10 +3,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../shared/models/book_club.dart';
 import '../../../shared/models/club_bets_and_polls.dart';
 import '../../../shared/models/club_extras.dart';
+import '../../../shared/models/club_presence_stats.dart';
 import '../../../shared/models/club_reviews.dart';
 import '../../../shared/models/club_schedule_milestones_challenges.dart';
 import '../../../shared/models/club_seals.dart';
-import '../../../shared/models/club_stories_and_capsule.dart';
 import '../../../shared/models/reading_session.dart';
 import '../../../shared/models/social_feed.dart';
 
@@ -15,7 +15,13 @@ class BookClubRepository {
 
   BookClubRepository(this._client);
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Usuário não autenticado.');
+    }
+    return userId;
+  }
 
   // ── Listar clubes do usuário ─────────────────────────────────────────────
 
@@ -32,23 +38,40 @@ class BookClubRepository {
         )
         .eq('user_id', _userId);
 
-    final List<BookClub> clubs = [];
-    for (final row in (data as List)) {
-      final clubMap = row['club'] as Map<String, dynamic>?;
-      if (clubMap == null) continue;
+    final rows = (data as List)
+        .map((row) => Map<String, dynamic>.from(row as Map))
+        .toList();
+    final clubIds = rows
+        .map((row) => (row['club'] as Map<String, dynamic>?)?['id'] as String?)
+        .whereType<String>()
+        .toList();
 
-      final countData = await _client
+    Map<String, int> memberCounts = {};
+    if (clubIds.isNotEmpty) {
+      final countRows = await _client
           .from('book_club_members')
-          .select('id')
-          .eq('club_id', clubMap['id'] as String);
-
-      clubs.add(BookClub.fromMap({
-        ...clubMap,
-        'member_count': (countData as List).length,
-        'member_role': row['role'],
-      }));
+          .select('club_id')
+          .inFilter('club_id', clubIds);
+      for (final row in (countRows as List)) {
+        final clubId = row['club_id'] as String?;
+        if (clubId == null) continue;
+        memberCounts[clubId] = (memberCounts[clubId] ?? 0) + 1;
+      }
     }
-    return clubs;
+
+    return rows.map((row) {
+      final clubMap = row['club'] as Map<String, dynamic>?;
+      if (clubMap == null) {
+        throw StateError('Clube inválido retornado para o usuário.');
+      }
+
+      final clubId = clubMap['id'] as String;
+      return BookClub.fromMap({
+        ...clubMap,
+        'member_count': memberCounts[clubId] ?? 0,
+        'member_role': row['role'],
+      });
+    }).toList();
   }
 
   // ── Buscar clube por ID ──────────────────────────────────────────────────
@@ -834,107 +857,6 @@ class BookClubRepository {
         .toList();
   }
 
-  // ── Apostas Amistosas ────────────────────────────────────────────────────
-
-  Future<List<ClubBet>> listBets(String clubId) async {
-    final data = await _client
-        .from('club_bets')
-        .select()
-        .eq('club_id', clubId)
-        .order('created_at', ascending: false);
-    return (data as List)
-        .map((e) => ClubBet.fromMap(e as Map<String, dynamic>))
-        .toList();
-  }
-
-  Future<ClubBet> createBet({
-    required String clubId,
-    required String description,
-    required BetStakeType stakeType,
-    String? stakeDescription,
-    String? resolutionCriteria,
-    String sideALabel = 'Sim',
-    String sideBLabel = 'Não',
-    DateTime? resolvesAt,
-  }) async {
-    final data = await _client
-        .from('club_bets')
-        .insert({
-          'club_id': clubId,
-          'created_by': _userId,
-          'description': description,
-          'stake_type': stakeType.dbValue,
-          'stake_description': stakeDescription,
-          'resolution_criteria': resolutionCriteria,
-          'side_a_label': sideALabel,
-          'side_b_label': sideBLabel,
-          'resolves_at': resolvesAt?.toIso8601String(),
-        })
-        .select()
-        .single();
-    return ClubBet.fromMap(data);
-  }
-
-  Future<void> joinBet(String betId, String side) async {
-    // Usa RPC SECURITY DEFINER para evitar ambiguidade de RLS no upsert direto.
-    // A RPC valida membership e faz INSERT ... ON CONFLICT DO UPDATE atomicamente.
-    await _client.rpc('join_bet', params: {
-      'p_bet_id': betId,
-      'p_side': side,
-    });
-  }
-
-  Future<void> leaveBet(String betId) async {
-    await _client
-        .from('club_bet_participants')
-        .delete()
-        .eq('bet_id', betId)
-        .eq('user_id', _userId);
-  }
-
-  Future<List<ClubBetParticipant>> listBetParticipants(String betId) async {
-    final data = await _client
-        .from('club_bet_participants')
-        .select('*, profile:profiles(name, avatar_url)')
-        .eq('bet_id', betId)
-        .order('joined_at');
-    return (data as List)
-        .map((e) => ClubBetParticipant.fromMap(e as Map<String, dynamic>))
-        .toList();
-  }
-
-  Future<void> resolveBet(String betId, String winnerSide) async {
-    await _client.rpc('resolve_bet', params: {
-      'p_bet_id': betId,
-      'p_winner_side': winnerSide,
-    });
-  }
-
-  Future<void> cancelBet(String betId) async {
-    await _client.rpc('cancel_bet', params: {'p_bet_id': betId});
-  }
-
-  /// Encerra automaticamente apostas com [resolves_at] vencido no clube.
-  /// Deve ser chamado antes de [listBets] como fallback quando pg_cron
-  /// não estiver disponível.
-  Future<void> refreshExpiredBets(String clubId) async {
-    await _client
-        .rpc('refresh_expired_bets', params: {'p_club_id': clubId});
-  }
-
-  Future<List<BetLeaderboardEntry>> fetchBetsLeaderboard(
-    String clubId, {
-    int minBets = 2,
-  }) async {
-    final data = await _client.rpc('club_bets_leaderboard', params: {
-      'p_club_id': clubId,
-      'p_min_bets': minBets,
-    });
-    return (data as List)
-        .map((e) => BetLeaderboardEntry.fromMap(e as Map<String, dynamic>))
-        .toList();
-  }
-
   // ── Votações Livres (Open Polls) ─────────────────────────────────────────
 
   Future<List<ClubOpenPoll>> listOpenPolls(String clubId) async {
@@ -1136,8 +1058,6 @@ class BookClubRepository {
     required String awardedTo,
     required SealType sealType,
     String? description,
-    String? customEmoji,
-    String? customLabel,
     String? bookHistoryId,
     String? challengeId,
   }) async {
@@ -1149,8 +1069,6 @@ class BookClubRepository {
           'awarded_by': _userId,
           'seal_type': sealType.dbValue,
           if (description?.isNotEmpty == true) 'description': description,
-          if (customEmoji?.isNotEmpty == true) 'custom_emoji': customEmoji,
-          if (customLabel?.isNotEmpty == true) 'custom_label': customLabel,
           if (bookHistoryId != null) 'book_history_id': bookHistoryId,
           if (challengeId != null) 'challenge_id': challengeId,
         })
@@ -1187,86 +1105,6 @@ class BookClubRepository {
         .toList();
   }
 
-  // ── Stories (V2) ──────────────────────────────────────────────────────────────
-
-  /// Retorna stories ativos do clube (ainda não expirados).
-  Future<List<ClubStory>> listStories(String clubId) async {
-    final data = await _client
-        .from('active_club_stories')
-        .select()
-        .eq('club_id', clubId)
-        .order('created_at', ascending: false);
-    return (data as List)
-        .map((e) => ClubStory.fromMap(e as Map<String, dynamic>))
-        .toList();
-  }
-
-  /// Cria um story de texto.
-  Future<String> createTextStory({
-    required String clubId,
-    required String content,
-  }) async {
-    final result = await _client.rpc('create_club_story', params: {
-      'p_club_id': clubId,
-      'p_story_type': 'text',
-      'p_content': content,
-    });
-    return result as String;
-  }
-
-  /// Faz upload de uma imagem e cria um story do tipo image.
-  /// Retorna o ID do story criado.
-  Future<String> createImageStory({
-    required String clubId,
-    required File imageFile,
-    String? caption,
-  }) async {
-    final ext = imageFile.path.split('.').last.toLowerCase();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final path = '$clubId/stories/$timestamp.$ext';
-
-    await _client.storage
-        .from('club-covers')
-        .upload(path, imageFile,
-            fileOptions: const FileOptions(upsert: false));
-
-    final imageUrl =
-        _client.storage.from('club-covers').getPublicUrl(path);
-
-    final result = await _client.rpc('create_club_story', params: {
-      'p_club_id': clubId,
-      'p_story_type': 'image',
-      'p_image_url': imageUrl,
-      if (caption != null && caption.isNotEmpty) 'p_caption': caption,
-    });
-    return result as String;
-  }
-
-  /// Cria um story de progresso de livro.
-  Future<String> createBookProgressStory({
-    required String clubId,
-    required String bookId,
-    String? caption,
-  }) async {
-    final result = await _client.rpc('create_club_story', params: {
-      'p_club_id': clubId,
-      'p_story_type': 'book_progress',
-      'p_book_id': bookId,
-      if (caption != null) 'p_caption': caption,
-    });
-    return result as String;
-  }
-
-  /// Marca um story como visto pelo usuário atual.
-  Future<void> markStoryViewed(String storyId) async {
-    await _client.rpc('mark_story_viewed', params: {'p_story_id': storyId});
-  }
-
-  /// Deleta um story (autor ou manager).
-  Future<void> deleteStory(String storyId) async {
-    await _client.from('club_stories').delete().eq('id', storyId);
-  }
-
   // ── Momento do Clube (V2) ─────────────────────────────────────────────────────
 
   /// Confirma a presença do usuário no Momento de hoje.
@@ -1287,52 +1125,6 @@ class BookClubRepository {
     final result = await _client.rpc(
         'user_confirmed_moment_today', params: {'p_club_id': clubId});
     return result as bool? ?? false;
-  }
-
-  // ── Cápsula do Tempo (V3) ─────────────────────────────────────────────────────
-
-  /// Retorna mensagens da cápsula do tempo do clube
-  /// (reveladas + as próprias do usuário pendentes).
-  Future<List<ClubTimeCapsuleEntry>> listTimeCapsule(String clubId) async {
-    final data = await _client
-        .from('club_time_capsule')
-        .select('*, profile:profiles!author_id(name)')
-        .eq('club_id', clubId)
-        .order('reveal_at', ascending: true);
-    return (data as List)
-        .map((e) => ClubTimeCapsuleEntry.fromMap({
-              ...e as Map<String, dynamic>,
-              'author_name':
-                  (e['profile'] as Map<String, dynamic>?)?['name'],
-            }))
-        .toList();
-  }
-
-  /// Deposita uma mensagem na cápsula do tempo.
-  Future<void> addTimeCapsuleMessage({
-    required String clubId,
-    required String message,
-    String? bookId,
-    String? bookTitle,
-    DateTime? revealAt,
-  }) async {
-    await _client.from('club_time_capsule').insert({
-      'club_id': clubId,
-      'author_id': _userId,
-      'message': message,
-      if (bookId != null) 'book_id': bookId,
-      if (bookTitle != null) 'book_title': bookTitle,
-      if (revealAt != null) 'reveal_at': revealAt.toIso8601String(),
-    });
-  }
-
-  /// Deleta uma mensagem da cápsula antes de ser revelada.
-  Future<void> deleteTimeCapsuleMessage(String capsuleId) async {
-    await _client
-        .from('club_time_capsule')
-        .delete()
-        .eq('id', capsuleId)
-        .eq('author_id', _userId);
   }
 
   // ── Estatísticas Avançadas (V3) ───────────────────────────────────────────────
@@ -1433,5 +1225,83 @@ class BookClubRepository {
         .maybeSingle();
     if (data == null) return null;
     return ClubReview.fromMap(Map<String, dynamic>.from(data as Map));
+  }
+
+  // ── Presença em tempo real ───────────────────────────────────────────────
+
+  /// Atualiza o last_seen_at do usuário atual.
+  Future<void> updateMyPresence() async {
+    await _client.rpc('update_my_presence');
+  }
+
+  /// Retorna membros do clube que estiveram ativos nos últimos [windowMinutes].
+  Future<List<ClubPresenceMember>> fetchPresence(
+    String clubId, {
+    int windowMinutes = 30,
+  }) async {
+    final data = await _client.rpc('club_presence', params: {
+      'p_club_id': clubId,
+      'p_window_minutes': windowMinutes,
+    });
+    return (data as List)
+        .map((e) => ClubPresenceMember.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ── Estatísticas coletivas ───────────────────────────────────────────────
+
+  /// Retorna totais históricos do clube + contribuição % do usuário atual.
+  Future<ClubCollectiveStats?> fetchCollectiveStats(String clubId) async {
+    final data = await _client.rpc(
+      'club_collective_stats',
+      params: {'p_club_id': clubId},
+    );
+    final list = data as List;
+    if (list.isEmpty) return null;
+    return ClubCollectiveStats.fromMap(list.first as Map<String, dynamic>);
+  }
+
+  // ── Heatmap social ───────────────────────────────────────────────────────
+
+  /// Retorna atividade coletiva do clube por dia nos últimos [days] dias.
+  Future<List<ClubHeatmapDay>> fetchSocialHeatmap(
+    String clubId, {
+    int days = 30,
+  }) async {
+    final data = await _client.rpc('club_social_heatmap', params: {
+      'p_club_id': clubId,
+      'p_days': days,
+    });
+    return (data as List)
+        .map((e) => ClubHeatmapDay.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ── Mentor ───────────────────────────────────────────────────────────────
+
+  /// Promove ou rebaixa um membro para o papel de mentor.
+  Future<void> setMentor({
+    required String clubId,
+    required String userId,
+    required bool promote,
+  }) async {
+    await _client.rpc('set_club_mentor', params: {
+      'p_club_id': clubId,
+      'p_user_id': userId,
+      'p_promote': promote,
+    });
+  }
+
+  /// Mentor dá boas-vindas a um novo membro (publica no feed do clube).
+  Future<void> mentorWelcomeMember({
+    required String clubId,
+    required String newMemberId,
+    String? message,
+  }) async {
+    await _client.rpc('mentor_welcome_member', params: {
+      'p_club_id': clubId,
+      'p_new_member_id': newMemberId,
+      if (message != null) 'p_message': message,
+    });
   }
 }

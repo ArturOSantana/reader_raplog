@@ -54,6 +54,7 @@ class Friend extends Equatable {
   final String? avatarUrl;
   final String? bio;
   final DateTime createdAt;
+  final DateTime? lastSeenAt;
 
   const Friend({
     required this.id,
@@ -62,10 +63,34 @@ class Friend extends Equatable {
     this.avatarUrl,
     this.bio,
     required this.createdAt,
+    this.lastSeenAt,
   });
+
+  /// Minutos desde a última atividade registrada.
+  int? get minutesAgo {
+    if (lastSeenAt == null) return null;
+    return DateTime.now().difference(lastSeenAt!).inMinutes;
+  }
+
+  /// Considera "ativo" se visto há menos de 5 minutos.
+  bool get isActive => minutesAgo != null && minutesAgo! < 5;
+
+  /// Considera "recente" se visto há menos de 30 minutos.
+  bool get isRecentlyActive => minutesAgo != null && minutesAgo! < 30;
+
+  /// Label legível de presença.
+  String? get presenceLabel {
+    final mins = minutesAgo;
+    if (mins == null) return null;
+    if (mins < 1)  return 'lendo agora';
+    if (mins < 60) return 'há $mins min';
+    final h = mins ~/ 60;
+    return 'há ${h}h';
+  }
 
   factory Friend.fromMap(Map<String, dynamic> map) {
     final profile = map['friend_profile'] as Map<String, dynamic>? ?? {};
+    final rawSeen = profile['last_seen_at'] as String?;
     return Friend(
       id: map['id'] as String,
       friendId: map['friend_id'] as String,
@@ -73,6 +98,7 @@ class Friend extends Equatable {
       avatarUrl: profile['avatar_url'] as String?,
       bio: profile['bio'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
+      lastSeenAt: rawSeen != null ? DateTime.tryParse(rawSeen) : null,
     );
   }
 

@@ -15,7 +15,13 @@ class OfflineProfileRepository {
 
   OfflineProfileRepository(this._client, this._isOnline);
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Usuário não autenticado.');
+    }
+    return userId;
+  }
 
   Future<UserProfile?> fetch() async {
     if (_isOnline()) {

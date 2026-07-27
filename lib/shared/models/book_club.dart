@@ -125,7 +125,7 @@ class BookClub extends Equatable {
   final bool? readingMomentActive;
 
   // Dados de membro (preenchido ao listar clubes do usuário)
-  final String? memberRole; // 'owner' | 'admin' | 'member'
+  final String? memberRole; // 'owner' | 'admin' | 'mentor' | 'member'
 
   const BookClub({
     required this.id,
@@ -157,8 +157,9 @@ class BookClub extends Equatable {
 
   // ── Helpers de papel ───────────────────────────────────────────────────────
 
-  bool get isOwner => memberRole == 'owner';
-  bool get isAdmin => memberRole == 'admin';
+  bool get isOwner  => memberRole == 'owner';
+  bool get isAdmin  => memberRole == 'admin';
+  bool get isMentor => memberRole == 'mentor';
 
   /// Pode gerenciar o clube (dono ou admin).
   bool get canManage => memberRole == 'owner' || memberRole == 'admin';
@@ -226,7 +227,7 @@ class ClubMember extends Equatable {
   final String id;
   final String clubId;
   final String userId;
-  final String role; // 'owner' | 'admin' | 'member'
+  final String role; // 'owner' | 'admin' | 'mentor' | 'member'
   final String? name;
   final String? avatarUrl;
   final DateTime joinedAt;
@@ -241,18 +242,17 @@ class ClubMember extends Equatable {
     required this.joinedAt,
   });
 
-  bool get isOwner => role == 'owner';
-  bool get isAdmin => role == 'admin';
+  bool get isOwner  => role == 'owner';
+  bool get isAdmin  => role == 'admin';
+  bool get isMentor => role == 'mentor';
   bool get canManage => role == 'owner' || role == 'admin';
 
   String get roleLabel {
     switch (role) {
-      case 'owner':
-        return 'Dono';
-      case 'admin':
-        return 'Admin';
-      default:
-        return 'Membro';
+      case 'owner':  return 'Dono';
+      case 'admin':  return 'Admin';
+      case 'mentor': return 'Mentor';
+      default:       return 'Membro';
     }
   }
 

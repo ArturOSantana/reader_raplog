@@ -18,6 +18,8 @@ import '../../../../shared/models/club_seals.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../library/data/book_search_result.dart';
 import '../../../library/data/book_search_service.dart';
+import '../widgets/club_presence_strip.dart';
+import '../widgets/club_collective_stats_card.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -69,11 +71,6 @@ final _clubChallengesProvider =
 final _clubStreakProvider =
     FutureProvider.family<int, String>((ref, clubId) {
   return ref.watch(bookClubRepositoryProvider).fetchClubStreak(clubId);
-});
-
-final _clubBetsProvider =
-    FutureProvider.family<List<ClubBet>, String>((ref, clubId) {
-  return ref.watch(bookClubRepositoryProvider).listBets(clubId);
 });
 
 final _clubOpenPollsProvider =
@@ -135,17 +132,16 @@ class _ClubDetailBody extends ConsumerWidget {
       ref.invalidate(_clubChallengesProvider(clubId));
     });
 
-    final hasBetBadge =
-        (ref.watch(_clubBetsProvider(clubId)).valueOrNull ?? [])
-            .where((b) => b.isOpen)
-            .isNotEmpty;
     final hasPollBadge =
         (ref.watch(_clubOpenPollsProvider(clubId)).valueOrNull ?? [])
             .where((p) => p.isOpen)
             .isNotEmpty;
 
+    // Invalida presença e stats ao refrescar
+    // (já invalidado no onRefresh abaixo via clubPresenceProvider)
+
     return Scaffold(
-      backgroundColor: ReadLogColors.ink,
+      backgroundColor: ReadLogColors.surface,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_clubDetailProvider(clubId));
@@ -158,8 +154,10 @@ class _ClubDetailBody extends ConsumerWidget {
           ref.invalidate(_clubHallOfFameProvider(clubId));
           ref.invalidate(_clubChallengesProvider(clubId));
           ref.invalidate(_clubStreakProvider(clubId));
-          ref.invalidate(_clubBetsProvider(clubId));
           ref.invalidate(_clubOpenPollsProvider(clubId));
+          ref.invalidate(clubPresenceProvider(clubId));
+          ref.invalidate(clubCollectiveStatsProvider(clubId));
+          ref.invalidate(clubSocialHeatmapProvider(clubId));
         },
         child: CustomScrollView(
           slivers: [
@@ -203,6 +201,12 @@ class _ClubDetailBody extends ConsumerWidget {
               const SizedBox(height: 8),
               _ReadingNowSection(clubId: clubId),
             ],
+            const SizedBox(height: 16),
+            // ── Presença em tempo real ────────────────────────────────
+            ClubPresenceStrip(clubId: clubId),
+            const SizedBox(height: 20),
+            // ── Métricas coletivas ────────────────────────────────────
+            ClubCollectiveStatsCard(clubId: clubId),
             const SizedBox(height: 20),
             // ════════════════════════════════════════════════════════════
             // NÍVEL 2 — EXPLORAR (grid de atalhos)
@@ -210,13 +214,21 @@ class _ClubDetailBody extends ConsumerWidget {
             _SectionLabel('Explorar'),
             const SizedBox(height: 8),
             ReadLogSectionRail(
-              dark: true,
+              dark: false,
               tiles: [
                 ReadLogSectionTile(
                   icon: Icons.dynamic_feed_outlined,
                   label: 'Feed',
                   onTap: () => context.push(
                     '/clubs/$clubId/feed',
+                    extra: {'clubName': club.name},
+                  ),
+                ),
+                ReadLogSectionTile(
+                  icon: Icons.local_library_outlined,
+                  label: 'Reading Room',
+                  onTap: () => context.push(
+                    '/clubs/$clubId/reading-room',
                     extra: {'clubName': club.name},
                   ),
                 ),
@@ -232,18 +244,8 @@ class _ClubDetailBody extends ConsumerWidget {
                     }
                   },
                 ),
-                ReadLogSectionTile(
-                  icon: Icons.casino_outlined,
-                  label: 'Apostas',
-                  hasBadge: hasBetBadge,
-                  onTap: () => context.push(
-                    '/clubs/$clubId/bets',
-                    extra: {
-                      'clubName': club.name,
-                      'canManage': club.canManage,
-                    },
-                  ),
-                ),
+                // Apostas removidas da navegação principal (V2).
+                // Funcionalidade disponível, mas requer comunidade ativa.
                 ReadLogSectionTile(
                   icon: Icons.how_to_vote_outlined,
                   label: 'Votações',
@@ -254,6 +256,14 @@ class _ClubDetailBody extends ConsumerWidget {
                       'clubName': club.name,
                       'canManage': club.canManage,
                     },
+                  ),
+                ),
+                ReadLogSectionTile(
+                  icon: Icons.grid_view_outlined,
+                  label: 'Heatmap',
+                  onTap: () => context.push(
+                    '/clubs/$clubId/social-heatmap',
+                    extra: {'clubName': club.name},
                   ),
                 ),
                 ReadLogSectionTile(
@@ -283,14 +293,9 @@ class _ClubDetailBody extends ConsumerWidget {
                     });
                   },
                 ),
-                ReadLogSectionTile(
-                  icon: Icons.auto_stories_outlined,
-                  label: 'Stories',
-                  onTap: () => context.push(
-                    '/clubs/$clubId/stories',
-                    extra: {'clubName': club.name},
-                  ),
-                ),
+                // Stories removidos da navegação principal (V2).
+                // A rota /clubs/:id/stories ainda existe no router para
+                // compatibilidade com links existentes, mas não é exposta na UI.
                 ReadLogSectionTile(
                   icon: Icons.people_outline,
                   label: 'Membros',
@@ -322,15 +327,8 @@ class _ClubDetailBody extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-            _MemoryAccordion(
-              icon: Icons.hourglass_empty_outlined,
-              title: 'Cápsula do Tempo',
-              onTap: () => context.push(
-                '/clubs/$clubId/capsule',
-                extra: {'clubName': club.name},
-              ),
-            ),
+            // Cápsula do Tempo adiada para V3.
+            // A tela e as migrations existem, mas não está exposta na UI.
             const SizedBox(height: 20),
             // ════════════════════════════════════════════════════════════
             // SEÇÕES SCROLL-DESTINO (abaixo do fold)
@@ -374,7 +372,7 @@ class _ClubDetailBody extends ConsumerWidget {
   void _showManageMenu(BuildContext context, WidgetRef ref, BookClub club) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: ReadLogColors.inkAlt,
+      backgroundColor: ReadLogColors.surfaceVariant,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -1185,44 +1183,7 @@ class _MemberTile extends ConsumerWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (!member.isOwner)
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: member.isAdmin
-                    ? AppColors.warmGold.withValues(alpha: 0.22)
-                    : ReadLogColors.cream.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                member.roleLabel,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: member.isAdmin
-                      ? AppColors.warmGold
-                      : ReadLogColors.cream.withValues(alpha: 0.75),
-                ),
-              ),
-            )
-          else
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.warmGold.withValues(alpha: 0.22),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                'Dono',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.warmGold,
-                ),
-              ),
-            ),
+          _RoleBadge(member: member),
           if (canActOnMember && !club.isClosed)
             PopupMenuButton<String>(
               icon: Icon(Icons.more_vert,
@@ -1238,7 +1199,9 @@ class _MemberTile extends ConsumerWidget {
 
   List<PopupMenuEntry<String>> _memberMenuItems() {
     final items = <PopupMenuEntry<String>>[];
-    if (member.role == 'member' &&
+
+    // Promover para Admin (member ou mentor → admin)
+    if ((member.role == 'member' || member.role == 'mentor') &&
         (club.isOwner ||
             (club.isAdmin && club.adminsCanPromote))) {
       items.add(const PopupMenuItem(
@@ -1250,6 +1213,32 @@ class _MemberTile extends ConsumerWidget {
         ),
       ));
     }
+
+    // Tornar Mentor (apenas member → mentor, por owner ou admin)
+    if (member.role == 'member' && club.canManage) {
+      items.add(const PopupMenuItem(
+        value: 'make_mentor',
+        child: ListTile(
+          leading: Icon(Icons.school_outlined),
+          title: Text('Tornar Mentor'),
+          contentPadding: EdgeInsets.zero,
+        ),
+      ));
+    }
+
+    // Remover papel de Mentor (mentor → member)
+    if (member.isMentor && club.canManage) {
+      items.add(const PopupMenuItem(
+        value: 'remove_mentor',
+        child: ListTile(
+          leading: Icon(Icons.school_outlined),
+          title: Text('Remover papel de Mentor'),
+          contentPadding: EdgeInsets.zero,
+        ),
+      ));
+    }
+
+    // Rebaixar Admin para Membro (somente owner)
     if (member.role == 'admin' && club.isOwner) {
       items.add(const PopupMenuItem(
         value: 'demote',
@@ -1260,6 +1249,19 @@ class _MemberTile extends ConsumerWidget {
         ),
       ));
     }
+
+    // Boas-vindas de mentor (só o próprio mentor vê, para membros que entraram recentemente)
+    if (club.isMentor && !member.isOwner && !member.isAdmin) {
+      items.add(const PopupMenuItem(
+        value: 'welcome',
+        child: ListTile(
+          leading: Icon(Icons.waving_hand_outlined),
+          title: Text('Dar boas-vindas'),
+          contentPadding: EdgeInsets.zero,
+        ),
+      ));
+    }
+
     if (!member.isOwner) {
       if (items.isNotEmpty) items.add(const PopupMenuDivider());
       items.add(const PopupMenuItem(
@@ -1282,8 +1284,17 @@ class _MemberTile extends ConsumerWidget {
       case 'promote':
         _confirmPromotion(context, ref);
         break;
+      case 'make_mentor':
+        _confirmSetMentor(context, ref, promote: true);
+        break;
+      case 'remove_mentor':
+        _confirmSetMentor(context, ref, promote: false);
+        break;
       case 'demote':
         _confirmDemotion(context, ref);
+        break;
+      case 'welcome':
+        _sendWelcome(context, ref);
         break;
       case 'remove':
         _confirmRemoval(context, ref);
@@ -1372,6 +1383,83 @@ class _MemberTile extends ConsumerWidget {
     );
   }
 
+  void _confirmSetMentor(BuildContext context, WidgetRef ref,
+      {required bool promote}) {
+    final action = promote ? 'Tornar Mentor' : 'Remover papel de Mentor';
+    final body = promote
+        ? 'Tornar "${member.name ?? 'este membro'}" Mentor do clube?'
+        : 'Remover o papel de Mentor de "${member.name ?? 'este mentor'}"?';
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(action),
+        content: Text(body),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await ref.read(bookClubRepositoryProvider).setMentor(
+                    clubId: clubId,
+                    userId: member.userId,
+                    promote: promote,
+                  );
+              ref.invalidate(_clubMembersProvider(clubId));
+            },
+            child: Text(action),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _sendWelcome(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController();
+    final defaultMsg =
+        'Bem-vindo(a) ao clube, ${member.name ?? 'novo leitor'}! 📚';
+    controller.text = defaultMsg;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Dar boas-vindas'),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Mensagem de boas-vindas…',
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar')),
+          FilledButton(
+            onPressed: () async {
+              final msg = controller.text.trim();
+              Navigator.pop(context);
+              await ref
+                  .read(bookClubRepositoryProvider)
+                  .mentorWelcomeMember(
+                    clubId: clubId,
+                    newMemberId: member.userId,
+                    message: msg.isNotEmpty ? msg : null,
+                  );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Mensagem de boas-vindas enviada!')),
+                );
+              }
+            },
+            child: const Text('Enviar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _initials(String name) {
     final parts = name.trim().split(' ');
     final text = parts.length >= 2
@@ -1385,6 +1473,54 @@ class _MemberTile extends ConsumerWidget {
           fontWeight: FontWeight.w600,
           fontSize: 13,
         ));
+  }
+}
+
+// ── Badge de papel do membro ──────────────────────────────────────────────────
+
+class _RoleBadge extends StatelessWidget {
+  final ClubMember member;
+  const _RoleBadge({required this.member});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color bg;
+    final Color fg;
+    final String label;
+
+    if (member.isOwner) {
+      bg = AppColors.warmGold.withValues(alpha: 0.22);
+      fg = AppColors.warmGold;
+      label = 'Dono';
+    } else if (member.isAdmin) {
+      bg = AppColors.warmGold.withValues(alpha: 0.22);
+      fg = AppColors.warmGold;
+      label = 'Admin';
+    } else if (member.isMentor) {
+      bg = ReadLogColors.sage.withValues(alpha: 0.18);
+      fg = ReadLogColors.sage;
+      label = 'Mentor';
+    } else {
+      bg = ReadLogColors.cream.withValues(alpha: 0.10);
+      fg = ReadLogColors.cream.withValues(alpha: 0.75);
+      label = 'Membro';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: fg,
+        ),
+      ),
+    );
   }
 }
 
@@ -3607,153 +3743,6 @@ class _CreateChallengesheetState extends ConsumerState<_CreateChallengeSheet> {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// SEÇÃO: APOSTAS AMISTOSAS
-// ════════════════════════════════════════════════════════════════════════════
-
-// ── Sheet: Criar Aposta ───────────────────────────────────────────────────────
-
-class _CreateBetSheet extends ConsumerStatefulWidget {
-  final String clubId;
-  final VoidCallback onSaved;
-
-  const _CreateBetSheet({required this.clubId, required this.onSaved});
-
-  @override
-  ConsumerState<_CreateBetSheet> createState() => _CreateBetSheetState();
-}
-
-class _CreateBetSheetState extends ConsumerState<_CreateBetSheet> {
-  final _descCtrl = TextEditingController();
-  final _sideACtrl = TextEditingController(text: 'Sim');
-  final _sideBCtrl = TextEditingController(text: 'Não');
-  BetStakeType _stakeType = BetStakeType.cafe;
-  bool _loading = false;
-
-  @override
-  void dispose() {
-    _descCtrl.dispose();
-    _sideACtrl.dispose();
-    _sideBCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    final desc = _descCtrl.text.trim();
-    if (desc.isEmpty) return;
-    setState(() => _loading = true);
-    try {
-      await ref.read(bookClubRepositoryProvider).createBet(
-            clubId: widget.clubId,
-            description: desc,
-            stakeType: _stakeType,
-            sideALabel: _sideACtrl.text.trim().isEmpty ? 'Sim' : _sideACtrl.text.trim(),
-            sideBLabel: _sideBCtrl.text.trim().isEmpty ? 'Não' : _sideBCtrl.text.trim(),
-          );
-      if (mounted) {
-        Navigator.pop(context);
-        widget.onSaved();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Erro: $e')));
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20, right: 20, top: 20,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36, height: 4,
-                decoration: BoxDecoration(
-                  color: cs.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text('🎲 Nova Aposta',
-                style: AppTextStyles.headlineMedium.copyWith(color: cs.onSurface)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _descCtrl,
-              maxLines: 2,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Descrição da aposta *',
-                hintText: 'Ex: Quem vai terminar o livro primeiro?',
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text('Prêmio', style: AppTextStyles.labelMedium),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: BetStakeType.values.map((t) {
-                final selected = _stakeType == t;
-                return ChoiceChip(
-                  label: Text('${t.emoji} ${t.dbValue}'),
-                  selected: selected,
-                  onSelected: (_) => setState(() => _stakeType = t),
-                  selectedColor: AppColors.forestGreen.withValues(alpha: 0.2),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _sideACtrl,
-                    decoration: const InputDecoration(labelText: 'Lado A'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _sideBCtrl,
-                    decoration: const InputDecoration(labelText: 'Lado B'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _loading ? null : _save,
-                style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.forestGreen),
-                child: _loading
-                    ? const SizedBox(
-                        height: 20, width: 20,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Text('Criar aposta'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════════════════════════════
 // SEÇÃO: VOTAÇÕES LIVRES (OPEN POLLS)
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -4136,13 +4125,11 @@ class _MemoryAccordion extends StatefulWidget {
   final IconData icon;
   final String title;
   final Widget? child;
-  final VoidCallback? onTap;
 
   const _MemoryAccordion({
     required this.icon,
     required this.title,
     this.child,
-    this.onTap,
   });
 
   @override
@@ -4169,13 +4156,9 @@ class _MemoryAccordionState extends State<_MemoryAccordion> {
         children: [
           InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              if (widget.onTap != null) {
-                widget.onTap!();
-              } else if (widget.child != null) {
-                setState(() => _expanded = !_expanded);
-              }
-            },
+            onTap: widget.child != null
+                ? () => setState(() => _expanded = !_expanded)
+                : null,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
@@ -4190,11 +4173,7 @@ class _MemoryAccordionState extends State<_MemoryAccordion> {
                     ),
                   ),
                   Icon(
-                    widget.onTap != null
-                        ? Icons.chevron_right
-                        : (_expanded
-                            ? Icons.expand_less
-                            : Icons.expand_more),
+                    _expanded ? Icons.expand_less : Icons.expand_more,
                     size: 20,
                     color: cs.onSurfaceVariant,
                   ),

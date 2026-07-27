@@ -44,6 +44,20 @@ extension GoalTypeX on GoalType {
     }
   }
 
+  /// Texto de missão — linguagem leve, orientada à ação.
+  String get missionLabel {
+    switch (this) {
+      case GoalType.dailyPages:
+        return 'Leia páginas hoje';
+      case GoalType.dailyMinutes:
+        return 'Leia por minutos hoje';
+      case GoalType.yearlyBooks:
+        return 'Leia livros este ano';
+      case GoalType.monthlyPages:
+        return 'Leia páginas este mês';
+    }
+  }
+
   String get unit {
     switch (this) {
       case GoalType.dailyPages:

@@ -6,7 +6,13 @@ class SessionRepository {
 
   SessionRepository(this._client);
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Usuário não autenticado.');
+    }
+    return userId;
+  }
 
   Future<ReadingSession> startSession({
     required String bookId,
@@ -30,6 +36,10 @@ class SessionRepository {
         })
         .select()
         .single();
+
+    // Atualiza presença em tempo real (fire-and-forget — erro não bloqueia sessão)
+    _client.rpc('update_my_presence').catchError((_) {});
+
     return ReadingSession.fromMap(data);
   }
 

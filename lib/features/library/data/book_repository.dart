@@ -6,25 +6,26 @@ class BookRepository {
 
   BookRepository(this._client);
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Usuário não autenticado.');
+    }
+    return userId;
+  }
 
   Future<List<Book>> fetchAll({BookStatus? status}) async {
-    var query = _client
+    final userId = _userId;
+    final query = _client
         .from('books')
         .select()
-        .eq('user_id', _userId)
-        .order('updated_at', ascending: false);
+        .eq('user_id', userId);
 
     if (status != null) {
-      query = _client
-          .from('books')
-          .select()
-          .eq('user_id', _userId)
-          .eq('status', status.dbValue)
-          .order('updated_at', ascending: false);
+      query.eq('status', status.dbValue);
     }
 
-    final data = await query;
+    final data = await query.order('updated_at', ascending: false);
     return (data as List).map((e) => Book.fromMap(e)).toList();
   }
 

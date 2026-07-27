@@ -16,7 +16,7 @@ class GoalsScreen extends ConsumerWidget {
     final goals = ref.watch(_goalsProvider);
 
     return Scaffold(
-      appBar: AppBar(automaticallyImplyLeading: false, title: const Text('Metas')),
+      appBar: AppBar(automaticallyImplyLeading: false, title: const Text('Missões')),
       body: goals.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erro: $e')),
@@ -63,13 +63,13 @@ class _GoalsList extends ConsumerWidget {
               const Icon(Icons.flag_outlined, size: 56, color: AppColors.textMuted),
               const SizedBox(height: 16),
               Text(
-                'Nenhuma meta definida',
+                'Nenhuma missão definida',
                 style: AppTextStyles.titleMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                'Toque no + para adicionar uma meta de leitura.',
+                'Toque no + para criar uma missão de leitura.',
                 style: AppTextStyles.bodyMedium,
                 textAlign: TextAlign.center,
               ),
@@ -190,9 +190,9 @@ class _AddGoalSheetState extends State<_AddGoalSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Nova meta', style: AppTextStyles.headlineMedium),
+            Text('Nova missão', style: AppTextStyles.headlineMedium),
             const SizedBox(height: 20),
-            Text('Tipo de meta', style: AppTextStyles.titleMedium),
+            Text('Tipo de missão', style: AppTextStyles.titleMedium),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -228,7 +228,7 @@ class _AddGoalSheetState extends State<_AddGoalSheet> {
                       child: CircularProgressIndicator(
                           color: Colors.white, strokeWidth: 2),
                     )
-                  : const Text('Salvar meta'),
+                  : const Text('Salvar missão'),
             ),
           ],
         ),

@@ -93,14 +93,14 @@ jobs:
       - name: Rename APK
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \
-             build/app/outputs/flutter-apk/readlog-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}.apk
+             build/app/outputs/flutter-apk/lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}.apk
 
       # ── 9. Upload artefato no GitHub (opcional, útil para baixar manualmente) ──
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: readlog-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}
-          path: build/app/outputs/flutter-apk/readlog-*.apk
+          name: lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}
+          path: build/app/outputs/flutter-apk/lumen-*.apk
           retention-days: 14
 
       # ── 10. Firebase App Distribution ─────────────────────────────────────
@@ -110,7 +110,7 @@ jobs:
           appId: ${{ secrets.FIREBASE_APP_ID_ANDROID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
           groups: beta-testers
-          file: build/app/outputs/flutter-apk/readlog-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}.apk
+          file: build/app/outputs/flutter-apk/lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}.apk
           releaseNotes: |
             Build automática · ${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}
             Commit: ${{ github.sha }}

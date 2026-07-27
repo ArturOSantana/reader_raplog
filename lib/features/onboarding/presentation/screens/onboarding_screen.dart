@@ -245,7 +245,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                   _StepPage(
                     icon: Icons.flag_outlined,
-                    title: 'Meta anual\nde livros',
+                    title: 'Missão anual\nde livros',
                     subtitle: _selectedProfileIndex != null
                         ? 'Sugerimos ${_readerProfiles[_selectedProfileIndex!].suggestedBooks} livros com base no seu perfil. Ajuste como quiser!'
                         : 'Defina quantos livros quer terminar este ano.',
@@ -255,7 +255,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       autofocus: true,
                       decoration: const InputDecoration(
-                        labelText: 'Meta anual (opcional)',
+                        labelText: 'Missão anual (opcional)',
                         suffixText: 'livros',
                       ),
                       onFieldSubmitted: (_) => _nextPage(),
@@ -263,7 +263,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                   _StepPage(
                     icon: Icons.timer_outlined,
-                    title: 'Meta diária\nde leitura',
+                    title: 'Missão diária\nde leitura',
                     subtitle: 'Defina um ritmo diário — pode ser por páginas ou minutos.',
                     child: _DailyGoalStep(
                       selectedType: _dailyGoalType,

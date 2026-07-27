@@ -152,7 +152,7 @@ class _ProfileBody extends ConsumerWidget {
 
         const _Divider(),
 
-        // ── Meta anual ───────────────────────────────────────────────
+        // ── Missão anual ─────────────────────────────────────────────
         statsAsync.when(
           loading: () => const SizedBox.shrink(),
           error: (_, __) => const SizedBox.shrink(),
@@ -738,7 +738,7 @@ class _LibrarySection extends StatelessWidget {
   }
 }
 
-// ── Meta Anual ────────────────────────────────────────────────────────────────
+// ── Missão Anual ─────────────────────────────────────────────────────────────
 
 class _YearlyGoalSection extends StatelessWidget {
   final FriendPublicStats stats;
@@ -753,7 +753,7 @@ class _YearlyGoalSection extends StatelessWidget {
         : 0.0;
     return _Section(
       icon: Icons.flag_outlined,
-      title: 'Meta anual',
+      title: 'Missão anual',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

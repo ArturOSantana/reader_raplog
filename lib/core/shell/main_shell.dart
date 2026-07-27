@@ -239,7 +239,7 @@ class _AppDrawer extends ConsumerWidget {
                   _DrawerSection(label: 'FERRAMENTAS'),
                   _DrawerTile(
                     icon: Icons.flag_outlined,
-                    label: 'Metas',
+                    label: 'Missões',
                     active: currentLocation.startsWith('/goals'),
                     onTap: () => push('/goals'),
                   ),

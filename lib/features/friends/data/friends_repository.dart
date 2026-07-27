@@ -6,7 +6,13 @@ class FriendsRepository {
 
   FriendsRepository(this._client);
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Usuário não autenticado.');
+    }
+    return userId;
+  }
 
   // ── Busca ────────────────────────────────────────────────
 
@@ -184,7 +190,10 @@ class FriendsRepository {
   Future<List<Friend>> listFriends() async {
     final data = await _client
         .from('friends')
-        .select('id, friend_id, created_at, friend_profile:profiles!friends_friend_id_fkey(name, avatar_url, bio)')
+        .select(
+          'id, friend_id, created_at, '
+          'friend_profile:profiles!friends_friend_id_fkey(name, avatar_url, bio, last_seen_at)',
+        )
         .eq('user_id', _userId)
         .order('created_at', ascending: false);
     return (data as List)

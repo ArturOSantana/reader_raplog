@@ -128,7 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 const SizedBox(height: 48),
                 Text(
-                  'Readlog',
+                  'Lumen',
                   style: AppTextStyles.displayLarge.copyWith(
                     color: AppColors.forestGreen,
                   ),

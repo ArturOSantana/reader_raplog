@@ -38,13 +38,11 @@ import '../../features/clubs/presentation/screens/club_seals_screen.dart';
 import '../../shared/models/club_seals.dart';
 import '../../features/clubs/presentation/screens/club_timeline_screen.dart';
 import '../../features/clubs/presentation/screens/book_diary_screen.dart';
-import '../../features/clubs/presentation/screens/club_stories_screen.dart';
-import '../../features/clubs/presentation/screens/club_time_capsule_screen.dart';
 import '../../features/clubs/presentation/screens/club_advanced_stats_screen.dart';
-import '../../features/clubs/presentation/screens/club_bets_screen.dart';
 import '../../features/clubs/presentation/screens/club_open_polls_screen.dart';
 import '../../features/clubs/presentation/screens/club_review_screen.dart';
 import '../../features/clubs/presentation/screens/club_book_reviews_screen.dart';
+import '../../features/clubs/presentation/screens/club_social_heatmap_screen.dart';
 import '../../shared/models/club_reviews.dart';
 
 import '../../shared/models/club_schedule_milestones_challenges.dart';
@@ -61,16 +59,32 @@ final initialRouteProvider = Provider<String?>((ref) => null);
 
 class _AuthNotifier extends ChangeNotifier {
   _AuthNotifier(this._ref) {
-    _ref.listen(authStateProvider, (_, __) => notifyListeners());
-    _ref.listen(onboardingStatusProvider, (_, __) => notifyListeners());
+    _removeListeners = [
+      _ref.listen(authStateProvider, (_, __) => _notify()),
+      _ref.listen(onboardingStatusProvider, (_, __) => _notify()),
+    ];
   }
 
   final Ref _ref;
+  late final List<ProviderSubscription<dynamic>> _removeListeners;
+
+  void _notify() {
+    if (!hasListeners) return;
+    notifyListeners();
+  }
 
   bool get isLoggedIn =>
       _ref.read(authStateProvider).valueOrNull?.session != null;
 
   bool? get onboardingDone => _ref.read(onboardingStatusProvider);
+
+  @override
+  void dispose() {
+    for (final sub in _removeListeners) {
+      sub.close();
+    }
+    super.dispose();
+  }
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -319,28 +333,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                     },
                   ),
                   GoRoute(
-                    path: 'stories',
-                    builder: (_, state) {
-                      final extra =
-                          state.extra as Map<String, String>? ?? {};
-                      return ClubStoriesScreen(
-                        clubId: state.pathParameters['clubId']!,
-                        clubName: extra['clubName'] ?? 'Clube',
-                      );
-                    },
-                  ),
-                  GoRoute(
-                    path: 'capsule',
-                    builder: (_, state) {
-                      final extra =
-                          state.extra as Map<String, String>? ?? {};
-                      return ClubTimeCapsuleScreen(
-                        clubId: state.pathParameters['clubId']!,
-                        clubName: extra['clubName'] ?? 'Clube',
-                      );
-                    },
-                  ),
-                  GoRoute(
                     path: 'stats',
                     builder: (_, state) {
                       final extra =
@@ -384,18 +376,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                         milestone: extra['milestone'] as ClubMilestone,
                         clubId: state.pathParameters['clubId']!,
                         clubName: extra['clubName'] as String? ?? 'Clube',
-                      );
-                    },
-                  ),
-                  GoRoute(
-                    path: 'bets',
-                    builder: (_, state) {
-                      final extra =
-                          state.extra as Map<String, dynamic>? ?? {};
-                      return ClubBetsScreen(
-                        clubId: state.pathParameters['clubId']!,
-                        clubName: extra['clubName'] as String? ?? 'Clube',
-                        canManage: extra['canManage'] as bool? ?? false,
                       );
                     },
                   ),
@@ -456,6 +436,17 @@ final routerProvider = Provider<GoRouter>((ref) {
                       );
                     },
                   ),
+                  GoRoute(
+                    path: 'social-heatmap',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, String>? ?? {};
+                      return ClubSocialHeatmapScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] ?? 'Clube',
+                      );
+                    },
+                  ),
                 ],
               ),
             ],
@@ -486,7 +477,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     saveLastRoute(location);
   });
 
-  ref.onDispose(router.dispose);
+  ref.onDispose(() {
+    notifier.dispose();
+    router.dispose();
+  });
 
   return router;
 });

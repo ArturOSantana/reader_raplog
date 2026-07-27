@@ -1,4 +1,4 @@
-# Configuração de Widgets Nativos — Readlog
+# Configuração de Widgets Nativos — Lumen
 
 Este documento descreve os passos necessários **no Xcode e no Android Studio** para completar a integração dos widgets nativos gerados pelo Flutter.
 

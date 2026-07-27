@@ -31,3 +31,4 @@ macos/.symlinks/
 # Android keystore (nunca commitar)
 android/key.properties
 android/app/keystore.jks
+keystore_base64.txt

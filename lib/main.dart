@@ -70,7 +70,7 @@ class ReadlogApp extends ConsumerWidget {
     ));
 
     return MaterialApp.router(
-      title: 'Readlog',
+      title: 'Lumen',
       debugShowCheckedModeBanner: false,
       theme: ReadLogTheme.light(),
       darkTheme: ReadLogTheme.dark(),

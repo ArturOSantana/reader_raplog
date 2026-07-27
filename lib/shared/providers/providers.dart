@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/club_presence_stats.dart';
 import '../../core/local/connectivity_provider.dart';
 import '../../core/local/sync_service.dart';
 import '../../features/library/data/offline_book_repository.dart';
@@ -152,5 +153,26 @@ final onboardingCompletedProvider = FutureProvider<bool>((ref) async {
   if (userId == null) return false;
   final profile = await ref.read(profileRepositoryProvider).fetch();
   return profile?.onboardingCompleted ?? false;
+});
+
+// ── Presença do clube ─────────────────────────────────────────────────────
+
+final clubPresenceProvider =
+    FutureProvider.family<List<ClubPresenceMember>, String>((ref, clubId) {
+  return ref.watch(bookClubRepositoryProvider).fetchPresence(clubId);
+});
+
+// ── Estatísticas coletivas do clube ──────────────────────────────────────
+
+final clubCollectiveStatsProvider =
+    FutureProvider.family<ClubCollectiveStats?, String>((ref, clubId) {
+  return ref.watch(bookClubRepositoryProvider).fetchCollectiveStats(clubId);
+});
+
+// ── Heatmap social do clube ───────────────────────────────────────────────
+
+final clubSocialHeatmapProvider =
+    FutureProvider.family<List<ClubHeatmapDay>, String>((ref, clubId) {
+  return ref.watch(bookClubRepositoryProvider).fetchSocialHeatmap(clubId);
 });
 

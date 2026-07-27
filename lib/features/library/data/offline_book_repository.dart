@@ -16,29 +16,30 @@ class OfflineBookRepository {
 
   OfflineBookRepository(this._client, this._isOnline);
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Usuário não autenticado.');
+    }
+    return userId;
+  }
 
   // ── Fetch ────────────────────────────────────────────────────────────────
 
   Future<List<Book>> fetchAll({BookStatus? status}) async {
+    final userId = _userId;
     if (_isOnline()) {
       try {
-        var query = _client
+        final query = _client
             .from('books')
             .select()
-            .eq('user_id', _userId)
-            .order('updated_at', ascending: false);
+            .eq('user_id', userId);
 
         if (status != null) {
-          query = _client
-              .from('books')
-              .select()
-              .eq('user_id', _userId)
-              .eq('status', status.dbValue)
-              .order('updated_at', ascending: false);
+          query.eq('status', status.dbValue);
         }
 
-        final data = await query;
+        final data = await query.order('updated_at', ascending: false);
         await _local.upsertAll(
             List<Map<String, dynamic>>.from(data as List));
         return (data as List).map((e) => Book.fromMap(e)).toList();
@@ -46,7 +47,7 @@ class OfflineBookRepository {
         // Sem rede — usa cache
       }
     }
-    return _local.fetchAll(_userId, status: status);
+    return _local.fetchAll(userId, status: status);
   }
 
   Future<Book?> fetchBySourceClub(String clubId) async {

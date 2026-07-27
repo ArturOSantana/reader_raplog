@@ -329,125 +329,226 @@ class _FeedEventContent extends StatelessWidget {
     switch (item.eventType) {
       case FeedEventType.finishedBook:
         return _FinishedBookCard(item: item);
+
       case FeedEventType.startedBook:
         return _EventCard(
           icon: Icons.menu_book_outlined,
           color: AppColors.forestGreenLight,
-          lines: [
-            'Começou a ler',
-            if (item.bookTitle != null) item.bookTitle!,
-          ],
+          headline: item.bookTitle != null
+              ? 'Começou a ler "${item.bookTitle}"'
+              : 'Começou um novo livro',
+          detail: null,
         );
+
       case FeedEventType.streak:
+        final days = item.streakDays ?? 0;
+        final String? streakDetail = switch (true) {
+          _ when days >= 100 =>
+            'Marco incrível — mais de 99% dos leitores não chegam aqui.',
+          _ when days >= 30 =>
+            'Um mês inteiro lendo todo dia. Isso é disciplina de verdade.',
+          _ when days >= 7 => 'Uma semana seguida. O hábito está se formando.',
+          _ => null,
+        };
         return _EventCard(
           icon: Icons.local_fire_department_outlined,
           color: AppColors.warmGold,
-          lines: [
-            'Ofensiva de',
-            '${item.streakDays ?? 0} dias lendo!',
-          ],
+          headline: '$days dias lendo sem parar 🔥',
+          detail: streakDetail,
         );
+
       case FeedEventType.achievement:
         return _EventCard(
           icon: Icons.workspace_premium_outlined,
           color: AppColors.warmGoldLight,
-          lines: [
-            'Conquista desbloqueada',
-            if (item.achievementName != null) item.achievementName!,
-          ],
+          headline: item.achievementName != null
+              ? 'Desbloqueou "${item.achievementName}"'
+              : 'Nova conquista desbloqueada',
+          detail: null,
         );
+
       case FeedEventType.goalCompleted:
         return _EventCard(
-          icon: Icons.flag_outlined,
+          icon: Icons.flag_rounded,
           color: AppColors.forestGreen,
-          lines: [
-            'Completou a meta',
-            if (item.goalDescription != null) item.goalDescription!,
-          ],
+          headline: 'Missão cumprida! 🎯',
+          detail: item.goalDescription,
         );
+
       case FeedEventType.readingSession:
-        return _EventCard(
-          icon: Icons.menu_book_outlined,
-          color: AppColors.forestGreenLight,
-          lines: [
-            'Terminou uma sessão',
-            if (item.bookTitle != null) item.bookTitle!,
-            if (item.pagesRead != null && item.pagesRead! > 0)
-              '${item.pagesRead} páginas · ${item.readingTimeLabel}',
-            if (item.streakDays != null && item.streakDays! > 1)
-              '${item.streakDays} dias de ofensiva',
-          ],
+        // Monta uma narrativa contextual com base nos dados disponíveis
+        final pages = item.pagesRead;
+        final time = item.readingTimeLabel;
+        final streak = item.streakDays;
+        final book = item.bookTitle;
+
+        final String headline;
+        if (pages != null && pages > 0 && book != null) {
+          headline = 'Leu $pages páginas de "$book"';
+        } else if (book != null) {
+          headline = 'Terminou uma sessão de "$book"';
+        } else {
+          headline = 'Concluiu uma sessão de leitura';
+        }
+
+        String? badge;
+        if (streak != null && streak >= 100) {
+          badge = '🏆 $streak dias seguidos';
+        } else if (streak != null && streak > 1) {
+          badge = '🔥 $streak dias de ofensiva';
+        }
+
+        return _NarrativeSessionCard(
+          headline: headline,
+          timeLabel: time.isNotEmpty ? time : null,
+          badge: badge,
         );
+
       case FeedEventType.joinedClub:
         return _EventCard(
           icon: Icons.groups_outlined,
           color: AppColors.warmGoldLight,
-          lines: ['Entrou em um clube de leitura'],
+          headline: 'Entrou para um clube de leitura',
+          detail: 'A comunidade cresceu.',
         );
+
       case FeedEventType.betResolved:
         return _EventCard(
           icon: Icons.emoji_events_outlined,
           color: AppColors.warmGold,
-          lines: [
-            'Aposta resolvida',
-            if (item.bookTitle != null) item.bookTitle!,
-          ],
+          headline: 'Aposta encerrada',
+          detail: item.bookTitle,
         );
+
       case FeedEventType.pollOpened:
         return _EventCard(
           icon: Icons.how_to_vote_outlined,
           color: AppColors.forestGreenLight,
-          lines: [
-            'Nova votação aberta',
-            if (item.bookTitle != null) item.bookTitle!,
-          ],
+          headline: 'Abriu uma votação no clube',
+          detail: item.bookTitle,
         );
+
       case FeedEventType.pollClosed:
         return _EventCard(
           icon: Icons.poll_outlined,
           color: AppColors.forestGreen,
-          lines: [
-            'Votação encerrada',
-            if (item.bookTitle != null) item.bookTitle!,
-          ],
+          headline: 'Votação encerrada',
+          detail: item.bookTitle,
         );
+
       case FeedEventType.challengeStarted:
         return _EventCard(
           icon: Icons.sports_score_outlined,
           color: AppColors.warmGoldLight,
-          lines: [
-            'Desafio iniciado',
-            if (item.bookTitle != null) item.bookTitle!,
-          ],
+          headline: 'Novo desafio no clube! 💪',
+          detail: item.bookTitle,
         );
+
       case FeedEventType.challengeFinished:
         return _EventCard(
           icon: Icons.emoji_events_rounded,
           color: AppColors.warmGold,
-          lines: [
-            'Desafio concluído',
-            if (item.bookTitle != null) item.bookTitle!,
-          ],
+          headline: 'Desafio concluído com sucesso!',
+          detail: item.bookTitle,
         );
+
       case FeedEventType.sealAwarded:
         return _EventCard(
           icon: Icons.workspace_premium_outlined,
           color: AppColors.warmGoldLight,
-          lines: [
-            'Selo atribuído',
-            if (item.bookTitle != null) item.bookTitle!,
-          ],
+          headline: 'Recebeu um selo do clube',
+          detail: item.bookTitle,
         );
+
       case FeedEventType.bookReview:
         return _EventCard(
           icon: Icons.rate_review_outlined,
           color: AppColors.warmGold,
-          lines: [
-            'Publicou uma resenha',
-            if (item.bookTitle != null) item.bookTitle!,
-          ],
+          headline: item.bookTitle != null
+              ? 'Publicou uma resenha de "${item.bookTitle}"'
+              : 'Publicou uma resenha',
+          detail: null,
         );
     }
+  }
+}
+
+// ── Card narrativo para sessões de leitura ────────────────────────────────────
+// Formato mais rico que o _EventCard padrão: destaca o tempo e badge de streak.
+
+class _NarrativeSessionCard extends StatelessWidget {
+  final String headline;
+  final String? timeLabel;
+  final String? badge;
+
+  const _NarrativeSessionCard({
+    required this.headline,
+    this.timeLabel,
+    this.badge,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.forestGreenLight.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: AppColors.forestGreenLight.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.menu_book_outlined,
+              size: 22, color: AppColors.forestGreenLight),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  headline,
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600),
+                ),
+                if (timeLabel != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.timer_outlined,
+                          size: 13, color: AppColors.textMuted),
+                      const SizedBox(width: 4),
+                      Text(timeLabel!,
+                          style: AppTextStyles.labelMedium),
+                    ],
+                  ),
+                ],
+                if (badge != null) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.warmGold.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      badge!,
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.warmGold,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -477,18 +578,12 @@ class _FinishedBookCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Narrativa humanizada — "Artur terminou de ler 'O Hobbit' em 4h 30min."
                 Text(
-                  'Terminou de ler',
-                  style: AppTextStyles.bodyMedium,
+                  item.humanNarrative(),
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600),
                 ),
-                if (item.bookTitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    item.bookTitle!,
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(fontWeight: FontWeight.w600),
-                  ),
-                ],
                 if (item.rating != null) ...[
                   const SizedBox(height: 6),
                   Row(
@@ -544,12 +639,14 @@ class _FinishedBookCard extends StatelessWidget {
 class _EventCard extends StatelessWidget {
   final IconData icon;
   final Color color;
-  final List<String> lines;
+  final String headline;
+  final String? detail;
 
   const _EventCard({
     required this.icon,
     required this.color,
-    required this.lines,
+    required this.headline,
+    this.detail,
   });
 
   @override
@@ -562,23 +659,29 @@ class _EventCard extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 22, color: color),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: lines
-                  .map((l) => Text(
-                        l,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          fontWeight: lines.indexOf(l) == 1
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          color: AppColors.textPrimary,
-                        ),
-                      ))
-                  .toList(),
+              children: [
+                Text(
+                  headline,
+                  style: AppTextStyles.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600),
+                ),
+                if (detail != null && detail!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    detail!,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],
@@ -611,11 +714,46 @@ class _FriendsTab extends ConsumerWidget {
             ),
           );
         }
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: friends.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (_, i) => _FriendSocialTile(friend: friends[i]),
+
+        // Ordena: ativos primeiro → recentes → sem presença (por data de amizade)
+        final sorted = [...friends]..sort((a, b) {
+            if (a.isActive && !b.isActive) return -1;
+            if (!a.isActive && b.isActive) return 1;
+            if (a.isRecentlyActive && !b.isRecentlyActive) return -1;
+            if (!a.isRecentlyActive && b.isRecentlyActive) return 1;
+            if (a.lastSeenAt != null && b.lastSeenAt != null) {
+              return b.lastSeenAt!.compareTo(a.lastSeenAt!);
+            }
+            return 0;
+          });
+
+        // Conta quantos estão ativos/recentes para mostrar kicker
+        final activeCount = sorted.where((f) => f.isRecentlyActive).length;
+
+        return RefreshIndicator(
+          onRefresh: () async => ref.invalidate(_friendsListProvider),
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            itemCount: sorted.length + (activeCount > 0 ? 1 : 0),
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (_, i) {
+              // Kicker "LENDO AGORA" antes do primeiro ativo
+              if (activeCount > 0 && i == 0) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'LENDO AGORA · $activeCount',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: AppColors.forestGreen,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                );
+              }
+              final idx = activeCount > 0 ? i - 1 : i;
+              return _FriendSocialTile(friend: sorted[idx]);
+            },
+          ),
         );
       },
     );
@@ -629,25 +767,63 @@ class _FriendSocialTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final presence = friend.presenceLabel;
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 8),
-      leading: _MiniAvatar(
-        url: friend.avatarUrl,
-        name: friend.name ?? '?',
-        radius: 22,
+      leading: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          _MiniAvatar(
+            url: friend.avatarUrl,
+            name: friend.name ?? '?',
+            radius: 22,
+          ),
+          if (friend.isRecentlyActive)
+            Positioned(
+              bottom: -1,
+              right: -1,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: friend.isActive
+                      ? AppColors.forestGreen
+                      : AppColors.warmGold,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       title: Text(
         friend.name ?? 'Usuário',
         style: AppTextStyles.titleMedium,
       ),
-      subtitle: friend.bio != null && friend.bio!.isNotEmpty
+      subtitle: presence != null
           ? Text(
-              friend.bio!,
-              style: AppTextStyles.bodyMedium,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              presence,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: friend.isActive
+                    ? AppColors.forestGreen
+                    : AppColors.textMuted,
+                fontWeight: friend.isActive
+                    ? FontWeight.w600
+                    : FontWeight.w400,
+              ),
             )
-          : null,
+          : (friend.bio != null && friend.bio!.isNotEmpty
+              ? Text(
+                  friend.bio!,
+                  style: AppTextStyles.bodyMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )
+              : null),
       trailing: const Icon(Icons.chevron_right,
           color: AppColors.textMuted, size: 20),
       onTap: () => context.push('/friends/profile/${friend.friendId}'),

@@ -13,7 +13,13 @@ class OfflineSessionRepository {
 
   OfflineSessionRepository(this._client, this._isOnline);
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Usuário não autenticado.');
+    }
+    return userId;
+  }
 
   // ── Start / Finish / Cancel ───────────────────────────────────────────────
 
@@ -107,6 +113,8 @@ class OfflineSessionRepository {
             .select()
             .single();
         await localRepo.insert(data);
+        // Atualiza presença em tempo real (fire-and-forget)
+        _client.rpc('update_my_presence').catchError((_) {});
         return ReadingSession.fromMap(data);
       } catch (_) {}
     }

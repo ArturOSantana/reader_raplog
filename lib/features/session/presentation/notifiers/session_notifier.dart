@@ -13,6 +13,11 @@ const _kInactivityWarning = Duration(minutes: 30);
 // Intervalo de atualização da notificação persistente (bateria-friendly).
 const _kNotificationThrottle = Duration(seconds: 30);
 
+// Intervalo de ping de presença — mantém o dot "lendo agora" verde
+// enquanto a sessão estiver ativa. 2 min é conservador: a janela do
+// RPC club_presence é de 5 min, então há margem de sobra.
+const _kPresencePing = Duration(minutes: 2);
+
 /// Estado imutável que a UI consome.
 class ActiveSessionState {
   final ReadingSession? session;
@@ -47,6 +52,7 @@ class ActiveSessionState {
 /// O [Timer] vive aqui — não no widget — então não é cancelado pelo dispose.
 class SessionNotifier extends Notifier<ActiveSessionState> {
   Timer? _ticker;
+  Timer? _presencePingTimer;
   Timer? _inactivityWarningTimer;
   Timer? _inactivityAutoPauseTimer;
   Timer? _notificationThrottle;
@@ -279,6 +285,19 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
       bookTitle: state.bookTitle,
       elapsed: _formatTime(state.elapsedSeconds),
     );
+
+    // Ping periódico de presença — mantém "lendo agora" visível para amigos.
+    // Chama a RPC diretamente via Supabase client para evitar dependência
+    // circular com BookClubRepository. Fire-and-forget: nunca bloqueia a sessão.
+    _presencePingTimer?.cancel();
+    _presencePingTimer = Timer.periodic(_kPresencePing, (_) {
+      if (state.hasActiveSession && !state.isPaused) {
+        ref
+            .read(supabaseClientProvider)
+            .rpc('update_my_presence')
+            .catchError((_) {});
+      }
+    });
   }
 
   void _scheduleInactivityTimers() {
@@ -307,6 +326,8 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
   void _cleanup() {
     _ticker?.cancel();
     _ticker = null;
+    _presencePingTimer?.cancel();
+    _presencePingTimer = null;
     _inactivityWarningTimer?.cancel();
     _inactivityWarningTimer = null;
     _inactivityAutoPauseTimer?.cancel();

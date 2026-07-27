@@ -85,16 +85,16 @@ class FeedEventContent extends StatelessWidget {
       case FeedEventType.finishedBook:
         return _FinishedBookCard(item: item);
       case FeedEventType.startedBook:
-        return _SimpleEventCard(
+        return _NarrativeEventCard(
           icon: Icons.menu_book_outlined,
           color: AppColors.forestGreenLight,
-          lines: ['Começou a ler', if (item.bookTitle != null) item.bookTitle!],
+          narrative: item.humanNarrative(),
         );
       case FeedEventType.streak:
-        return _SimpleEventCard(
+        return _NarrativeEventCard(
           icon: Icons.local_fire_department_outlined,
           color: AppColors.warmGold,
-          lines: ['Ofensiva de', '${item.streakDays ?? 0} dias lendo!'],
+          narrative: item.humanNarrative(),
         );
       case FeedEventType.achievement:
         return _SimpleEventCard(
@@ -106,25 +106,19 @@ class FeedEventContent extends StatelessWidget {
           ],
         );
       case FeedEventType.goalCompleted:
-        return _SimpleEventCard(
+        return _NarrativeEventCard(
           icon: Icons.check_circle_outline,
           color: AppColors.forestGreen,
-          lines: [
-            'Completou a meta',
-            if (item.goalDescription != null) item.goalDescription!,
-          ],
+          narrative: item.humanNarrative(),
         );
       case FeedEventType.readingSession:
-        return _SimpleEventCard(
+        return _NarrativeEventCard(
           icon: Icons.menu_book_outlined,
           color: AppColors.forestGreenLight,
-          lines: [
-            'Terminou uma sessão',
-            if (item.bookTitle != null) item.bookTitle!,
-            if (item.pagesRead != null && item.pagesRead! > 0)
-              '${item.pagesRead} páginas · ${item.readingTimeLabel}',
+          narrative: item.humanNarrative(),
+          sub: [
             if (item.streakDays != null && item.streakDays! > 1)
-              '${item.streakDays} dias de ofensiva',
+              '🔥 ${item.streakDays} dias de ofensiva',
           ],
         );
       case FeedEventType.joinedClub:
@@ -216,13 +210,11 @@ class _FinishedBookCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Terminou de ler', style: AppTextStyles.bodyMedium),
-                if (item.bookTitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(item.bookTitle!,
-                      style: AppTextStyles.bodyMedium
-                          .copyWith(fontWeight: FontWeight.w600)),
-                ],
+                // Narrativa humanizada como cabeçalho — substitui "Terminou de ler" + título separados
+                Text(
+                  item.humanNarrative(),
+                  style: AppTextStyles.bodyMedium,
+                ),
                 if (item.rating != null) ...[
                   const SizedBox(height: 6),
                   Row(
@@ -425,6 +417,67 @@ class _SimpleEventCard extends StatelessWidget {
                   color: AppColors.textPrimary,
                 ),
               )).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Card com narrativa humanizada ─────────────────────────────────────────────
+//
+// Exibe uma frase completa em vez de fragmentos secos.
+// Ex: "Artur leu 42 páginas de O Hobbit em 35min."
+// Em vez de: ["Terminou uma sessão", "O Hobbit", "42 páginas · 35min"]
+
+class _NarrativeEventCard extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String narrative;
+  final List<String> sub;
+
+  const _NarrativeEventCard({
+    required this.icon,
+    required this.color,
+    required this.narrative,
+    this.sub = const [],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 22, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  narrative,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                ...sub.map((s) => Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        s,
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    )),
+              ],
             ),
           ),
         ],

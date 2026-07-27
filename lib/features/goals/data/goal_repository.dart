@@ -6,7 +6,13 @@ class GoalRepository {
 
   GoalRepository(this._client);
 
-  String get _userId => _client.auth.currentUser!.id;
+  String get _userId {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Usuário não autenticado.');
+    }
+    return userId;
+  }
 
   Future<List<Goal>> fetchAll() async {
     final data = await _client

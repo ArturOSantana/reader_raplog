@@ -133,10 +133,10 @@ class DashboardScreen extends ConsumerWidget {
                         readBooks: readBooks,
                       ),
 
-                      // ── Metas ────────────────────────────────────────────
+                      // ── Missões ────────────────────────────────────────────
                       if (goals.isNotEmpty) ...[
                         const SizedBox(height: 28),
-                        _SectionLabel(label: 'Metas'),
+                        _SectionLabel(label: 'Missões'),
                         const SizedBox(height: 12),
                         _GoalProgressCard(
                           goals: goals,
@@ -462,7 +462,7 @@ class _GoalProgressCard extends StatelessWidget {
                         children: [
                           Text(
                             done
-                                ? '✓ Meta concluída!'
+                                ? '✓ Missão concluída!'
                                 : '$percent% concluído',
                             style: ReadLogType.mono(
                               size: 9,

@@ -288,4 +288,95 @@ class FeedItem extends Equatable {
 
   int totalReactions() =>
       reactionsSummary.values.fold(0, (a, b) => a + b);
+
+  /// Narrativa humanizada — substitui eventos "frios" por frases com contexto.
+  ///
+  /// Segue o princípio da estratégia de produto:
+  /// "A diferença entre um produto de dados e um produto de emoção está
+  /// na narrativa automática."
+  String humanNarrative({String? viewerName}) {
+    final name = userName ?? 'Alguém';
+    switch (eventType) {
+      case FeedEventType.readingSession:
+        final pages = pagesRead;
+        final mins = sessionMinutes ?? readingTimeMinutes;
+        final book = bookTitle;
+        if (pages != null && pages > 0 && book != null) {
+          final timeStr = mins != null && mins > 0
+              ? ' em ${_fmtMins(mins)}'
+              : '';
+          return '$name leu $pages página${pages == 1 ? '' : 's'} de "$book"$timeStr.';
+        }
+        if (pages != null && pages > 0) {
+          return '$name leu $pages página${pages == 1 ? '' : 's'}.';
+        }
+        if (mins != null && mins > 0) {
+          return '$name leu por ${_fmtMins(mins)}.';
+        }
+        return '$name registrou uma sessão de leitura.';
+
+      case FeedEventType.finishedBook:
+        final book = bookTitle ?? 'um livro';
+        final timeStr = readingTimeMinutes != null && readingTimeMinutes! > 0
+            ? ' em ${_fmtMins(readingTimeMinutes!)}'
+            : '';
+        return '$name terminou de ler "$book"$timeStr.';
+
+      case FeedEventType.startedBook:
+        final book = bookTitle ?? 'um livro';
+        return '$name começou a ler "$book".';
+
+      case FeedEventType.streak:
+        final days = streakDays ?? 0;
+        if (days >= 100) {
+          return '$name atingiu $days dias seguidos lendo. Isso é mais do que 97% dos leitores.';
+        }
+        if (days >= 30) {
+          return '$name está há $days dias lendo sem parar.';
+        }
+        return '$name mantém uma sequência de $days dia${days == 1 ? '' : 's'}.';
+
+      case FeedEventType.achievement:
+        final achv = achievementName ?? 'uma conquista';
+        return '$name desbloqueou "$achv".';
+
+      case FeedEventType.goalCompleted:
+        final goal = goalDescription;
+        return goal != null
+            ? '$name completou a missão: $goal'
+            : '$name completou a missão do dia.';
+
+      case FeedEventType.joinedClub:
+        return '$name entrou no clube.';
+
+      case FeedEventType.challengeStarted:
+        return '$name aceitou um novo desafio.';
+
+      case FeedEventType.challengeFinished:
+        return '$name concluiu um desafio de leitura.';
+
+      case FeedEventType.sealAwarded:
+        return '$name recebeu um selo do clube.';
+
+      case FeedEventType.bookReview:
+        final book = bookTitle ?? 'um livro';
+        return '$name escreveu uma resenha de "$book".';
+
+      case FeedEventType.betResolved:
+        return '$name participou de uma aposta.';
+
+      case FeedEventType.pollOpened:
+        return 'Uma nova votação foi aberta no clube.';
+
+      case FeedEventType.pollClosed:
+        return 'A votação do clube foi encerrada.';
+    }
+  }
+
+  static String _fmtMins(int mins) {
+    final h = mins ~/ 60;
+    final m = mins % 60;
+    if (h == 0) return '${m}min';
+    return m == 0 ? '${h}h' : '${h}h ${m}min';
+  }
 }

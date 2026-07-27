@@ -83,7 +83,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             ),
             const SizedBox(height: 20),
             const Text(
-              'ReadLog',
+              'Lumen',
               style: TextStyle(
                 fontFamily: 'Fraunces',
                 fontSize: 36,
@@ -94,7 +94,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Seu diário de leitura',
+              'Seu companheiro de leitura',
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 15,

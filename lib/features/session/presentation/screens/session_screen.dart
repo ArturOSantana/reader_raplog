@@ -14,6 +14,7 @@ import '../../../../theme/readlog_theme.dart';
 import '../../../../theme/readlog_components.dart';
 import '../../../../shared/models/achievement.dart';
 import '../../../../shared/models/book.dart';
+import '../../../../shared/models/note.dart';
 import '../../../../shared/models/reading_session.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../achievements/data/achievement_service.dart';
@@ -416,7 +417,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: ReadLogColors.ink,
+      backgroundColor: ReadLogColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -456,6 +457,115 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       // Mostra a inspiração apenas para a primeira conquista nova da sessão
       _showAchievementInspiration(unlocked.first);
     }).catchError((_) {});
+  }
+
+  // ── Mini-ações ────────────────────────────────────────────────────────────
+
+  void _showAddNoteSheet() {
+    final bookId = ref.read(sessionNotifierProvider).session?.bookId;
+    if (bookId == null) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: ReadLogColors.inkAlt,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (_) => _QuickInputSheet(
+        title: 'Nova Nota',
+        hint: 'O que você quer anotar?',
+        onSave: (text) async {
+          await ref.read(noteRepositoryProvider).insert(
+                bookId: bookId,
+                type: NoteType.observation,
+                content: text,
+              );
+        },
+      ),
+    );
+  }
+
+  void _showAddHighlightSheet() {
+    final bookId = ref.read(sessionNotifierProvider).session?.bookId;
+    if (bookId == null) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: ReadLogColors.inkAlt,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (_) => _QuickInputSheet(
+        title: 'Novo Trecho',
+        hint: 'Digite o trecho que quer salvar...',
+        onSave: (text) async {
+          await ref.read(highlightRepositoryProvider).insert(
+                bookId: bookId,
+                text: text,
+              );
+        },
+      ),
+    );
+  }
+
+  void _showMoodPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: ReadLogColors.inkAlt,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'COMO ESTÁ SE SENTINDO?',
+                style: ReadLogType.mono(
+                  size: 10,
+                  color: ReadLogColors.cream.withValues(alpha: 0.5),
+                ).copyWith(letterSpacing: 1.5),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: SessionMood.values.map((m) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Humor: ${m.label}'),
+                          duration: const Duration(seconds: 2),
+                          backgroundColor: ReadLogColors.inkAlt,
+                        ),
+                      );
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(m.emoji, style: const TextStyle(fontSize: 28)),
+                        const SizedBox(height: 4),
+                        Text(
+                          m.label,
+                          style: ReadLogType.mono(
+                            size: 9,
+                            color: ReadLogColors.cream.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -509,6 +619,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               isPaused: isPaused,
               onTogglePause: _togglePause,
               onFinish: _openFinishSheet,
+              onAddNote: _showAddNoteSheet,
+              onAddHighlight: _showAddHighlightSheet,
+              onPickMood: _showMoodPicker,
             )
           : _StartSessionView(
               readingBooks: _readingBooks,
@@ -647,7 +760,7 @@ class _GoalPicker extends StatelessWidget {
       (SessionGoal.freeReading, Icons.auto_stories_outlined, 'Leitura livre'),
       (SessionGoal.byTime, Icons.timer_outlined, 'Por tempo'),
       (SessionGoal.byPage, Icons.bookmark_outlined, 'Até uma página'),
-      (SessionGoal.dailyGoal, Icons.flag_outlined, 'Meta diária'),
+      (SessionGoal.dailyGoal, Icons.flag_outlined, 'Missão diária'),
     ];
 
     return Column(
@@ -703,6 +816,9 @@ class _ActiveSessionView extends StatelessWidget {
   final bool isPaused;
   final VoidCallback onTogglePause;
   final VoidCallback onFinish;
+  final VoidCallback onAddNote;
+  final VoidCallback onAddHighlight;
+  final VoidCallback onPickMood;
 
   const _ActiveSessionView({
     required this.sessionState,
@@ -710,6 +826,9 @@ class _ActiveSessionView extends StatelessWidget {
     required this.isPaused,
     required this.onTogglePause,
     required this.onFinish,
+    required this.onAddNote,
+    required this.onAddHighlight,
+    required this.onPickMood,
   });
 
   String _formatTime(int s) {
@@ -919,14 +1038,17 @@ class _ActiveSessionView extends StatelessWidget {
                 _MiniAction(
                   label: '+ NOTA',
                   icon: Icons.edit_outlined,
+                  onTap: onAddNote,
                 ),
                 _MiniAction(
                   label: '+ TRECHO',
                   icon: Icons.format_quote_outlined,
+                  onTap: onAddHighlight,
                 ),
                 _MiniAction(
                   label: 'HUMOR',
                   icon: Icons.mood_outlined,
+                  onTap: onPickMood,
                 ),
               ],
             ),
@@ -945,25 +1067,33 @@ class _ActiveSessionView extends StatelessWidget {
 class _MiniAction extends StatelessWidget {
   final String label;
   final IconData icon;
+  final VoidCallback? onTap;
 
-  const _MiniAction({required this.label, required this.icon});
+  const _MiniAction({required this.label, required this.icon, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: ReadLogColors.cream.withValues(alpha: 0.45)),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: ReadLogType.mono(
-            size: 9,
-            color: ReadLogColors.cream.withValues(alpha: 0.45),
-            weight: FontWeight.w500,
-          ).copyWith(letterSpacing: 0.8),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: ReadLogColors.cream.withValues(alpha: 0.65)),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: ReadLogType.mono(
+                size: 9,
+                color: ReadLogColors.cream.withValues(alpha: 0.65),
+                weight: FontWeight.w500,
+              ).copyWith(letterSpacing: 0.8),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -1532,6 +1662,131 @@ class _ShareCompletionSheetState extends State<_ShareCompletionSheet> {
                     )
                   : const Icon(Icons.share),
               label: Text(_sharing ? 'Gerando...' : 'Compartilhar'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _QuickInputSheet — bottom sheet reutilizável para nota / trecho
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _QuickInputSheet extends StatefulWidget {
+  final String title;
+  final String hint;
+  final Future<void> Function(String text) onSave;
+
+  const _QuickInputSheet({
+    required this.title,
+    required this.hint,
+    required this.onSave,
+  });
+
+  @override
+  State<_QuickInputSheet> createState() => _QuickInputSheetState();
+}
+
+class _QuickInputSheetState extends State<_QuickInputSheet> {
+  final _controller = TextEditingController();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    setState(() => _saving = true);
+    try {
+      await widget.onSave(text);
+      if (mounted) Navigator.pop(context);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.title.toUpperCase(),
+            style: ReadLogType.mono(
+              size: 10,
+              color: ReadLogColors.cream.withValues(alpha: 0.5),
+            ).copyWith(letterSpacing: 1.5),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            maxLines: 4,
+            minLines: 2,
+            style: ReadLogType.display(
+              size: 14,
+              color: ReadLogColors.cream,
+            ),
+            decoration: InputDecoration(
+              hintText: widget.hint,
+              hintStyle: ReadLogType.display(
+                size: 14,
+                color: ReadLogColors.cream.withValues(alpha: 0.3),
+              ),
+              filled: true,
+              fillColor: ReadLogColors.ink,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(3),
+                borderSide: BorderSide(
+                    color: ReadLogColors.cream.withValues(alpha: 0.15)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(3),
+                borderSide: BorderSide(
+                    color: ReadLogColors.cream.withValues(alpha: 0.15)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(3),
+                borderSide: const BorderSide(color: ReadLogColors.brassLight),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _saving ? null : _submit,
+              style: FilledButton.styleFrom(
+                backgroundColor: ReadLogColors.stamp,
+                foregroundColor: ReadLogColors.cream,
+                textStyle:
+                    ReadLogType.mono(size: 12, weight: FontWeight.w600),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(3)),
+                minimumSize: const Size(0, 48),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: ReadLogColors.cream),
+                    )
+                  : const Text('SALVAR'),
             ),
           ),
         ],

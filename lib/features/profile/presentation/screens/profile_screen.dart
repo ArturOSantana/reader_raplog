@@ -191,7 +191,7 @@ class ProfileScreen extends ConsumerWidget {
               ),
               _QuickLink(
                 icon: Icons.flag_outlined,
-                label: 'Metas',
+                label: 'Missões',
                 onTap: () => context.push('/goals'),
               ),
               _QuickLink(
@@ -585,7 +585,7 @@ class _GoalsCard extends ConsumerWidget {
           if (yearlyGoal != null && yearlyGoal > 0) {
             return _card(
               child: _GoalRow(
-                label: 'Meta anual',
+                label: 'Missão anual',
                 current: readBooks,
                 total: yearlyGoal,
                 unit: 'livros',
@@ -1807,7 +1807,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   controller: _yearlyGoalController,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(labelText: 'Meta anual de livros'),
+                  decoration: const InputDecoration(labelText: 'Missão anual de livros'),
                   validator: (v) {
                     if (v != null && v.trim().isNotEmpty) {
                       final n = int.tryParse(v.trim());
