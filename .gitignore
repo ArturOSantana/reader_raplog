@@ -59,3 +59,7 @@ readlog/
 
 # Vercel link (gerado localmente, não commitar)
 .vercel/
+
+# ── Firebase / Google Services ───────────────────────────────
+mobile/android/app/google-services.json
+mobile/ios/Runner/GoogleService-Info.plist
