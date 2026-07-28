@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createServerSupabase } from '@lumen/supabase/server'
+import { searchBooks, type BookMetadata } from '@/lib/book-search-cache'
 import { addBookFromSearch } from './search-actions'
 import type { Metadata } from 'next'
 
@@ -17,48 +18,16 @@ export default async function BookSearchPage({ searchParams }: PageProps) {
 
   const { q = '', action, added } = await searchParams
 
-  // ── Busca via Google Books API (spec §23) ─────────────────────────────────
-  let results: GoogleBook[] = []
+  // ── Busca com cache (spec §2 — Google Books Cache Layer) ──────────────────
+  let results: BookMetadata[] = []
   let searchError: string | null = null
 
   if (q.trim().length >= 2) {
-    const apiKey = process.env.GOOGLE_BOOKS_API_KEY
-    if (!apiKey) {
-      searchError = 'Busca temporariamente indisponível.'
-    } else {
-      try {
-        const url = new URL('https://www.googleapis.com/books/v1/volumes')
-        url.searchParams.set('q', q.trim())
-        url.searchParams.set('maxResults', '12')
-        url.searchParams.set('langRestrict', 'pt')
-        url.searchParams.set('key', apiKey)
-        url.searchParams.set('printType', 'books')
-        url.searchParams.set('orderBy', 'relevance')
-
-        const res = await fetch(url.toString(), {
-          next: { revalidate: 3600 }, // cache 1h — spec §23: fallback por cota
-        })
-
-        if (!res.ok) throw new Error(`Google Books API: ${res.status}`)
-        const data = await res.json()
-        results = (data.items ?? []).map(parseGoogleBook)
-      } catch (err) {
-        console.error('Google Books error:', err)
-        // Spec §23: fallback com Open Library
-        try {
-          const olRes = await fetch(
-            `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=12&language=por`,
-            { next: { revalidate: 3600 } }
-          )
-          if (olRes.ok) {
-            const olData = await olRes.json()
-            results = (olData.docs ?? []).slice(0, 12).map(parseOpenLibraryBook)
-          }
-        } catch {
-          searchError = 'Busca temporariamente indisponível. Tente novamente.'
-        }
-      }
-    }
+    const result = await searchBooks(q, {
+      apiKey: process.env.GOOGLE_BOOKS_API_KEY ?? '',
+    })
+    results = result.books
+    searchError = result.error ?? null
   }
 
   return (
@@ -198,50 +167,3 @@ export default async function BookSearchPage({ searchParams }: PageProps) {
   )
 }
 
-// ── Tipos e parsers ───────────────────────────────────────────
-
-interface GoogleBook {
-  googleBooksId: string | null
-  title: string
-  author: string | null
-  coverUrl: string | null
-  isbn: string | null
-  publisher: string | null
-  publishedYear: number | null
-  pageCount: number | null
-  description: string | null
-}
-
-function parseGoogleBook(item: Record<string, unknown>): GoogleBook {
-  const info = (item.volumeInfo ?? {}) as Record<string, unknown>
-  const ids   = (info.industryIdentifiers as Array<{ type: string; identifier: string }> | undefined) ?? []
-  const isbn13 = ids.find((id) => id.type === 'ISBN_13')?.identifier ?? null
-  const isbn10 = ids.find((id) => id.type === 'ISBN_10')?.identifier ?? null
-  const images = (info.imageLinks ?? {}) as Record<string, string>
-  return {
-    googleBooksId: item.id as string | null,
-    title:         (info.title as string) ?? 'Sem título',
-    author:        (info.authors as string[] | undefined)?.[0] ?? null,
-    coverUrl:      images.thumbnail?.replace('http:', 'https:') ?? null,
-    isbn:          isbn13 ?? isbn10,
-    publisher:     (info.publisher as string | undefined) ?? null,
-    publishedYear: info.publishedDate ? parseInt(String(info.publishedDate).slice(0, 4)) || null : null,
-    pageCount:     (info.pageCount as number | undefined) ?? null,
-    description:   (info.description as string | undefined)?.slice(0, 300) ?? null,
-  }
-}
-
-function parseOpenLibraryBook(doc: Record<string, unknown>): GoogleBook {
-  const coverId = (doc.cover_i as number | undefined)
-  return {
-    googleBooksId: null,
-    title:         (doc.title as string) ?? 'Sem título',
-    author:        (doc.author_name as string[] | undefined)?.[0] ?? null,
-    coverUrl:      coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : null,
-    isbn:          ((doc.isbn as string[] | undefined)?.[0]) ?? null,
-    publisher:     (doc.publisher as string[] | undefined)?.[0] ?? null,
-    publishedYear: (doc.first_publish_year as number | undefined) ?? null,
-    pageCount:     (doc.number_of_pages_median as number | undefined) ?? null,
-    description:   null,
-  }
-}

@@ -89,3 +89,18 @@ export function clubCategoryLabel(cat: string): string {
   }
   return map[cat] ?? cat
 }
+
+/**
+ * Renderiza uma string de estrelas para rating 1-5.
+ *
+ * @param rating - Valor numérico de 1 a 5 (0 retorna string vazia)
+ * @param withEmpty - Se `true`, preenche estrelas vazias até 5 (padrão: true)
+ * @returns Exemplo: starRating(3) → "★★★☆☆"
+ */
+export function starRating(rating: number, withEmpty = true): string {
+  const clamped = Math.max(0, Math.min(5, Math.round(rating)))
+  if (clamped === 0) return ''
+  const filled = '★'.repeat(clamped)
+  const empty = withEmpty ? '☆'.repeat(5 - clamped) : ''
+  return filled + empty
+}

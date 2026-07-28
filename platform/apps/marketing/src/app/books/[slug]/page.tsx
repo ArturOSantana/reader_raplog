@@ -1,5 +1,6 @@
 import { createServerSupabase } from '@lumen/supabase/server'
 import { notFound } from 'next/navigation'
+import { starRating } from '@lumen/ui'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -123,7 +124,6 @@ export default async function BookPage({ params }: PageProps) {
       : {}),
   }
 
-  const stars = (rating: number) => '★'.repeat(rating) + '☆'.repeat(5 - rating)
 
   return (
     <>
@@ -183,7 +183,7 @@ export default async function BookPage({ params }: PageProps) {
               {avgRating && (
                 <div className="flex items-center gap-2 mb-4">
                   <span className="text-[#F5A623] text-lg tracking-wider">
-                    {stars(Math.round(parseFloat(avgRating)))}
+                    {starRating(Math.round(parseFloat(avgRating)))}
                   </span>
                   <span className="font-[IBM_Plex_Mono] text-sm text-[#1A1918] font-medium">
                     {avgRating}
@@ -242,7 +242,7 @@ export default async function BookPage({ params }: PageProps) {
                           </p>
                           {review.rating && (
                             <p className="text-[#F5A623] text-xs" itemProp="reviewRating">
-                              {stars(review.rating)}
+                              {starRating(review.rating)}
                             </p>
                           )}
                         </div>

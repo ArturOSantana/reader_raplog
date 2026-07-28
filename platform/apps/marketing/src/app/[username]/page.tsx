@@ -1,5 +1,6 @@
 import { createServerSupabase } from '@lumen/supabase/server'
 import { notFound } from 'next/navigation'
+import { starRating } from '@lumen/ui'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -114,7 +115,6 @@ export default async function PublicProfilePage({ params }: PageProps) {
     url: `https://lumen.app/@${profile.username}`,
   }
 
-  const stars = (rating: number) => '★'.repeat(rating) + '☆'.repeat(5 - rating)
   const hours = Math.floor((stats?.total_minutes ?? 0) / 60)
 
   return (
@@ -222,7 +222,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
                             <p className="text-xs text-[#6B6863]">{book.author}</p>
                           )}
                           {review.rating && (
-                            <p className="text-[#F5A623] text-xs mt-1">{stars(review.rating)}</p>
+                            <p className="text-[#F5A623] text-xs mt-1">{starRating(review.rating)}</p>
                           )}
                         </div>
                       </div>

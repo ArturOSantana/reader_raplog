@@ -63,6 +63,7 @@ export default async function AdminLayout({
     { href: '/storage', label: 'Storage' },
     { href: '/push', label: 'Push Notifications' },
     { href: '/email-queue', label: 'Fila de Emails' },
+    { href: '/queues', label: 'Queue Monitor' },
     { href: '/invites', label: 'Convites' },
   ]
 

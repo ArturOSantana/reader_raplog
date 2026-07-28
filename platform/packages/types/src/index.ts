@@ -422,6 +422,102 @@ export interface BookList {
   updated_at: string
 }
 
+// ─────────────────────────────────────────────────────────────
+// Notification Platform (spec §4)
+// ─────────────────────────────────────────────────────────────
+
+/** Canais de entrega de notificações. */
+export type NotificationChannel = 'push' | 'email' | 'inbox' | 'web'
+
+/** Eventos canônicos que disparam notificações. */
+export type NotificationEvent =
+  | 'newFollower'
+  | 'newComment'
+  | 'clubInvite'
+  | 'checkIn'
+  | 'challenge'
+  | 'newBook'
+  | 'clubUpdate'
+  | 'billing'
+  | 'system'
+
+/** Registro de notificação na inbox do usuário. */
+export interface Notification {
+  id: string
+  user_id: string
+  event: NotificationEvent
+  title: string
+  body: string
+  data: Record<string, string>
+  read: boolean
+  created_at: string
+}
+
+/** Preferência por evento/canal do usuário. */
+export interface NotificationPreference {
+  id: string
+  user_id: string
+  event: NotificationEvent
+  channel: NotificationChannel
+  enabled: boolean
+  updated_at: string
+}
+
+// ─────────────────────────────────────────────────────────────
+// Queue Platform (spec §5)
+// ─────────────────────────────────────────────────────────────
+
+/** Filas canônicas — espelham QueueNames no Flutter. */
+export type QueueName =
+  | 'queue:email'
+  | 'queue:push'
+  | 'queue:google_books'
+  | 'queue:analytics'
+  | 'queue:reviews'
+  | 'queue:billing'
+  | 'queue:lgpd'
+  | 'queue:recommendations'
+  | 'queue:media'
+  | 'queue:ai'
+
+export type QueueJobStatus = 'pending' | 'running' | 'done' | 'failed' | 'dead_letter'
+
+export interface QueueJob {
+  id: string
+  queue: QueueName
+  payload: Record<string, unknown>
+  status: QueueJobStatus
+  attempts: number
+  max_retries: number
+  error: string | null
+  created_at: string
+  started_at: string | null
+  completed_at: string | null
+}
+
+// ─────────────────────────────────────────────────────────────
+// Media Pipeline (spec §8)
+// ─────────────────────────────────────────────────────────────
+
+export type MediaType = 'avatar' | 'cover' | 'club_cover' | 'attachment'
+export type MediaStatus = 'pending' | 'processing' | 'ready' | 'failed'
+
+export interface MediaAsset {
+  id: string
+  user_id: string
+  type: MediaType
+  original_url: string
+  processed_url: string | null
+  thumbnail_url: string | null
+  status: MediaStatus
+  mime_type: string
+  size_bytes: number
+  width: number | null
+  height: number | null
+  created_at: string
+  updated_at: string
+}
+
 export interface BookListItem {
   id: string
   list_id: string

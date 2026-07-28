@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createServerSupabase } from '@lumen/supabase/server'
-import { bookStatusLabel } from '@lumen/ui'
+import { bookStatusLabel, starRating } from '@lumen/ui'
 import { batchUpdateStatus, batchDelete } from './library-actions'
 import type { Book } from '@lumen/types'
 import type { Metadata } from 'next'
@@ -416,7 +416,7 @@ function BookCard({ book }: { book: Book }) {
         </div>
       )}
       {book.rating != null && book.rating > 0 && (
-        <p className="text-xs text-[#F5A623] mt-0.5">{'★'.repeat(book.rating)}</p>
+        <p className="text-xs text-[#F5A623] mt-0.5">{starRating(book.rating, false)}</p>
       )}
     </div>
   )
