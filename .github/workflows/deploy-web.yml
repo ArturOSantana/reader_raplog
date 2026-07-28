@@ -7,7 +7,6 @@ on:
       - 'platform/**'
       - '.github/workflows/deploy-web.yml'
 
-# Cancela runs anteriores ainda em andamento para a mesma branch
 concurrency:
   group: deploy-platform-${{ github.ref }}
   cancel-in-progress: true
@@ -17,45 +16,29 @@ jobs:
     name: Deploy marketing → Vercel
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: platform
-
     steps:
-      # ── 1. Checkout ────────────────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── 2. Node ────────────────────────────────────────────────────────────
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: platform/package-lock.json
 
-      # ── 3. Dependências ────────────────────────────────────────────────────
-      - name: Install dependencies
-        run: npm ci
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
 
-      # ── 4. Deploy marketing → Vercel ──────────────────────────────────────
       - name: Deploy marketing
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
-          working-directory: platform/apps/marketing
-          vercel-args: '--prod'
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: platform/apps/marketing
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
 
   deploy-web:
     name: Deploy web app → Vercel
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: platform
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,29 +47,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: platform/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
 
       - name: Deploy web
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
-          working-directory: platform/apps/web
-          vercel-args: '--prod'
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: platform/apps/web
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
 
   deploy-admin:
     name: Deploy admin → Vercel
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: platform
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -95,17 +70,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: platform/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
 
       - name: Deploy admin
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-          working-directory: platform/apps/admin
-          vercel-args: '--prod'
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: platform/apps/admin
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
