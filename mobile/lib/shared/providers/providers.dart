@@ -5,9 +5,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/providers/analytics_provider.dart';
 import '../../core/providers/book_metadata_provider.dart';
 import '../../core/providers/cache_provider.dart';
+import '../../core/providers/notification_provider.dart';
+import '../../core/providers/queue_provider.dart';
 import '../../core/providers/impl/cached_book_metadata_impl.dart';
 import '../../core/providers/impl/debug_analytics_impl.dart';
 import '../../core/providers/impl/google_books_metadata_impl.dart';
+import '../../core/media/media_pipeline.dart';
+import '../../core/media/supabase_media_pipeline.dart';
+import '../../core/providers/storage_provider.dart';
+import '../../core/providers/impl/in_memory_queue_impl.dart';
+import '../../core/providers/impl/supabase_storage_impl.dart';
+import '../../core/providers/impl/supabase_notification_impl.dart';
 import '../../core/providers/impl/memory_cache_impl.dart';
 import '../../core/providers/impl/noop_analytics_impl.dart';
 import '../../core/providers/impl/shared_prefs_cache_impl.dart';
@@ -193,6 +201,44 @@ final clubSocialHeatmapProvider =
   return ref.watch(bookClubRepositoryProvider).fetchSocialHeatmap(clubId);
 });
 
+
+// ── Queue Platform (Fase 2A) ──────────────────────────────────────────────
+
+/// Queue in-process para desenvolvimento/debug.
+/// Em produção, trocar por SupabaseQueueImpl ou BullMQImpl.
+final queueProvider = Provider<QueueProvider>((ref) {
+  return InMemoryQueueImpl();
+}, name: 'queueProvider');
+
+// ── Notification Platform (Fase 2A) ──────────────────────────────────────
+
+/// Envia notificações via Supabase (inbox) + Queue (push/email).
+/// Canais configuráveis por usuário via NotificationPreference.
+final notificationPlatformProvider = Provider<NotificationProvider>((ref) {
+  return SupabaseNotificationImpl(
+    supabase: ref.watch(supabaseClientProvider),
+    queue: ref.watch(queueProvider),
+  );
+}, name: 'notificationPlatformProvider');
+
+// ── Media Pipeline (Fase 2A) ──────────────────────────────────────────────
+
+/// StorageProvider via Supabase Storage.
+/// Trocar por S3Impl / R2Impl sem alterar consumidores.
+final storageProvider = Provider<StorageProvider>((ref) {
+  return SupabaseStorageImpl(ref.watch(supabaseClientProvider));
+}, name: 'storageProvider');
+
+// ── Media Pipeline (Fase 2A) ──────────────────────────────────────────────
+
+/// Todo upload de imagem/documento deve passar pelo mediaPipelineProvider.
+/// Valida MIME, tamanho, comprime (stub) e salva no Supabase Storage.
+final mediaPipelineProvider = Provider<MediaPipeline>((ref) {
+  return SupabaseMediaPipeline(
+    storage: ref.watch(storageProvider),
+    supabase: ref.watch(supabaseClientProvider),
+  );
+}, name: 'mediaPipelineProvider');
 
 // ── Platform Providers (Fase 1A / 1B) ────────────────────────────────────
 //

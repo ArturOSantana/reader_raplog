@@ -53,7 +53,7 @@ import '../../features/notifications/presentation/screens/reading_schedule_scree
 import '../../features/notifications/data/notification_models.dart';
 import '../shell/main_shell.dart';
 import 'route_persistence.dart';
-import '../../admin/admin_router.dart';
+import '../../admin/admin_router.dart' show adminRoutes;
 
 /// Última rota salva, injetada via override no main.dart antes do runApp.
 final initialRouteProvider = Provider<String?>((ref) => null);
@@ -96,8 +96,10 @@ class _AuthNotifier extends ChangeNotifier {
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
+  ref.keepAlive();
+
   final notifier = _AuthNotifier(ref);
-  final initialRoute = ref.watch(initialRouteProvider) ?? '/';
+  final initialRoute = ref.read(initialRouteProvider) ?? '/';
 
   final router = GoRouter(
     initialLocation: initialRoute,

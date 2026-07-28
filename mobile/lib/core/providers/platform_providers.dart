@@ -16,3 +16,4 @@ export 'payment_provider.dart';
 export 'queue_provider.dart';
 export 'search_provider.dart';
 export 'storage_provider.dart';
+export '../media/media_pipeline.dart';

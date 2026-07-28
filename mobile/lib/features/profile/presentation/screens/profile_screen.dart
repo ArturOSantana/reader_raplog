@@ -264,10 +264,13 @@ class ProfileScreen extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => _SettingsSheet(
+      // O builder recebe o context local do overlay (sheetContext).
+      // Usar sheetContext nos Navigator.pop garante que fechamos o overlay
+      // correto, sem interceptação pelo GoRouter.
+      builder: (sheetContext) => _SettingsSheet(
         profileAsync: ref.read(_profileProvider),
         onEditProfile: () {
-          Navigator.pop(context);
+          Navigator.of(sheetContext).pop();
           _showEditSheet(
             context, ref,
             ref.read(_profileProvider).valueOrNull,
@@ -1538,7 +1541,7 @@ class _SettingsSheet extends ConsumerWidget {
             icon: Icons.notifications_outlined,
             label: 'Notificações',
             onTap: () {
-              Navigator.pop(context);
+              Navigator.of(context).pop();
               context.push('/notifications/settings');
             },
           ),
@@ -1576,9 +1579,13 @@ class _SettingsSheet extends ConsumerWidget {
 
   void _confirmSignOut(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
+    // Captura o Navigator do bottom sheet (context local do _SettingsSheet)
+    // antes de abrir o dialog. Isso garante que os pops subsequentes fechem
+    // os overlays corretos em vez de serem interceptados pelo GoRouter.
+    final sheetNavigator = Navigator.of(context);
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text('Sair', style: ReadLogType.display(size: 16, color: cs.onSurface)),
         content: Text(
           'Tem certeza que deseja sair da sua conta?',
@@ -1586,27 +1593,38 @@ class _SettingsSheet extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: Text('Cancelar', style: ReadLogType.mono(size: 13, color: cs.onSurface)),
           ),
           TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              await LocalDatabase.instance.clearUserData();
-              ref.invalidate(bookRepositoryProvider);
-              ref.invalidate(sessionRepositoryProvider);
-              ref.invalidate(noteRepositoryProvider);
-              ref.invalidate(profileRepositoryProvider);
-              ref.invalidate(onboardingCompletedProvider);
-              await GoogleSignIn().signOut();
-              await Supabase.instance.client.auth.signOut();
+            onPressed: () {
+              // Fecha dialog e bottom sheet de forma síncrona antes de
+              // qualquer await. O signOut() dispara o authStateProvider que
+              // aciona o redirect do GoRouter — a árvore precisa estar
+              // completamente estável nesse momento para evitar o
+              // '!_debugLocked' no NavigatorState.
+              Navigator.of(dialogContext).pop(); // fecha o dialog
+              sheetNavigator.pop();              // fecha o bottom sheet
+              _performSignOut(ref);
             },
             child: Text('Sair', style: ReadLogType.mono(size: 13, color: AppColors.error)),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _performSignOut(WidgetRef ref) async {
+    await LocalDatabase.instance.clearUserData();
+    ref.invalidate(bookRepositoryProvider);
+    ref.invalidate(sessionRepositoryProvider);
+    ref.invalidate(noteRepositoryProvider);
+    ref.invalidate(profileRepositoryProvider);
+    ref.invalidate(onboardingCompletedProvider);
+    await GoogleSignIn().signOut();
+    await Supabase.instance.client.auth.signOut();
+    // A navegação para /auth/login é feita automaticamente pelo
+    // authStateProvider escutado no SplashScreen / redirect do router.
   }
 }
 
