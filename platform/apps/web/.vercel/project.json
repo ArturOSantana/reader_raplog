@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_F2kGSI6JffgkciY758DgVtFrqPlZ",
+  "orgId": "team_46q00sbKaHvKD7W0gw8WkI4s",
+  "projectName": "lumen-web",
+  "settings": {
+    "createdAt": 1785209627137,
+    "framework": "nextjs",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "20.x"
+  }
+}
