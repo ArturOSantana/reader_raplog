@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "apps/admin/.next",
   "github": {
     "enabled": false
   }

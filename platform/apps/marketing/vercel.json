@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "apps/marketing/.next",
   "github": {
     "enabled": false
   }
