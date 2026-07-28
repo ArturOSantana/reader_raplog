@@ -1,0 +1,5 @@
+<svg viewBox="0 0 220 64" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <text x="0" y="40" font-family="Fraunces, serif" font-weight="500" font-size="34" fill="#151515">Lumen</text>
+  <path d="M2 50H196" stroke="#4D7056" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="201" cy="50" r="3" fill="#4D7056"/>
+</svg>

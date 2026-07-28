@@ -39,6 +39,7 @@ dependencies:
   flutter_local_notifications: ^18.0.1
 
   # UI
+  flutter_svg: ^2.1.0
   image_picker: ^1.1.2
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
@@ -77,6 +78,7 @@ flutter:
   assets:
     - assets/images/
     - assets/animations/
+    - assets/icons/
     # .env é necessário para flutter_dotenv no mobile/desktop.
     # No build web (CI), um .env VAZIO é criado antes do flutter build web
     # para que o asset exista mas não exponha segredos via assets/.env HTTP.
