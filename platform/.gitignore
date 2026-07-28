@@ -26,3 +26,6 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+
+# Vercel link local
+.vercel/
