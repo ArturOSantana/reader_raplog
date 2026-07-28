@@ -30,15 +30,13 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Install dependencies
+      - name: Install dependencies (workspace root)
         run: npm ci
         working-directory: platform
 
-      - name: Link node_modules into app dirs
-        run: |
-          ln -s "$(pwd)/platform/node_modules" platform/apps/marketing/node_modules
-          ln -s "$(pwd)/platform/node_modules" platform/apps/web/node_modules
-          ln -s "$(pwd)/platform/node_modules" platform/apps/admin/node_modules
+      - name: Install dependencies (marketing app)
+        run: npm install --legacy-peer-deps
+        working-directory: platform/apps/marketing
 
       - name: Pull Vercel project config
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
@@ -79,15 +77,13 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Install dependencies
+      - name: Install dependencies (workspace root)
         run: npm ci
         working-directory: platform
 
-      - name: Link node_modules into app dirs
-        run: |
-          ln -s "$(pwd)/platform/node_modules" platform/apps/marketing/node_modules
-          ln -s "$(pwd)/platform/node_modules" platform/apps/web/node_modules
-          ln -s "$(pwd)/platform/node_modules" platform/apps/admin/node_modules
+      - name: Install dependencies (web app)
+        run: npm install --legacy-peer-deps
+        working-directory: platform/apps/web
 
       - name: Pull Vercel project config
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
@@ -128,15 +124,13 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Install dependencies
+      - name: Install dependencies (workspace root)
         run: npm ci
         working-directory: platform
 
-      - name: Link node_modules into app dirs
-        run: |
-          ln -s "$(pwd)/platform/node_modules" platform/apps/marketing/node_modules
-          ln -s "$(pwd)/platform/node_modules" platform/apps/web/node_modules
-          ln -s "$(pwd)/platform/node_modules" platform/apps/admin/node_modules
+      - name: Install dependencies (admin app)
+        run: npm install --legacy-peer-deps
+        working-directory: platform/apps/admin
 
       - name: Pull Vercel project config
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
