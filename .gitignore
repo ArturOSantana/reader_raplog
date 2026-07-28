@@ -54,3 +54,8 @@ Thumbs.db
 
 # ── Artefato legado ───────────────────────────────────────────
 readlog/
+.vercel
+.env*
+
+# Vercel link (gerado localmente, não commitar)
+.vercel/
