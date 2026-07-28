@@ -1,34 +1,56 @@
-# Flutter / Dart
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-build/
-*.g.dart
-
-# Env — nunca commitar segredos
+# ── Segredos — NUNCA commitar ────────────────────────────────
 .env
 .env.*
 !.env.example
+.env.local
+.env.*.local
 
-# iOS
-ios/Pods/
-ios/.symlinks/
-ios/Runner.xcworkspace/xcshareddata/
+# ── Android keystore ─────────────────────────────────────────
+mobile/android/key.properties
+mobile/android/app/keystore.jks
+keystore_base64.txt
 
-# Android
-android/.gradle/
-android/local.properties
+# ── Flutter / Dart ────────────────────────────────────────────
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/build/
+mobile/*.g.dart
 
-# macOS
-macos/Pods/
-macos/.symlinks/
+# ── iOS ───────────────────────────────────────────────────────
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Runner.xcworkspace/xcshareddata/
 
-# IDEs
+# ── macOS ─────────────────────────────────────────────────────
+mobile/macos/Pods/
+mobile/macos/.symlinks/
+
+# ── Android ───────────────────────────────────────────────────
+mobile/android/.gradle/
+mobile/android/local.properties
+
+# ── Next.js / Node ───────────────────────────────────────────
+platform/node_modules/
+platform/**/node_modules/
+platform/**/.next/
+platform/**/dist/
+platform/**/*.tsbuildinfo
+platform/**/.turbo/
+platform/out/
+
+# ── Supabase local ────────────────────────────────────────────
+platform/supabase/.temp/
+mobile/supabase/.temp/
+
+# ── IDEs ──────────────────────────────────────────────────────
 .idea/
 .vscode/
 *.iml
 
-# Android keystore (nunca commitar)
-android/key.properties
-android/app/keystore.jks
-keystore_base64.txt
+# ── OS ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Artefato legado ───────────────────────────────────────────
+readlog/

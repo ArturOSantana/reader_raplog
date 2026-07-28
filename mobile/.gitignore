@@ -1,0 +1,37 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+*.g.dart
+
+# Env — nunca commitar segredos
+.env
+.env.*
+!.env.example
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Runner.xcworkspace/xcshareddata/
+
+# Android
+android/.gradle/
+android/local.properties
+
+# macOS
+macos/Pods/
+macos/.symlinks/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Android keystore (nunca commitar)
+android/key.properties
+android/app/keystore.jks
+keystore_base64.txt
+
+# Subdiretório legado / artefato acidental
+readlog/

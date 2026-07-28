@@ -1,0 +1,28 @@
+{
+  "name": "@lumen/supabase",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clientes Supabase compartilhados entre todas as apps do Lumen.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./browser": "./src/browser.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.50.0",
+    "@supabase/ssr": "0.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.29",
+    "typescript": "5.8.3",
+    "next": "15.5.22"
+  },
+  "peerDependencies": {
+    "next": ">=15.5.22"
+  }
+}

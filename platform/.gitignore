@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Turbo
+.turbo/
+
+# Next.js
+.next/
+out/
+dist/
+
+# Build artifacts
+*.tsbuildinfo
+
+# Env files (nunca commitar segredos)
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

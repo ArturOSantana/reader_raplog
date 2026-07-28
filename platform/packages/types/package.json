@@ -1,0 +1,17 @@
+{
+  "name": "@lumen/types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tipos TypeScript compartilhados entre todas as apps do Lumen.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3"
+  }
+}

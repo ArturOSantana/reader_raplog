@@ -1,0 +1,58 @@
+name: Deploy Web — Vercel
+
+on:
+  push:
+    branches: [main]
+
+# Cancela runs anteriores ainda em andamento para a mesma branch
+concurrency:
+  group: deploy-web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Build Flutter Web & Deploy Vercel
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Flutter ─────────────────────────────────────────────────────────
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # ── 3. .env VAZIO para satisfazer o asset flutter_dotenv ───────────────
+      # No web as variáveis chegam via --dart-define; o arquivo .env bundled
+      # fica vazio propositalmente para não expor segredos via HTTP (assets/.env).
+      - name: Create empty .env (web asset placeholder)
+        run: touch .env
+
+      # ── 4. Dependências ────────────────────────────────────────────────────
+      - name: Flutter pub get
+        run: flutter pub get
+
+      # ── 5. Build Flutter Web (release) ─────────────────────────────────────
+      # Variáveis sensíveis chegam via --dart-define (não ficam em assets/).
+      # O renderer padrão (canvaskit) é omitido para usar o default do Flutter.
+      - name: Build Flutter Web
+        run: |
+          flutter build web --release \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            --dart-define=GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+
+      # ── 6. Deploy para Vercel ──────────────────────────────────────────────
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          vercel-args: '--prod'

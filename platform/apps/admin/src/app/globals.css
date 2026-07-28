@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "IBM Plex Mono", "Courier New", monospace;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  /* Admin usa paleta mais neutra — menos leitura, mais dados */
+  --color-paper:      #F8F9FA;
+  --color-paper-alt:  #F1F3F5;
+  --color-paper-deep: #E9ECEF;
+
+  --color-canvas:     #0F1117;
+
+  --color-ink:        #1A1A2E;
+  --color-ink-muted:  #6C757D;
+  --color-ink-ghost:  #ADB5BD;
+
+  --color-progress:        #3D6B5A;
+  --color-progress-light:  #5A9480;
+  --color-progress-subtle: #E8F0EE;
+
+  --color-success: #3D6B5A;
+  --color-warning: #8B5E2E;
+  --color-danger:  #8B2E2E;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-ink-ghost); border-radius: 3px; }

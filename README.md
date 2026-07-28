@@ -1,17 +1,53 @@
-# Lumen
+# Lumen — Monorepo
 
-A new Flutter project.
+Repositório único com todo o código da plataforma Lumen.
 
-## Getting Started
+```
+lumen/                     ← raiz do repo
+├── mobile/                ← Flutter app (Android + iOS)
+│   ├── lib/
+│   ├── android/
+│   ├── ios/
+│   └── supabase/          ← migrations + edge functions do mobile
+├── platform/              ← Turborepo (Next.js)
+│   ├── apps/
+│   │   ├── marketing/     ← lumen.app  (Next.js 15, porta 3000)
+│   │   ├── web/           ← app.lumen.app (Next.js 15, porta 3001)
+│   │   └── admin/         ← admin.lumen.app (Next.js 15, porta 3002)
+│   ├── packages/
+│   │   ├── ui/            ← componentes compartilhados
+│   │   ├── types/         ← tipos TypeScript compartilhados
+│   │   └── supabase/      ← cliente Supabase SSR/browser compartilhado
+│   └── supabase/          ← migrations + edge functions da platform
+└── .github/workflows/
+    ├── beta.yml           ← CI Android → Firebase App Distribution
+    └── deploy-web.yml     ← CI Flutter Web → Vercel  (em breve)
+```
 
-This project is a starting point for a Flutter application.
+## Setup rápido
 
-A few resources to get you started if this is your first Flutter project:
+### Mobile (Flutter)
+```bash
+cd mobile
+cp .env.example .env   # preencha com suas chaves
+flutter pub get
+flutter run
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+### Platform (Next.js Turborepo)
+```bash
+cd platform
+cp apps/web/.env.example apps/web/.env.local
+cp apps/admin/.env.example apps/admin/.env.local
+cp apps/marketing/.env.example apps/marketing/.env.local
+# preencha os valores em cada .env.local
+npm install
+npm run dev            # inicia os 3 apps em paralelo
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## CI/CD
+
+| Workflow | Trigger | Resultado |
+|---|---|---|
+| `beta.yml` | push `main` — mudança em `mobile/**` | APK Android → Firebase App Distribution |
+| `deploy-web.yml` | push `main` — mudança em `platform/**` | Next.js apps → Vercel |

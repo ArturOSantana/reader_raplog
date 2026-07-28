@@ -1,0 +1,42 @@
+{
+  "name": "lumen-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lumen — monorepo Turborepo: marketing, web platform e admin console.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "dev:marketing": "turbo dev --filter=@lumen/marketing",
+    "dev:web": "turbo dev --filter=@lumen/web",
+    "dev:admin": "turbo dev --filter=@lumen/admin"
+  },
+  "devDependencies": {
+    "turbo": "2.10.7"
+  },
+  "overrides": {
+    "postcss": "8.5.23",
+    "sharp": "0.35.3",
+    "brace-expansion": "5.0.8",
+    "minimatch": "10.2.6",
+    "next": {
+      "postcss": "8.5.23",
+      "sharp": "0.35.3"
+    }
+  },
+  "packageManager": "npm@10.9.2",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "allowScripts": {
+    "@tailwindcss/oxide@4.1.11": true,
+    "sharp@0.35.3": true,
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.12.2": true
+  }
+}
