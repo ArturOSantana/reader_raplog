@@ -1,9 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/providers/cache_provider.dart';
 import '../../core/providers/analytics_provider.dart';
+import '../../core/providers/book_metadata_provider.dart';
+import '../../core/providers/cache_provider.dart';
+import '../../core/providers/impl/cached_book_metadata_impl.dart';
+import '../../core/providers/impl/debug_analytics_impl.dart';
+import '../../core/providers/impl/google_books_metadata_impl.dart';
 import '../../core/providers/impl/memory_cache_impl.dart';
 import '../../core/providers/impl/noop_analytics_impl.dart';
+import '../../core/providers/impl/shared_prefs_cache_impl.dart';
+import '../../core/observability/observability_service.dart';
+import '../../features/library/data/book_search_service.dart';
+import '../../features/library/data/cached_book_search_service.dart';
 import '../models/club_presence_stats.dart';
 import '../../core/local/connectivity_provider.dart';
 import '../../core/local/sync_service.dart';
@@ -24,6 +34,7 @@ import '../../features/notifications/presentation/notification_notifier.dart';
 import '../../features/inspiration/data/inspiration_service.dart';
 
 export '../../core/local/connectivity_provider.dart';
+export '../../core/observability/observability_service.dart';
 export '../../core/providers/platform_providers.dart';
 export '../../core/rbac/rbac.dart';
 
@@ -183,21 +194,61 @@ final clubSocialHeatmapProvider =
 });
 
 
-// ── Platform Providers (Fase 1A) ──────────────────────────────────────────
+// ── Platform Providers (Fase 1A / 1B) ────────────────────────────────────
 //
 // Implementações concretas dos providers de plataforma.
-// Troque a implementação aqui sem tocar em nenhuma outra parte do app.
+// Para trocar de implementação, altere apenas aqui.
 
-/// Cache in-memory — padrão para Fase 1.
-/// Trocar por SharedPrefsCacheImpl ou UpstashCacheImpl nas fases seguintes.
-final cacheProvider = Provider<CacheProvider>(
-  (_) => MemoryCacheImpl(),
-  name: 'cacheProvider',
-);
+// ── Cache ─────────────────────────────────────────────────────────────────
 
-/// Analytics no-op — descarta eventos silenciosamente.
-/// Trocar por PostHogAnalyticsImpl quando configurado.
-final analyticsProvider = Provider<AnalyticsProvider>(
-  (_) => const NoopAnalyticsImpl(),
-  name: 'analyticsProvider',
+/// Cache persistente via SharedPreferences (Fase 1B).
+/// Inicializado de forma assíncrona; fallback para memória enquanto carrega.
+final sharedPrefsCacheProvider = FutureProvider<CacheProvider>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  return SharedPrefsCacheImpl(prefs);
+}, name: 'sharedPrefsCacheProvider');
+
+/// Cache usado em todo o app.
+/// Usa SharedPrefsCacheImpl quando disponível; fallback para MemoryCacheImpl.
+final cacheProvider = Provider<CacheProvider>((ref) {
+  return ref.watch(sharedPrefsCacheProvider).valueOrNull ?? MemoryCacheImpl();
+}, name: 'cacheProvider');
+
+// ── Analytics ─────────────────────────────────────────────────────────────
+
+/// DebugAnalyticsImpl em debug (loga no console); NoopAnalyticsImpl em produção.
+/// Fase 2B: trocar por PostHogAnalyticsImpl.
+final analyticsProvider = Provider<AnalyticsProvider>((ref) {
+  if (kDebugMode) return const DebugAnalyticsImpl();
+  return const NoopAnalyticsImpl();
+}, name: 'analyticsProvider');
+
+// ── Book Metadata com cache ───────────────────────────────────────────────
+
+/// Provider de metadados de livros com cache automático.
+/// Fluxo: cache (SharedPrefs) → Google Books API → salva no cache.
+final bookMetadataProvider = Provider<BookMetadataProvider>((ref) {
+  final cache = ref.watch(cacheProvider);
+  const apiKey = String.fromEnvironment('GOOGLE_BOOKS_API_KEY');
+  final google = GoogleBooksMetadataImpl(apiKey: apiKey);
+  return CachedBookMetadataImpl(delegate: google, cache: cache);
+}, name: 'bookMetadataProvider');
+
+// ── Book Search com cache ─────────────────────────────────────────────────
+
+/// BookSearchService com cache — substitui o uso direto de BookSearchService.
+final cachedBookSearchProvider = Provider<CachedBookSearchService>((ref) {
+  final cache = ref.watch(cacheProvider);
+  return CachedBookSearchService(
+    delegate: BookSearchService(),
+    cache: cache,
+  );
+}, name: 'cachedBookSearchProvider');
+
+// ── Observabilidade ───────────────────────────────────────────────────────
+
+/// Acesso ao ObservabilityService via Riverpod (alias de obsProvider).
+final observabilityProvider = Provider<ObservabilityService>(
+  (_) => ObservabilityService.instance,
+  name: 'observabilityProvider',
 );

@@ -20,7 +20,7 @@ class SharedPrefsCacheImpl implements CacheProvider {
 
   // Prefixo interno para não colidir com outras chaves de SharedPreferences.
   static const _ns = 'lumen_cache::';
-  // Sufixo onde o TTL expirado é armazenado (timestamp Unix em ms).
+  // Sufixo onde o TTL expira é armazenado (timestamp Unix em ms).
   static const _ttlSuffix = '::ttl';
 
   String _k(String key) => '$_ns$key';
@@ -49,8 +49,7 @@ class SharedPrefsCacheImpl implements CacheProvider {
   Future<void> set<T>(String key, T value, {Duration? ttl}) async {
     await _prefs.setString(_k(key), jsonEncode(value));
     if (ttl != null) {
-      final expiresAt =
-          DateTime.now().add(ttl).millisecondsSinceEpoch;
+      final expiresAt = DateTime.now().add(ttl).millisecondsSinceEpoch;
       await _prefs.setInt(_ttlK(key), expiresAt);
     } else {
       await _prefs.remove(_ttlK(key));
@@ -66,7 +65,7 @@ class SharedPrefsCacheImpl implements CacheProvider {
   @override
   Future<void> invalidatePrefix(String prefix) async {
     final fullPrefix = '$_ns$prefix';
-    final keys = _prefs.getKeys().where((k) => k.startsWith(fullPrefix));
+    final keys = _prefs.getKeys().where((k) => k.startsWith(fullPrefix)).toList();
     for (final k in keys) {
       await _prefs.remove(k);
     }
@@ -74,7 +73,7 @@ class SharedPrefsCacheImpl implements CacheProvider {
 
   @override
   Future<void> clear() async {
-    final keys = _prefs.getKeys().where((k) => k.startsWith(_ns));
+    final keys = _prefs.getKeys().where((k) => k.startsWith(_ns)).toList();
     for (final k in keys) {
       await _prefs.remove(k);
     }

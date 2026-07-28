@@ -4,7 +4,7 @@
 /// Útil para verificar que os eventos corretos estão sendo disparados
 /// antes de conectar um provider real como PostHog ou GA4.
 ///
-/// ⚠ NUNCA usar em produção — troca por [NoopAnalyticsImpl] ou
+/// ⚠ NUNCA usar em produção — trocar por [NoopAnalyticsImpl] ou
 /// [PostHogAnalyticsImpl] no build de release.
 library;
 
@@ -36,8 +36,9 @@ class DebugAnalyticsImpl implements AnalyticsProvider {
     Map<String, Object?> traits = const {},
   }) async {
     if (!kDebugMode) return;
+    final id = userId.length > 8 ? '${userId.substring(0, 8)}…' : userId;
     // ignore: avoid_print
-    debugPrint('[Analytics] identify: userId=${userId.substring(0, 8)}…');
+    debugPrint('[Analytics] identify: userId=$id');
   }
 
   @override

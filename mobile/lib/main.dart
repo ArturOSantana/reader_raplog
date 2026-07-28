@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/app_env.dart';
 import 'core/local/local_database.dart';
+import 'core/observability/observability_service.dart';
 import 'core/router/app_router.dart';
 import 'core/router/route_persistence.dart';
 import 'core/widgets/widget_manager.dart';
@@ -17,6 +18,10 @@ import 'theme/readlog_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Configura hooks de erro do Flutter → ObservabilityService.
+  // Em Fase 3, este serviço encaminhará para Sentry.
+  setupObservabilityHooks();
 
   // Bloqueia orientação em portrait (padrão para apps de leitura)
   await SystemChrome.setPreferredOrientations([

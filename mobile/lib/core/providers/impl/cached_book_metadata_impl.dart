@@ -5,18 +5,18 @@
 /// ```
 /// Usuário pesquisa
 ///   ↓
-/// Cache (SharedPrefs / Redis)
+/// CacheProvider (SharedPrefs / Redis)
 ///   ↓ miss
 /// Provider real (Google Books, Open Library…)
 ///   ↓
-/// Normalização → BookMetadata
+/// BookMetadata normalizado
 ///   ↓
-/// Salva no cache
+/// Salva no cache (TTL configurável)
 ///   ↓
-/// Responde
+/// Responde ao chamador
 /// ```
 ///
-/// Nunca consulta o provider real duas vezes para o mesmo resultado.
+/// Nunca consulta o provider real duas vezes para a mesma query/id/isbn.
 library;
 
 import '../book_metadata_provider.dart';
@@ -26,7 +26,7 @@ class CachedBookMetadataImpl implements BookMetadataProvider {
   CachedBookMetadataImpl({
     required BookMetadataProvider delegate,
     required CacheProvider cache,
-    Duration searchTtl   = const Duration(hours: 6),
+    Duration searchTtl    = const Duration(hours: 6),
     Duration fetchByIdTtl = const Duration(days: 30),
   })  : _delegate = delegate,
         _cache = cache,
@@ -51,20 +51,14 @@ class CachedBookMetadataImpl implements BookMetadataProvider {
     if (cached != null) {
       return cached
           .cast<Map<String, dynamic>>()
-          .map(_metadataFromMap)
+          .map(_fromMap)
           .toList();
     }
 
     final results = await _delegate.search(query, maxResults: maxResults);
-
     if (results.isNotEmpty) {
-      await _cache.set(
-        key,
-        results.map(_metadataToMap).toList(),
-        ttl: _searchTtl,
-      );
+      await _cache.set(key, results.map(_toMap).toList(), ttl: _searchTtl);
     }
-
     return results;
   }
 
@@ -73,16 +67,13 @@ class CachedBookMetadataImpl implements BookMetadataProvider {
   @override
   Future<BookMetadata?> fetchById(String id) async {
     final key = 'gbooks:id:$id';
-
     final cached = await _cache.get<Map<String, dynamic>>(key);
-    if (cached != null) return _metadataFromMap(cached);
+    if (cached != null) return _fromMap(cached);
 
     final result = await _delegate.fetchById(id);
-
     if (result != null) {
-      await _cache.set(key, _metadataToMap(result), ttl: _fetchByIdTtl);
+      await _cache.set(key, _toMap(result), ttl: _fetchByIdTtl);
     }
-
     return result;
   }
 
@@ -92,22 +83,19 @@ class CachedBookMetadataImpl implements BookMetadataProvider {
   Future<BookMetadata?> fetchByIsbn(String isbn) async {
     final clean = isbn.replaceAll(RegExp(r'[\s-]'), '');
     final key = 'gbooks:isbn:$clean';
-
     final cached = await _cache.get<Map<String, dynamic>>(key);
-    if (cached != null) return _metadataFromMap(cached);
+    if (cached != null) return _fromMap(cached);
 
     final result = await _delegate.fetchByIsbn(isbn);
-
     if (result != null) {
-      await _cache.set(key, _metadataToMap(result), ttl: _fetchByIdTtl);
+      await _cache.set(key, _toMap(result), ttl: _fetchByIdTtl);
     }
-
     return result;
   }
 
   // ── Serialização ──────────────────────────────────────────────────────────
 
-  static Map<String, dynamic> _metadataToMap(BookMetadata m) => {
+  static Map<String, dynamic> _toMap(BookMetadata m) => {
         'id': m.id,
         'title': m.title,
         'subtitle': m.subtitle,
@@ -124,7 +112,7 @@ class CachedBookMetadataImpl implements BookMetadataProvider {
         'sourceProvider': m.sourceProvider,
       };
 
-  static BookMetadata _metadataFromMap(Map<String, dynamic> m) => BookMetadata(
+  static BookMetadata _fromMap(Map<String, dynamic> m) => BookMetadata(
         id: m['id'] as String,
         title: m['title'] as String,
         subtitle: m['subtitle'] as String?,
