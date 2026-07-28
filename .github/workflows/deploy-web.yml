@@ -26,7 +26,7 @@ jobs:
           node-version: 20
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: npm install -g vercel@56
 
       - name: Deploy marketing
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
@@ -49,7 +49,7 @@ jobs:
           node-version: 20
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: npm install -g vercel@56
 
       - name: Deploy web
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
@@ -72,7 +72,7 @@ jobs:
           node-version: 20
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: npm install -g vercel@56
 
       - name: Deploy admin
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
