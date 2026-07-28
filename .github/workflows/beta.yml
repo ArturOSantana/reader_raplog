@@ -64,7 +64,13 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      # ── 6. Keystore de release ─────────────────────────────────────────────
+      # ── 6. google-services.json ────────────────────────────────────────────
+      - name: Create google-services.json
+        run: |
+          printf '%s' '${{ secrets.GOOGLE_SERVICES_JSON }}' \
+            > android/app/google-services.json
+
+      # ── 7. Keystore de release ─────────────────────────────────────────────
       - name: Decode keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -85,14 +91,14 @@ jobs:
             "$STORE_PASS" "$KEY_PASS" "$KEY_ALIAS" \
             > android/key.properties
 
-      # ── 7. Build APK release ───────────────────────────────────────────────
+      # ── 8. Build APK release ───────────────────────────────────────────────
       - name: Build APK
         run: |
           flutter build apk --release \
             --build-number=${{ steps.ver.outputs.code }} \
             --build-name=${{ steps.ver.outputs.name }}
 
-      # ── 8. Renomeia o artefato com a versão ────────────────────────────────
+      # ── 9. Renomeia o artefato com a versão ────────────────────────────────
       - name: Rename APK
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \
