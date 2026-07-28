@@ -31,12 +31,14 @@ jobs:
       - name: Link project
         run: |
           mkdir -p .vercel
-          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_MARKETING }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
-        working-directory: platform/apps/marketing
+          printf '{"projectId":"%s","orgId":"%s"}' \
+            "${{ secrets.VERCEL_PROJECT_ID_MARKETING }}" \
+            "${{ secrets.VERCEL_ORG_ID }}" > .vercel/project.json
+        working-directory: platform
 
       - name: Deploy marketing
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/marketing
+        working-directory: platform
 
   deploy-web:
     name: Deploy web app → Vercel
@@ -57,12 +59,14 @@ jobs:
       - name: Link project
         run: |
           mkdir -p .vercel
-          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_WEB }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
-        working-directory: platform/apps/web
+          printf '{"projectId":"%s","orgId":"%s"}' \
+            "${{ secrets.VERCEL_PROJECT_ID_WEB }}" \
+            "${{ secrets.VERCEL_ORG_ID }}" > .vercel/project.json
+        working-directory: platform
 
       - name: Deploy web
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/web
+        working-directory: platform
 
   deploy-admin:
     name: Deploy admin → Vercel
@@ -83,9 +87,11 @@ jobs:
       - name: Link project
         run: |
           mkdir -p .vercel
-          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_ADMIN }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
-        working-directory: platform/apps/admin
+          printf '{"projectId":"%s","orgId":"%s"}' \
+            "${{ secrets.VERCEL_PROJECT_ID_ADMIN }}" \
+            "${{ secrets.VERCEL_ORG_ID }}" > .vercel/project.json
+        working-directory: platform
 
       - name: Deploy admin
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/admin
+        working-directory: platform
