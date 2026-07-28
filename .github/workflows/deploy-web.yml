@@ -41,8 +41,14 @@ jobs:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
 
+      - name: Clear rootDirectory from project settings
+        run: |
+          jq '.settings.rootDirectory = null' .vercel/project.json > /tmp/project.json \
+            && mv /tmp/project.json .vercel/project.json
+        working-directory: platform/apps/marketing
+
       - name: Build
-        run: npx next build
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform/apps/marketing
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
@@ -84,8 +90,14 @@ jobs:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
 
+      - name: Clear rootDirectory from project settings
+        run: |
+          jq '.settings.rootDirectory = null' .vercel/project.json > /tmp/project.json \
+            && mv /tmp/project.json .vercel/project.json
+        working-directory: platform/apps/web
+
       - name: Build
-        run: npx next build
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform/apps/web
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
@@ -127,8 +139,14 @@ jobs:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
 
+      - name: Clear rootDirectory from project settings
+        run: |
+          jq '.settings.rootDirectory = null' .vercel/project.json > /tmp/project.json \
+            && mv /tmp/project.json .vercel/project.json
+        working-directory: platform/apps/admin
+
       - name: Build
-        run: npx next build
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform/apps/admin
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
