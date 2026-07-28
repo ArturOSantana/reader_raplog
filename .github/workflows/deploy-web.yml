@@ -28,12 +28,15 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
+      - name: Link project
+        run: |
+          mkdir -p .vercel
+          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_MARKETING }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
+        working-directory: platform/apps/marketing
+
       - name: Deploy marketing
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform/apps/marketing
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
 
   deploy-web:
     name: Deploy web app → Vercel
@@ -51,12 +54,15 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
+      - name: Link project
+        run: |
+          mkdir -p .vercel
+          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_WEB }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
+        working-directory: platform/apps/web
+
       - name: Deploy web
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform/apps/web
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
 
   deploy-admin:
     name: Deploy admin → Vercel
@@ -74,9 +80,12 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
+      - name: Link project
+        run: |
+          mkdir -p .vercel
+          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_ADMIN }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
+        working-directory: platform/apps/admin
+
       - name: Deploy admin
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform/apps/admin
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
