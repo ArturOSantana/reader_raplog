@@ -28,16 +28,12 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Link project
-        run: |
-          mkdir -p .vercel
-          printf '{"projectId":"%s","orgId":"%s"}' \
-            "${{ secrets.VERCEL_PROJECT_ID_MARKETING }}" \
-            "${{ secrets.VERCEL_ORG_ID }}" > .vercel/project.json
-        working-directory: platform
-
       - name: Deploy marketing
-        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel deploy --prod --yes \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --scope=${{ secrets.VERCEL_ORG_ID }} \
+            --project=${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
         working-directory: platform
 
   deploy-web:
@@ -56,16 +52,12 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Link project
-        run: |
-          mkdir -p .vercel
-          printf '{"projectId":"%s","orgId":"%s"}' \
-            "${{ secrets.VERCEL_PROJECT_ID_WEB }}" \
-            "${{ secrets.VERCEL_ORG_ID }}" > .vercel/project.json
-        working-directory: platform
-
       - name: Deploy web
-        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel deploy --prod --yes \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --scope=${{ secrets.VERCEL_ORG_ID }} \
+            --project=${{ secrets.VERCEL_PROJECT_ID_WEB }}
         working-directory: platform
 
   deploy-admin:
@@ -84,14 +76,10 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Link project
-        run: |
-          mkdir -p .vercel
-          printf '{"projectId":"%s","orgId":"%s"}' \
-            "${{ secrets.VERCEL_PROJECT_ID_ADMIN }}" \
-            "${{ secrets.VERCEL_ORG_ID }}" > .vercel/project.json
-        working-directory: platform
-
       - name: Deploy admin
-        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel deploy --prod --yes \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --scope=${{ secrets.VERCEL_ORG_ID }} \
+            --project=${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
         working-directory: platform
