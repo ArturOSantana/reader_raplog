@@ -30,31 +30,27 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Install dependencies (workspace root)
-        run: npm ci
+      - name: Install dependencies
+        run: npm install
         working-directory: platform
-
-      - name: Install dependencies (marketing app)
-        run: npm install --legacy-peer-deps
-        working-directory: platform/apps/marketing
 
       - name: Pull Vercel project config
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/marketing
+        working-directory: platform
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
 
       - name: Build
-        run: vercel build --prod --cwd apps/marketing --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: platform/apps/marketing
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
 
       - name: Deploy prebuilt
-        run: vercel deploy --prebuilt --prod --cwd apps/marketing --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: platform/apps/marketing
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
@@ -77,31 +73,27 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Install dependencies (workspace root)
-        run: npm ci
+      - name: Install dependencies
+        run: npm install
         working-directory: platform
-
-      - name: Install dependencies (web app)
-        run: npm install --legacy-peer-deps
-        working-directory: platform/apps/web
 
       - name: Pull Vercel project config
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/web
+        working-directory: platform
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
 
       - name: Build
-        run: vercel build --prod --cwd apps/web --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: platform/apps/web
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
 
       - name: Deploy prebuilt
-        run: vercel deploy --prebuilt --prod --cwd apps/web --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: platform/apps/web
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
@@ -124,31 +116,27 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Install dependencies (workspace root)
-        run: npm ci
+      - name: Install dependencies
+        run: npm install
         working-directory: platform
-
-      - name: Install dependencies (admin app)
-        run: npm install --legacy-peer-deps
-        working-directory: platform/apps/admin
 
       - name: Pull Vercel project config
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/admin
+        working-directory: platform
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
 
       - name: Build
-        run: vercel build --prod --cwd apps/admin --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: platform/apps/admin
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
 
       - name: Deploy prebuilt
-        run: vercel deploy --prebuilt --prod --cwd apps/admin --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: platform/apps/admin
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
