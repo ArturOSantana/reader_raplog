@@ -26,18 +26,18 @@ jobs:
           node-version: 20
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: npm install -g vercel@56
 
-      - name: Remove stale Vercel link
-        run: rm -rf .vercel
+      - name: Link project
+        run: |
+          mkdir -p .vercel
+          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_MARKETING }}","orgId":"${{ secrets.VERCEL_ORG_ID }}","projectName":"lumen-marketing"}' > .vercel/project.json
+          cat .vercel/project.json
         working-directory: platform
 
       - name: Deploy marketing
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
 
   deploy-web:
     name: Deploy web app → Vercel
@@ -53,18 +53,18 @@ jobs:
           node-version: 20
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: npm install -g vercel@56
 
-      - name: Remove stale Vercel link
-        run: rm -rf .vercel
+      - name: Link project
+        run: |
+          mkdir -p .vercel
+          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_WEB }}","orgId":"${{ secrets.VERCEL_ORG_ID }}","projectName":"lumen-web"}' > .vercel/project.json
+          cat .vercel/project.json
         working-directory: platform
 
       - name: Deploy web
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
 
   deploy-admin:
     name: Deploy admin → Vercel
@@ -80,15 +80,15 @@ jobs:
           node-version: 20
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: npm install -g vercel@56
 
-      - name: Remove stale Vercel link
-        run: rm -rf .vercel
+      - name: Link project
+        run: |
+          mkdir -p .vercel
+          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_ADMIN }}","orgId":"${{ secrets.VERCEL_ORG_ID }}","projectName":"lumen-admin"}' > .vercel/project.json
+          cat .vercel/project.json
         working-directory: platform
 
       - name: Deploy admin
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
