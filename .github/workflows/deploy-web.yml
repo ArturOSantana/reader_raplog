@@ -29,12 +29,11 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Deploy marketing
-        run: |
-          vercel deploy --prod --yes \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=${{ secrets.VERCEL_ORG_ID }} \
-            --project=${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
 
   deploy-web:
     name: Deploy web app → Vercel
@@ -53,12 +52,11 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Deploy web
-        run: |
-          vercel deploy --prod --yes \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=${{ secrets.VERCEL_ORG_ID }} \
-            --project=${{ secrets.VERCEL_PROJECT_ID_WEB }}
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
 
   deploy-admin:
     name: Deploy admin → Vercel
@@ -77,9 +75,8 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Deploy admin
-        run: |
-          vercel deploy --prod --yes \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=${{ secrets.VERCEL_ORG_ID }} \
-            --project=${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: platform
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
