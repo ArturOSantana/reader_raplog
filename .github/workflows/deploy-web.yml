@@ -42,8 +42,8 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
 
       - name: Build
-        run: vercel build --prod --cwd apps/marketing --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: platform/apps/marketing
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
@@ -128,8 +128,8 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
 
       - name: Build
-        run: vercel build --prod --cwd apps/admin --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: platform/apps/admin
         env:
           VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
