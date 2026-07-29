@@ -109,7 +109,11 @@ class HomeScreen extends ConsumerWidget {
     ];
     final dateLabel = '${weekdays[now.weekday - 1]}, ${now.day} de ${months[now.month - 1]}';
 
-    const userName = 'Artur';
+    final currentUser = ref.watch(currentUserProvider);
+    final fullName    = currentUser?.userMetadata?['full_name'] as String?;
+    final userName    = (fullName?.trim().split(' ').first) ??
+        currentUser?.email?.split('@').first ??
+        'Leitor';
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg     = isDark ? ReadLogColors.canvas   : ReadLogColors.surface;
@@ -219,6 +223,7 @@ class HomeScreen extends ConsumerWidget {
                           progress: _progress(reading[i]),
                           currentPage: reading[i].currentPage,
                           totalPages: reading[i].totalPages,
+                          coverUrl: reading[i].coverUrl,
                           onTap: () =>
                               context.push('/library/book/${reading[i].id}'),
                         ),
