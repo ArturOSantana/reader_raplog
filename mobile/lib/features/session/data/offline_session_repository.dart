@@ -244,9 +244,9 @@ class OfflineSessionRepository {
         await localRepo.upsertDailyStats(
           userId: _userId,
           date: today,
-          totalMinutes: result['total_minutes'] as int,
-          totalPages: result['total_pages'] as int,
-          sessionCount: result['session_count'] as int,
+          totalMinutes: (result['total_minutes'] as num?)?.toInt() ?? 0,
+          totalPages: (result['total_pages'] as num?)?.toInt() ?? 0,
+          sessionCount: (result['session_count'] as num?)?.toInt() ?? 0,
         );
         return result;
       } catch (_) {}
@@ -259,7 +259,7 @@ class OfflineSessionRepository {
       try {
         final data = await _client
             .rpc('calculate_streak', params: {'p_user_id': _userId});
-        return (data as int?) ?? 0;
+        return (data as num?)?.toInt() ?? 0;
       } catch (_) {}
     }
     return localRepo.fetchStreak(_userId);

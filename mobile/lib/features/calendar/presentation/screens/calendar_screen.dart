@@ -28,7 +28,7 @@ final _calendarDataProvider = FutureProvider<Map<String, dynamic>>((ref) async {
 
   return {
     'heatmap': results[0] as List<Map<String, dynamic>>,
-    'streak': results[1] as int,
+    'streak': (results[1] as num?)?.toInt() ?? 0,
     'meetings': results[2] as List<BookClubMeeting>,
     'goals': results[3] as List<Goal>,
   };

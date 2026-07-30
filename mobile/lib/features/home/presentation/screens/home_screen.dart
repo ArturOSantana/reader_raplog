@@ -28,7 +28,7 @@ final _homeDataProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   ]);
 
   final daily   = results[0] as Map<String, dynamic>;
-  final streak  = results[1] as int;
+  final streak  = (results[1] as num?)?.toInt() ?? 0;
   final reading = results[2] as List<Book>;
   final goals   = results[3] as List<Goal>;
 

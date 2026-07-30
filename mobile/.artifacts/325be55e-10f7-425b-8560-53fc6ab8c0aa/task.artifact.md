@@ -1,0 +1,17 @@
+- [x] Estabilizar versões do Build (Gradle/Kotlin)
+    - [x] Downgrade AGP para 8.5.1 em `settings.gradle.kts`
+    - [x] Downgrade Kotlin para 1.9.24 em `settings.gradle.kts`
+- [x] Ajustar Permissões e Manifesto
+    - [x] Adicionar `INTERNET` e `ACCESS_NETWORK_STATE` em `AndroidManifest.xml`
+- [x] Configurar Regras de Obfuscação (R8/ProGuard)
+    - [x] Criar `android/app/proguard-rules.pro` com regras para widgets e Flutter
+    - [x] Ativar ProGuard em `android/app/build.gradle.kts`
+- [x] Melhorar Segurança do Código Nativo (Kotlin)
+    - [x] Refatorar `StreakWidget.kt` para usar referências de classe seguras
+    - [x] Refatorar `CurrentBookWidget.kt`
+    - [x] Refatorar `DailyGoalWidget.kt`
+    - [x] Refatorar `QuoteWidget.kt`
+    - [x] Refatorar `ClubWidget.kt`
+    - [x] Refatorar `ReaderDashboardWidget.kt`
+- [x] Verificação Final
+    - [x] Revisão manual das configurações de build e manifesto

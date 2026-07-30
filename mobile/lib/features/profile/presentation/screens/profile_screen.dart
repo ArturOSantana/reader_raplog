@@ -41,7 +41,7 @@ final _profileStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final achievements = results[3] as List<Achievement>;
 
   return {
-    'streak': results[0] as int,
+    'streak': (results[0] as num?)?.toInt() ?? 0,
     'yearStats': results[1] as Map<String, dynamic>,
     'books': books,
     'achievements': achievements,

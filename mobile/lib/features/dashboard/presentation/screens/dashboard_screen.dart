@@ -30,7 +30,7 @@ final _dashboardDataProvider = FutureProvider<Map<String, dynamic>>((ref) async 
 
   return {
     'daily': results[0] as Map<String, dynamic>,
-    'streak': results[1] as int,
+    'streak': (results[1] as num?)?.toInt() ?? 0,
     'heatmap': results[2] as List<Map<String, dynamic>>,
     'books': results[3],
     'week': results[4] as Map<String, dynamic>,
