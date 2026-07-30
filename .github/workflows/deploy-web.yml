@@ -34,17 +34,14 @@ jobs:
         run: npm install
         working-directory: platform
 
+      - name: Link project
+        run: |
+          mkdir -p .vercel
+          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_MARKETING }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
+        working-directory: platform/apps/marketing
+
       - name: Pull Vercel environment variables
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/marketing
-        env:
-          VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
-
-      - name: Clear rootDirectory from project settings
-        run: |
-          jq '.settings.rootDirectory = null' .vercel/project.json > /tmp/project.json \
-            && mv /tmp/project.json .vercel/project.json
         working-directory: platform/apps/marketing
 
       - name: Build
@@ -83,17 +80,14 @@ jobs:
         run: npm install
         working-directory: platform
 
+      - name: Link project
+        run: |
+          mkdir -p .vercel
+          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_WEB }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
+        working-directory: platform/apps/web
+
       - name: Pull Vercel environment variables
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/web
-        env:
-          VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
-
-      - name: Clear rootDirectory from project settings
-        run: |
-          jq '.settings.rootDirectory = null' .vercel/project.json > /tmp/project.json \
-            && mv /tmp/project.json .vercel/project.json
         working-directory: platform/apps/web
 
       - name: Build
@@ -132,17 +126,14 @@ jobs:
         run: npm install
         working-directory: platform
 
+      - name: Link project
+        run: |
+          mkdir -p .vercel
+          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_ADMIN }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
+        working-directory: platform/apps/admin
+
       - name: Pull Vercel environment variables
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/admin
-        env:
-          VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-
-      - name: Clear rootDirectory from project settings
-        run: |
-          jq '.settings.rootDirectory = null' .vercel/project.json > /tmp/project.json \
-            && mv /tmp/project.json .vercel/project.json
         working-directory: platform/apps/admin
 
       - name: Build
