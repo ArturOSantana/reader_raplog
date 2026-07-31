@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy ${{ matrix.app.name }} → Vercel
+    name: Deploy ${{ matrix.app }} → Vercel
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -25,18 +25,12 @@ jobs:
       fail-fast: false
       matrix:
         app:
-          - name: marketing
-            project_id: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
-
-          - name: web
-            project_id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
-
-          - name: admin
-            project_id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+          - marketing
+          - web
+          - admin
 
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ matrix.app.project_id }}
 
     steps:
       - name: Checkout
@@ -64,24 +58,43 @@ jobs:
         working-directory: platform
         run: npm ci --ignore-scripts
 
+      - name: Set Vercel Project ID
+        shell: bash
+        run: |
+          case "${{ matrix.app }}" in
+            marketing)
+              echo "VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_MARKETING }}" >> $GITHUB_ENV
+              ;;
+            web)
+              echo "VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_WEB }}" >> $GITHUB_ENV
+              ;;
+            admin)
+              echo "VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_ADMIN }}" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "Unknown app: ${{ matrix.app }}"
+              exit 1
+              ;;
+          esac
+
       - name: Create node_modules symlink
         working-directory: platform
         run: |
-          ln -sf "$(pwd)/node_modules" apps/${{ matrix.app.name }}/node_modules
+          ln -sfn "$(pwd)/node_modules" apps/${{ matrix.app }}/node_modules
 
       - name: Link Vercel project
-        working-directory: platform/apps/${{ matrix.app.name }}
+        working-directory: platform/apps/${{ matrix.app }}
         run: |
           mkdir -p .vercel
-          cat <<EOF > .vercel/project.json
+          cat > .vercel/project.json <<EOF
           {
-            "projectId": "${{ env.VERCEL_PROJECT_ID }}",
-            "orgId": "${{ env.VERCEL_ORG_ID }}"
+            "projectId": "${VERCEL_PROJECT_ID}",
+            "orgId": "${VERCEL_ORG_ID}"
           }
           EOF
 
       - name: Pull Vercel Environment
-        working-directory: platform/apps/${{ matrix.app.name }}
+        working-directory: platform/apps/${{ matrix.app }}
         run: |
           vercel pull \
             --yes \
@@ -93,7 +106,7 @@ jobs:
         run: |
           vercel build \
             --prod \
-            --cwd apps/${{ matrix.app.name }} \
+            --cwd apps/${{ matrix.app }} \
             --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy
@@ -102,5 +115,5 @@ jobs:
           vercel deploy \
             --prebuilt \
             --prod \
-            --cwd apps/${{ matrix.app.name }} \
+            --cwd apps/${{ matrix.app }} \
             --token=${{ secrets.VERCEL_TOKEN }}
