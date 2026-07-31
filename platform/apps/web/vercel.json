@@ -1,5 +1,7 @@
 {
   "github": {
     "enabled": false
-  }
+  },
+  "framework": "nextjs",
+  "outputDirectory": ".next"
 }
