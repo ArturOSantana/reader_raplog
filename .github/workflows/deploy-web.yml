@@ -34,12 +34,8 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Install monorepo dependencies
-        run: npm install
+        run: npm install --ignore-scripts
         working-directory: platform
-
-      - name: Link node_modules into app
-        run: cp -rl ../../node_modules ./node_modules
-        working-directory: platform/apps/marketing
 
       - name: Link project
         run: |
@@ -53,7 +49,9 @@ jobs:
 
       - name: Build
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/marketing
+        working-directory: platform
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
 
       - name: Deploy prebuilt
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
@@ -81,12 +79,8 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Install monorepo dependencies
-        run: npm install
+        run: npm install --ignore-scripts
         working-directory: platform
-
-      - name: Link node_modules into app
-        run: cp -rl ../../node_modules ./node_modules
-        working-directory: platform/apps/web
 
       - name: Link project
         run: |
@@ -100,7 +94,9 @@ jobs:
 
       - name: Build
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/web
+        working-directory: platform
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
 
       - name: Deploy prebuilt
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
@@ -128,12 +124,8 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Install monorepo dependencies
-        run: npm install
+        run: npm install --ignore-scripts
         working-directory: platform
-
-      - name: Link node_modules into app
-        run: cp -rl ../../node_modules ./node_modules
-        working-directory: platform/apps/admin
 
       - name: Link project
         run: |
@@ -147,7 +139,9 @@ jobs:
 
       - name: Build
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/admin
+        working-directory: platform
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
 
       - name: Deploy prebuilt
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
