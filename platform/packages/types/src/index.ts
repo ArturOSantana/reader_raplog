@@ -1,9 +1,7 @@
 /**
  * @lumen/types
  *
- * Tipos TypeScript compartilhados entre todas as apps do Lumen.
- * Espelham os modelos do app Flutter / schema Supabase.
- */
+ * Tip
 
 // ─────────────────────────────────────────────────────────────
 // Auth / Profile
