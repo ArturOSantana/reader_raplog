@@ -2,23 +2,42 @@ name: Deploy Platform — Vercel
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - 'platform/**'
-      - '.github/workflows/deploy-web.yml'
+      - "platform/**"
+      - ".github/workflows/deploy-web.yml"
+
+permissions:
+  contents: read
 
 concurrency:
   group: deploy-platform-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy-marketing:
-    name: Deploy marketing → Vercel
+  deploy:
+    name: Deploy ${{ matrix.app.name }} → Vercel
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - name: marketing
+            project_id: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
+
+          - name: web
+            project_id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+
+          - name: admin
+            project_id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+
     env:
-      VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ matrix.app.project_id }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,116 +46,61 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: platform/package-lock.json
 
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
-      - name: Install monorepo dependencies
-        run: npm install --ignore-scripts
-        working-directory: platform
-
-      - name: Link project
-        run: |
-          mkdir -p .vercel
-          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_MARKETING }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
-        working-directory: platform/apps/marketing
-
-      - name: Pull Vercel environment variables
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/marketing
-
-      - name: Build
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/marketing
-        working-directory: platform
-
-      - name: Deploy prebuilt
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/marketing
-        working-directory: platform
-
-  deploy-web:
-    name: Deploy web app → Vercel
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Cache Turborepo
+        uses: actions/cache@v4
         with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: platform/package-lock.json
+          path: platform/.turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Install monorepo dependencies
-        run: npm install --ignore-scripts
+      - name: Install dependencies
         working-directory: platform
+        run: npm ci --ignore-scripts
 
-      - name: Link project
+      - name: Create node_modules symlink
+        working-directory: platform
+        run: |
+          ln -sf "$(pwd)/node_modules" apps/${{ matrix.app.name }}/node_modules
+
+      - name: Link Vercel project
+        working-directory: platform/apps/${{ matrix.app.name }}
         run: |
           mkdir -p .vercel
-          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_WEB }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
-        working-directory: platform/apps/web
+          cat <<EOF > .vercel/project.json
+          {
+            "projectId": "${{ env.VERCEL_PROJECT_ID }}",
+            "orgId": "${{ env.VERCEL_ORG_ID }}"
+          }
+          EOF
 
-      - name: Pull Vercel environment variables
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/web
-
-      - name: Build
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/web
-        working-directory: platform
-
-      - name: Deploy prebuilt
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/web
-        working-directory: platform
-
-  deploy-admin:
-    name: Deploy admin → Vercel
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: platform/package-lock.json
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
-      - name: Install monorepo dependencies
-        run: npm install --ignore-scripts
-        working-directory: platform
-
-      - name: Link project
+      - name: Pull Vercel Environment
+        working-directory: platform/apps/${{ matrix.app.name }}
         run: |
-          mkdir -p .vercel
-          echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID_ADMIN }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
-        working-directory: platform/apps/admin
-
-      - name: Pull Vercel environment variables
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: platform/apps/admin
+          vercel pull \
+            --yes \
+            --environment=production \
+            --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/admin
         working-directory: platform
+        run: |
+          vercel build \
+            --prod \
+            --cwd apps/${{ matrix.app.name }} \
+            --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Deploy prebuilt
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/admin
+      - name: Deploy
         working-directory: platform
+        run: |
+          vercel deploy \
+            --prebuilt \
+            --prod \
+            --cwd apps/${{ matrix.app.name }} \
+            --token=${{ secrets.VERCEL_TOKEN }}
