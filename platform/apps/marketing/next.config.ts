@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  transpilePackages: ['@lumen/ui', '@lumen/types', '@lumen/supabase'],
   eslint: { ignoreDuringBuilds: true },
   images: {
     remotePatterns: [
