@@ -38,7 +38,7 @@ jobs:
         working-directory: platform
 
       - name: Link node_modules into app
-        run: cp -rl ../../../node_modules ./node_modules
+        run: cp -rl ../../node_modules ./node_modules
         working-directory: platform/apps/marketing
 
       - name: Link project
@@ -85,7 +85,7 @@ jobs:
         working-directory: platform
 
       - name: Link node_modules into app
-        run: cp -rl ../../../node_modules ./node_modules
+        run: cp -rl ../../node_modules ./node_modules
         working-directory: platform/apps/web
 
       - name: Link project
@@ -132,7 +132,7 @@ jobs:
         working-directory: platform
 
       - name: Link node_modules into app
-        run: cp -rl ../../../node_modules ./node_modules
+        run: cp -rl ../../node_modules ./node_modules
         working-directory: platform/apps/admin
 
       - name: Link project
