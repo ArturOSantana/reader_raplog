@@ -220,3 +220,28 @@ class ClubHallOfFameEntry extends Equatable {
   @override
   List<Object?> get props => [id, clubId, bookTitle, seasonEndedAt];
 }
+
+// ── Entrada de ranking por dias com check-in ──────────────────────────────────
+// Critério: dias distintos com ao menos 1 check-in no clube.
+// Não usa páginas, minutos ou XP — ver lumen-clube-pontuacao-logica.md.
+
+class ClubCheckinRankingEntry extends Equatable {
+  final int position;
+  final String userId;
+  final String? userName;
+  final String? avatarUrl;
+  final int checkinDays;
+
+  const ClubCheckinRankingEntry({
+    required this.position,
+    required this.userId,
+    this.userName,
+    this.avatarUrl,
+    required this.checkinDays,
+  });
+
+  bool get isCurrentUser => false; // resolvido na UI via supabaseClientProvider
+
+  @override
+  List<Object?> get props => [position, userId, checkinDays];
+}

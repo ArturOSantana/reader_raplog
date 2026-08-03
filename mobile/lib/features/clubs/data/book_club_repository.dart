@@ -1416,4 +1416,48 @@ class BookClubRepository {
         .update({'status': status})
         .eq('id', theoryId);
   }
+
+  // ── Ranking por dias com check-in ────────────────────────────────────────
+  // [scope]: 'all' (histórico completo) | 'current_book' (ciclo atual)
+  // Critério aprovado: dias distintos com pelo menos um check-in — não por
+  // páginas, minutos ou sessões. Ver lumen-clube-pontuacao-logica.md.
+  Future<List<ClubCheckinRankingEntry>> fetchCheckinRanking(
+    String clubId, {
+    String scope = 'all',
+    DateTime? bookStartedAt,
+  }) async {
+    final String? startedAtIso = (scope == 'current_book' && bookStartedAt != null)
+        ? bookStartedAt.toIso8601String()
+        : null;
+
+    // Consulta check-ins de clube (tabela: club_reading_checkins)
+    // Agrupa por user_id, conta dias distintos dentro da janela.
+    final data = await _client.rpc(
+      'club_checkin_ranking',
+      params: {
+        'p_club_id': clubId,
+        if (startedAtIso != null) 'p_started_at': startedAtIso,
+      },
+    );
+
+    final rows = List<Map<String, dynamic>>.from(data as List);
+    int rank = 0;
+    int? prev;
+    final result = <ClubCheckinRankingEntry>[];
+    for (final row in rows) {
+      final days = (row['checkin_days'] as num).toInt();
+      if (days != prev) {
+        rank++;
+        prev = days;
+      }
+      result.add(ClubCheckinRankingEntry(
+        position: rank,
+        userId: row['user_id'] as String,
+        userName: row['user_name'] as String?,
+        avatarUrl: row['avatar_url'] as String?,
+        checkinDays: days,
+      ));
+    }
+    return result;
+  }
 }

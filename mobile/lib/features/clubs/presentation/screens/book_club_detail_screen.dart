@@ -292,6 +292,18 @@ class _ClubDetailBody extends ConsumerWidget {
             ),
             const Divider(height: 1),
             _ExploreLink(
+              label: 'Classificações',
+              onTap: () => context.push(
+                '/clubs/$clubId/ranking',
+                extra: {
+                  'clubName': club.name,
+                  'hasCurrentBook': club.currentBookStatus == 'reading',
+                  'bookStartedAt': club.readingStartedAt,
+                },
+              ),
+            ),
+            const Divider(height: 1),
+            _ExploreLink(
               label: 'Membros',
               onTap: () {
                 final ctx = _membersKey.currentContext;

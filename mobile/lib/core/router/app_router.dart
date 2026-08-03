@@ -45,6 +45,7 @@ import '../../features/clubs/presentation/screens/club_book_reviews_screen.dart'
 import '../../features/clubs/presentation/screens/club_social_heatmap_screen.dart';
 import '../../features/clubs/presentation/screens/club_discussions_screen.dart';
 import '../../features/clubs/presentation/screens/club_theories_screen.dart';
+import '../../features/clubs/presentation/screens/club_ranking_screen.dart';
 import '../../shared/models/club_reviews.dart';
 
 import '../../shared/models/club_schedule_milestones_challenges.dart';
@@ -486,6 +487,21 @@ final routerProvider = Provider<GoRouter>((ref) {
                         clubId: state.pathParameters['clubId']!,
                         clubName: extra['clubName'] as String? ?? 'Clube',
                         canManage: extra['canManage'] as bool? ?? false,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'ranking',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ClubRankingScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        hasCurrentBook:
+                            extra['hasCurrentBook'] as bool? ?? false,
+                        bookStartedAt:
+                            extra['bookStartedAt'] as DateTime?,
                       );
                     },
                   ),

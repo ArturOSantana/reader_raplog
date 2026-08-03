@@ -212,6 +212,21 @@ final clubRankingProvider = FutureProvider.family<
       .fetchRanking(args.$1, period: args.$2, criteria: 'sessions');
 });
 
+// ── Ranking de check-ins do clube ─────────────────────────────────────────
+// Chave: (clubId, scope, bookStartedAt?)
+// scope: 'all' (histórico) | 'current_book' (ciclo atual)
+// Critério: dias distintos com ao menos 1 check-in — não páginas nem minutos.
+
+final clubCheckinRankingProvider = FutureProvider.family<
+    List<ClubCheckinRankingEntry>,
+    ({String clubId, String scope, DateTime? bookStartedAt})>((ref, args) {
+  return ref.watch(bookClubRepositoryProvider).fetchCheckinRanking(
+        args.clubId,
+        scope: args.scope,
+        bookStartedAt: args.bookStartedAt,
+      );
+});
+
 
 // ── Queue Platform (Fase 2A) ──────────────────────────────────────────────
 
