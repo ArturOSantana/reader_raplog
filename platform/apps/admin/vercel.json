@@ -3,5 +3,6 @@
     "enabled": false
   },
   "framework": "nextjs",
+  "buildCommand": "npm run build:vercel",
   "outputDirectory": ".next"
 }
