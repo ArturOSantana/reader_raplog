@@ -54,9 +54,13 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            // Desabilitado temporariamente para diagnóstico: confirmar se R8 é a causa do ClassNotFoundException
-            isMinifyEnabled = false
-            isShrinkResources = false
+            // proguardFiles() garante que AMBOS os arquivos são aplicados pelo R8:
+            // 1. proguard-android-optimize.txt — regras padrão do Android SDK
+            // 2. proguard-rules.pro            — regras customizadas do app
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
