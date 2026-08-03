@@ -82,25 +82,27 @@ class ProfileScreen extends ConsumerWidget {
     final email = user?.email ?? '';
 
     return Scaffold(
-      backgroundColor: ReadLogColors.paperAlt,
+      backgroundColor: LumenColors.surface,
       appBar: AppBar(
-        backgroundColor: ReadLogColors.paperAlt,
+        backgroundColor: LumenColors.surface,
         elevation: 0,
+        scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(Icons.menu, size: 22, color: ReadLogColors.charcoal),
+          icon: const Icon(Icons.menu, size: 22),
           tooltip: 'Menu',
           onPressed: openAppDrawer,
         ),
-        title: Text('Perfil',
-            style: ReadLogType.display(
-                size: 18, color: ReadLogColors.charcoal, weight: FontWeight.w600)),
+        title: Text(
+          'Perfil',
+          style: LumenType.bookTitle(size: 18),
+        ),
       ),
       body: ListView(
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.symmetric(horizontal: LumenSpace.md, vertical: LumenSpace.md),
         children: [
-          // ── Cabeçalho de identidade ──────────────────────────────────────
-          _IdentityCard(
+          // ── Cabeçalho de identidade ────────────────────────────────────────
+          _IdentityHeader(
             avatarUrl: avatarUrl,
             fullName: fullName,
             email: email,
@@ -108,128 +110,80 @@ class ProfileScreen extends ConsumerWidget {
             onEdit: () => _showEditSheet(context, ref, profileAsync.valueOrNull, fullName, avatarUrl),
           ),
 
-          _sectionGap(),
+          _divider(),
 
-          // ── Resumo ───────────────────────────────────────────────────────
-          _SectionHeader(label: 'Resumo'),
-          const _SummaryGrid(),
+          // ── Resumo do ano ──────────────────────────────────────────────────
+          _SectionCaption(label: 'Resumo do ano'),
+          const SizedBox(height: LumenSpace.md),
+          const _StatGrid(),
 
-          _sectionGap(),
+          _divider(),
 
-          // ── Objetivos ────────────────────────────────────────────────────
-          _SectionHeader(label: 'Objetivos'),
-          const _GoalsCard(),
+          // ── Objetivos ──────────────────────────────────────────────────────
+          _SectionCaption(label: 'Objetivos'),
+          const SizedBox(height: LumenSpace.md),
+          const _GoalsSection(),
 
-          _sectionGap(),
+          _divider(),
 
-          // ── Preferências de leitura (só exibe se houver gênero definido) ─
-          if (profileAsync.valueOrNull?.favoriteGenre?.trim().isNotEmpty == true) ...[
-            _SectionHeader(label: 'Preferências de Leitura'),
-            _PreferencesCard(profileAsync: profileAsync),
-            _sectionGap(),
-          ],
+          // ── Links de navegação ─────────────────────────────────────────────
+          _ClubsLinkRow(onTap: () => context.go('/clubs')),
+          _FriendsLinkRow(onTap: () => context.go('/friends')),
+          _CalendarLinkRow(onTap: () => context.go('/calendar')),
+          _AchievementsLinkRow(onTap: () => context.go('/achievements')),
+          _CollectionLinkRow(onTap: () => context.go('/library')),
 
-          // ── Autores favoritos (só exibe se houver dados) ─────────────────
-          if ((profileAsync.valueOrNull?.favoriteAuthors ?? '').trim().isNotEmpty) ...[
-            _SectionHeader(label: 'Autores Favoritos'),
-            _FavoriteAuthorsCard(profileAsync: profileAsync),
-            _sectionGap(),
-          ],
+          _divider(),
 
-          // ── Livros favoritos (só exibe se houver dados) ──────────────────
-          if (profileAsync.valueOrNull?.favoriteBook?.trim().isNotEmpty == true) ...[
-            _SectionHeader(label: 'Livros Favoritos'),
-            _FavoriteBooksCard(profileAsync: profileAsync),
-            _sectionGap(),
-          ],
+          // ── Heatmap de atividade ───────────────────────────────────────────
+          _SectionCaption(label: 'Atividade · 365 dias'),
+          const SizedBox(height: LumenSpace.md),
+          const _HeatmapSection(),
 
-          // ── Clube do livro ───────────────────────────────────────────────
-          _SectionHeader(label: 'Clubes'),
-          _ClubsCard(onTap: () => context.go('/clubs')),
+          _divider(),
 
-          _sectionGap(),
-
-          // ── Amigos ───────────────────────────────────────────────────────
-          _SectionHeader(label: 'Amigos'),
-          _FriendsCard(onTap: () => context.go('/friends')),
-
-          _sectionGap(),
-
-          // ── Calendário ───────────────────────────────────────────────────
-          _SectionHeader(label: 'Calendário'),
-          _CalendarCard(onTap: () => context.go('/calendar')),
-
-          _sectionGap(),
-
-          // ── Conquistas recentes ──────────────────────────────────────────
-          _SectionHeader(label: 'Conquistas Recentes'),
-          _RecentAchievementsCard(onTap: () => context.go('/achievements')),
-
-          _sectionGap(),
-
-          // ── Coleção ──────────────────────────────────────────────────────
-          _SectionHeader(label: 'Coleção'),
-          _CollectionCard(onTap: () => context.go('/library')),
-
-          _sectionGap(),
-
-          // ── Heatmap de atividade ─────────────────────────────────────────
-          _SectionHeader(label: 'Atividade — 365 dias'),
-          _ActivityHeatmapCard(),
-
-          _sectionGap(),
-
-          // ── Grade de atalhos — seções que não têm aba própria ────────────
-          _SectionHeader(label: 'Mais'),
-          _QuickLinksGrid(
-            links: [
-              _QuickLink(
-                icon: Icons.bar_chart_outlined,
-                label: 'Painel',
-                onTap: () => context.push('/dashboard'),
-              ),
-              _QuickLink(
-                icon: Icons.flag_outlined,
-                label: 'Missões',
-                onTap: () => context.push('/goals'),
-              ),
-              _QuickLink(
-                icon: Icons.dynamic_feed_outlined,
-                label: 'Feed Social',
-                onTap: () => context.push('/social'),
-              ),
-              _QuickLink(
-                icon: Icons.bookmark_border,
-                label: 'Desejos',
-                onTap: () => context.push('/wishlist'),
-              ),
-              _QuickLink(
-                icon: Icons.notifications_outlined,
-                label: 'Notificações',
-                onTap: () => context.push('/notifications'),
-              ),
-              _QuickLink(
-                icon: Icons.calendar_month_outlined,
-                label: 'Calendário',
-                onTap: () => context.push('/calendar'),
-              ),
-              _QuickLink(
-                icon: Icons.settings_outlined,
-                label: 'Config.',
-                onTap: () => _showSettingsSheet(context, ref),
-              ),
-            ],
+          // ── Mais ───────────────────────────────────────────────────────────
+          _SectionCaption(label: 'Mais'),
+          const SizedBox(height: LumenSpace.xs),
+          _LinkRow(
+            icon: Icons.bar_chart_outlined,
+            label: 'Painel',
+            onTap: () => context.push('/dashboard'),
+          ),
+          _LinkRow(
+            icon: Icons.flag_outlined,
+            label: 'Missões',
+            onTap: () => context.push('/goals'),
+          ),
+          _LinkRow(
+            icon: Icons.dynamic_feed_outlined,
+            label: 'Feed social',
+            onTap: () => context.push('/social'),
+          ),
+          _LinkRow(
+            icon: Icons.favorite_border,
+            label: 'Lista de desejos',
+            onTap: () => context.push('/wishlist'),
+          ),
+          _LinkRow(
+            icon: Icons.notifications_outlined,
+            label: 'Notificações',
+            onTap: () => context.push('/notifications'),
+          ),
+          _LinkRow(
+            icon: Icons.settings_outlined,
+            label: 'Configurações',
+            isLast: true,
+            onTap: () => _showSettingsSheet(context, ref),
           ),
 
-          const SizedBox(height: 40),
+          const SizedBox(height: LumenSpace.xl),
         ],
       ),
     );
   }
 
-  Widget _sectionGap() => const SizedBox(height: 20);
-
-  // ── Edit sheet ────────────────────────────────────────────────────────────
+  // ── Edit sheet ─────────────────────────────────────────────────────────────
 
   void _showEditSheet(
     BuildContext context,
@@ -241,9 +195,9 @@ class ProfileScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: ReadLogColors.cream,
+      backgroundColor: LumenColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(LumenRadius.modal)),
       ),
       builder: (_) => _EditProfileSheet(
         profile: profile,
@@ -254,18 +208,15 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // ── Settings sheet ────────────────────────────────────────────────────────
+  // ── Settings sheet ─────────────────────────────────────────────────────────
 
   void _showSettingsSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: ReadLogColors.cream,
+      backgroundColor: LumenColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(LumenRadius.modal)),
       ),
-      // O builder recebe o context local do overlay (sheetContext).
-      // Usar sheetContext nos Navigator.pop garante que fechamos o overlay
-      // correto, sem interceptação pelo GoRouter.
       builder: (sheetContext) => _SettingsSheet(
         profileAsync: ref.read(_profileProvider),
         onEditProfile: () {
@@ -287,68 +238,57 @@ class ProfileScreen extends ConsumerWidget {
 // Helpers de layout
 // ══════════════════════════════════════════════════════════════════════════════
 
-class _SectionHeader extends StatelessWidget {
+class _SectionCaption extends StatelessWidget {
   final String label;
-
-  const _SectionHeader({required this.label});
+  const _SectionCaption({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        label.toUpperCase(),
-        style: ReadLogType.mono(
-          size: 10,
-          color: ReadLogColors.charcoal.withValues(alpha: 0.45),
-        ).copyWith(letterSpacing: 1.2),
-      ),
+    return Text(
+      label.toUpperCase(),
+      style: LumenType.mono(
+        size: 10,
+        color: LumenColors.inkMuted,
+      ).copyWith(letterSpacing: 1.2),
     );
   }
 }
 
-Widget _card({required Widget child}) {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: ReadLogColors.cream,
-      borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: ReadLogColors.paperDeep.withValues(alpha: 0.5)),
-    ),
-    child: child,
-  );
-}
-
 Widget _divider() => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Divider(
-        height: 1,
-        thickness: 1,
-        color: ReadLogColors.paperDeep.withValues(alpha: 0.5),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: LumenSpace.lg),
+      child: Divider(height: 1, thickness: 1, color: LumenColors.divider),
     );
 
 String _monthYear(DateTime date) {
   const months = [
-    'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-    'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
   ];
-  return '${months[date.month - 1]}/${date.year}';
+  return '${months[date.month - 1]} de ${date.year}';
+}
+
+String _formatNumber(int n) {
+  if (n >= 1000) {
+    final s = n.toString();
+    final rest = s.substring(s.length - 3);
+    final head = s.substring(0, s.length - 3);
+    return '$head.$rest';
+  }
+  return '$n';
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// _IdentityCard
+// _IdentityHeader
 // ══════════════════════════════════════════════════════════════════════════════
 
-class _IdentityCard extends StatelessWidget {
+class _IdentityHeader extends StatelessWidget {
   final String? avatarUrl;
   final String? fullName;
   final String email;
   final AsyncValue<UserProfile?> profileAsync;
   final VoidCallback onEdit;
 
-  const _IdentityCard({
+  const _IdentityHeader({
     required this.avatarUrl,
     required this.fullName,
     required this.email,
@@ -358,74 +298,143 @@ class _IdentityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _card(
-      child: Column(
-        children: [
-          const SizedBox(height: 8),
-          _Avatar(url: avatarUrl, name: (profileAsync.valueOrNull?.name ?? fullName ?? email)),
-          const SizedBox(height: 12),
-          if ((profileAsync.valueOrNull?.name ?? fullName) != null &&
-              (profileAsync.valueOrNull?.name ?? fullName)!.isNotEmpty)
-            Text(
-              (profileAsync.valueOrNull?.name ?? fullName)!,
-              style: ReadLogType.display(size: 22, color: ReadLogColors.charcoal),
-              textAlign: TextAlign.center,
-            ),
-          const SizedBox(height: 4),
+    final profile = profileAsync.valueOrNull;
+    final displayName = profile?.name ?? fullName;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Avatar(url: avatarUrl, name: displayName ?? email),
+        const SizedBox(height: LumenSpace.md),
+
+        if (displayName != null && displayName.isNotEmpty)
           Text(
-            email,
-            style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.5)),
+            displayName,
+            style: LumenType.bookTitle(size: 20),
           ),
-          profileAsync.when(
-            loading: () => const SizedBox(height: 8),
-            error: (_, __) => const SizedBox.shrink(),
-            data: (profile) {
-              if (profile == null) return const SizedBox.shrink();
-              return Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Column(
-                  children: [
-                    if (profile.bio != null && profile.bio!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        '"${profile.bio!}"',
-                        style: ReadLogType.mono(
-                          size: 12,
-                          color: ReadLogColors.charcoal.withValues(alpha: 0.65),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.calendar_today_outlined, size: 13, color: ReadLogColors.brass),
-                        const SizedBox(width: 5),
-                        Text(
-                          'Membro desde ${_monthYear(profile.updatedAt)}',
-                          style: ReadLogType.mono(size: 11, color: ReadLogColors.charcoal.withValues(alpha: 0.5)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
+
+        const SizedBox(height: 4),
+        Text(
+          email,
+          style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
+        ),
+
+        // Bio
+        if (profile?.bio != null && profile!.bio!.isNotEmpty) ...[
+          const SizedBox(height: LumenSpace.sm),
+          Text(
+            '"${profile.bio!}"',
+            style: LumenType.quote(size: 13, color: LumenColors.inkMuted),
           ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_outlined, size: 15),
-            label: const Text('Editar Perfil'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: ReadLogColors.ink,
-              side: BorderSide(color: ReadLogColors.paperDeep),
-              textStyle: ReadLogType.mono(size: 12, color: ReadLogColors.ink),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        ],
+
+        // Membro desde
+        if (profile != null) ...[
+          const SizedBox(height: LumenSpace.sm),
+          Text(
+            'Membro desde ${_monthYear(profile.updatedAt)}',
+            style: LumenType.mono(size: 10, color: LumenColors.inkMuted)
+                .copyWith(letterSpacing: 0.4),
+          ),
+        ],
+
+        // Editar perfil
+        const SizedBox(height: LumenSpace.md),
+        GestureDetector(
+          onTap: onEdit,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.edit_outlined, size: 13, color: LumenColors.warning),
+              const SizedBox(width: 5),
+              Text(
+                'Editar perfil',
+                style: LumenType.mono(size: 12, color: LumenColors.warning),
+              ),
+            ],
+          ),
+        ),
+
+        // Identidade: gênero + autores + livro favorito
+        if (profile != null) ...[
+          const SizedBox(height: LumenSpace.md),
+          if (profile.favoriteGenre?.trim().isNotEmpty == true) ...[
+            _GenreChip(label: profile.favoriteGenre!.trim()),
+            const SizedBox(height: LumenSpace.sm),
+          ],
+          if (profile.favoriteAuthors?.trim().isNotEmpty == true)
+            _IdentityLine(
+              icon: Icons.person_outline,
+              text: profile.favoriteAuthors!.trim(),
+              prefix: 'Autores favoritos: ',
+            ),
+          if (profile.favoriteBook?.trim().isNotEmpty == true)
+            _IdentityLine(
+              icon: Icons.menu_book_outlined,
+              text: profile.favoriteBook!.trim(),
+              prefix: 'Livro favorito: ',
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _GenreChip extends StatelessWidget {
+  final String label;
+  const _GenreChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: LumenColors.warning),
+        borderRadius: BorderRadius.circular(LumenRadius.pill),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: LumenType.mono(size: 9, color: LumenColors.warning)
+            .copyWith(letterSpacing: 0.6),
+      ),
+    );
+  }
+}
+
+class _IdentityLine extends StatelessWidget {
+  final IconData icon;
+  final String prefix;
+  final String text;
+
+  const _IdentityLine({
+    required this.icon,
+    required this.prefix,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: LumenSpace.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 11, color: LumenColors.inkMuted),
+          const SizedBox(width: 5),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
+                children: [
+                  TextSpan(text: prefix),
+                  TextSpan(
+                    text: text,
+                    style: LumenType.mono(size: 11, color: LumenColors.ink),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 4),
         ],
       ),
     );
@@ -433,33 +442,24 @@ class _IdentityCard extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// _SummaryGrid — dados reais
+// _StatGrid — grade 3×2, número Fraunces grande, sem ícone
 // ══════════════════════════════════════════════════════════════════════════════
 
-class _SummaryGrid extends ConsumerWidget {
-  const _SummaryGrid();
+class _StatGrid extends ConsumerWidget {
+  const _StatGrid();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(_profileStatsProvider);
 
     return statsAsync.when(
-      loading: () => _card(
-        child: const Center(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
+      loading: () => const SizedBox(
+        height: 80,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, __) => _card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text(
-            'Não foi possível carregar.',
-            style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-          ),
-        ),
+      error: (_, __) => Text(
+        'Não foi possível carregar.',
+        style: LumenType.mono(size: 12, color: LumenColors.inkMuted),
       ),
       data: (stats) {
         final books = stats['books'] as List<Book>;
@@ -471,87 +471,89 @@ class _SummaryGrid extends ConsumerWidget {
         final totalMinutes = (yearStats['total_minutes'] as int? ?? 0);
         final totalPages = (yearStats['total_pages'] as int? ?? 0);
         final unlockedAchievements = achievements.where((a) => a.isUnlocked).length;
-
-        // Livro em leitura atual
-        final currentBook = books.where((b) => b.status == BookStatus.reading).firstOrNull;
-        final currentPageStr = currentBook != null && currentBook.currentPage != null && currentBook.totalPages != null
-            ? '${currentBook.currentPage}/${currentBook.totalPages}'
-            : currentBook != null
-                ? '—'
-                : '—';
-
+        final totalAchievements = achievements.length;
         final hours = totalMinutes ~/ 60;
 
-        return _card(
-          child: Wrap(
-            spacing: 0,
-            runSpacing: 0,
-            children: [
-              _SummaryTile(icon: Icons.local_fire_department_outlined, label: 'Ofensiva\natual', value: '$streak dias'),
-              _SummaryTile(icon: Icons.menu_book_outlined, label: 'Livros\nconcluídos', value: '$readBooks'),
-              _SummaryTile(icon: Icons.import_contacts_outlined, label: 'Página\natual', value: currentPageStr),
-              _SummaryTile(icon: Icons.timer_outlined, label: 'Tempo\ntotal', value: '${hours}h'),
-              _SummaryTile(icon: Icons.description_outlined, label: 'Páginas\nlidas', value: _formatNumber(totalPages)),
-              _SummaryTile(icon: Icons.military_tech_outlined, label: 'Conquistas', value: '$unlockedAchievements'),
-            ],
-          ),
+        final currentBook = books.where((b) => b.status == BookStatus.reading).firstOrNull;
+        final currentPageStr = currentBook?.currentPage != null
+            ? '${currentBook!.currentPage}'
+            : '—';
+
+        return _StatGridLayout(
+          items: [
+            _StatItem(value: '$streak', label: 'dias de sequência'),
+            _StatItem(value: '$readBooks', label: 'livros concluídos'),
+            _StatItem(value: currentPageStr, label: 'pág. atual'),
+            _StatItem(value: '${hours}h', label: 'tempo total'),
+            _StatItem(value: _formatNumber(totalPages), label: 'páginas lidas'),
+            _StatItem(
+              value: '$unlockedAchievements${totalAchievements > 0 ? '/$totalAchievements' : ''}',
+              label: 'conquistas',
+            ),
+          ],
         );
       },
     );
   }
-
-  String _formatNumber(int n) {
-    if (n >= 1000) {
-      final s = n.toString();
-      final rest = s.substring(s.length - 3);
-      final head = s.substring(0, s.length - 3);
-      return '$head.$rest';
-    }
-    return '$n';
-  }
 }
 
-class _SummaryTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _SummaryTile({required this.icon, required this.label, required this.value});
+class _StatGridLayout extends StatelessWidget {
+  final List<_StatItem> items;
+  const _StatGridLayout({required this.items});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: (MediaQuery.of(context).size.width - 40 - 32) / 3,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-        child: Column(
-          children: [
-            Icon(icon, size: 22, color: ReadLogColors.brass),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: ReadLogType.display(size: 16, color: ReadLogColors.charcoal),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: ReadLogType.mono(size: 10, color: ReadLogColors.charcoal.withValues(alpha: 0.5)),
-              textAlign: TextAlign.center,
-            ),
-          ],
+    final cols = 3;
+    final rows = <Widget>[];
+    for (var r = 0; r < (items.length / cols).ceil(); r++) {
+      final rowItems = <Widget>[];
+      for (var c = 0; c < cols; c++) {
+        final idx = r * cols + c;
+        rowItems.add(
+          Expanded(
+            child: idx < items.length
+                ? items[idx].build(context)
+                : const SizedBox(),
+          ),
+        );
+      }
+      rows.add(Row(crossAxisAlignment: CrossAxisAlignment.start, children: rowItems));
+      if (r < (items.length / cols).ceil() - 1) rows.add(const SizedBox(height: LumenSpace.lg));
+    }
+    return Column(children: rows);
+  }
+}
+
+class _StatItem {
+  final String value;
+  final String label;
+  const _StatItem({required this.value, required this.label});
+
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: LumenType.bookTitle(size: 24, weight: FontWeight.w400),
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          label.toUpperCase(),
+          style: LumenType.mono(size: 8, color: LumenColors.inkMuted)
+              .copyWith(letterSpacing: 0.4),
+        ),
+      ],
     );
   }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// _GoalsCard — dados reais
+// _GoalsSection — linha fina + ponto (LumenReadingProgress)
 // ══════════════════════════════════════════════════════════════════════════════
 
-class _GoalsCard extends ConsumerWidget {
-  const _GoalsCard();
+class _GoalsSection extends ConsumerWidget {
+  const _GoalsSection();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -560,51 +562,15 @@ class _GoalsCard extends ConsumerWidget {
     final profileAsync = ref.watch(_profileProvider);
 
     return goalsAsync.when(
-      loading: () => _card(
-        child: const Center(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
+      loading: () => const SizedBox(
+        height: 48,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, __) => _card(
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Text(
-            'Não foi possível carregar.',
-            style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-          ),
-        ),
+      error: (_, __) => Text(
+        'Não foi possível carregar.',
+        style: LumenType.mono(size: 12, color: LumenColors.inkMuted),
       ),
       data: (goals) {
-        if (goals.isEmpty) {
-          // Tenta mostrar meta anual do perfil se não há goals cadastradas no DB
-          final yearlyGoal = profileAsync.valueOrNull?.yearlyGoal;
-          final books = statsAsync.valueOrNull?['books'] as List<Book>?;
-          final readBooks = books?.where((b) => b.status == BookStatus.read).length ?? 0;
-
-          if (yearlyGoal != null && yearlyGoal > 0) {
-            return _card(
-              child: _GoalRow(
-                label: 'Missão anual',
-                current: readBooks,
-                total: yearlyGoal,
-                unit: 'livros',
-              ),
-            );
-          }
-          return _card(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text(
-                'Nenhuma meta definida. Configure suas metas no painel.',
-                style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-              ),
-            ),
-          );
-        }
-
         final yearStats = statsAsync.valueOrNull?['yearStats'] as Map<String, dynamic>?;
         final books = statsAsync.valueOrNull?['books'] as List<Book>?;
         final readBooks = books?.where((b) => b.status == BookStatus.read).length ?? 0;
@@ -612,6 +578,23 @@ class _GoalsCard extends ConsumerWidget {
         final totalMinutesYear = (yearStats?['total_minutes'] as int?) ?? 0;
         final now = DateTime.now();
         final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays + 1;
+
+        // Fallback: meta anual do perfil
+        if (goals.isEmpty) {
+          final yearlyGoal = profileAsync.valueOrNull?.yearlyGoal;
+          if (yearlyGoal != null && yearlyGoal > 0) {
+            return _GoalRow(
+              label: 'Livros no ano',
+              current: readBooks,
+              total: yearlyGoal,
+              unit: 'livros',
+            );
+          }
+          return Text(
+            'Nenhuma meta definida.',
+            style: LumenType.mono(size: 12, color: LumenColors.inkMuted),
+          );
+        }
 
         final rows = <Widget>[];
         for (var i = 0; i < goals.length; i++) {
@@ -625,25 +608,21 @@ class _GoalsCard extends ConsumerWidget {
               current = totalPagesYear;
               break;
             case GoalType.dailyPages:
-              // Usa total de páginas no ano dividido pelo número de dias para aproximar
               current = dayOfYear > 0 ? (totalPagesYear ~/ dayOfYear) : 0;
               break;
             case GoalType.dailyMinutes:
               current = dayOfYear > 0 ? (totalMinutesYear ~/ dayOfYear) : 0;
               break;
           }
+          if (i > 0) rows.add(const SizedBox(height: LumenSpace.md));
           rows.add(_GoalRow(
             label: goal.type.label,
             current: current,
             total: goal.targetValue,
             unit: goal.type.unit,
           ));
-          if (i < goals.length - 1) rows.add(_divider());
         }
-
-        return _card(
-          child: Column(children: rows),
-        );
+        return Column(children: rows);
       },
     );
   }
@@ -655,7 +634,12 @@ class _GoalRow extends StatelessWidget {
   final int total;
   final String unit;
 
-  const _GoalRow({required this.label, required this.current, required this.total, required this.unit});
+  const _GoalRow({
+    required this.label,
+    required this.current,
+    required this.total,
+    required this.unit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -666,666 +650,239 @@ class _GoalRow extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.65))),
             Text(
-              '$current / $total $unit',
-              style: ReadLogType.mono(size: 11, color: ReadLogColors.charcoal.withValues(alpha: 0.5)),
+              label,
+              style: LumenType.mono(size: 12, color: LumenColors.inkMuted),
+            ),
+            Text.rich(
+              TextSpan(
+                style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
+                children: [
+                  TextSpan(
+                    text: '$current',
+                    style: LumenType.mono(size: 11, color: LumenColors.ink),
+                  ),
+                  TextSpan(text: ' de $total'),
+                ],
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(2),
-          child: LinearProgressIndicator(
-            value: pct,
-            minHeight: 6,
-            backgroundColor: ReadLogColors.paperDeep.withValues(alpha: 0.5),
-            color: ReadLogColors.stamp,
-          ),
-        ),
+        const SizedBox(height: LumenSpace.sm),
+        LumenReadingProgress(progress: pct),
       ],
     );
   }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// _PreferencesCard — gênero favorito vem do perfil real
+// _LinkRow genérico — label + ícone + valor + chevron
 // ══════════════════════════════════════════════════════════════════════════════
 
-class _PreferencesCard extends StatelessWidget {
-  final AsyncValue<UserProfile?> profileAsync;
-
-  const _PreferencesCard({required this.profileAsync});
-
-  @override
-  Widget build(BuildContext context) {
-    return _card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Gênero favorito',
-            style: ReadLogType.mono(size: 11, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-          ),
-          const SizedBox(height: 10),
-          profileAsync.when(
-            loading: () => Text(
-              'Carregando...',
-              style: ReadLogType.mono(size: 11, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-            ),
-            error: (_, __) => Text(
-              'Não foi possível carregar.',
-              style: ReadLogType.mono(size: 11, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-            ),
-            data: (profile) {
-              final genre = profile?.favoriteGenre?.trim();
-              if (genre == null || genre.isEmpty) {
-                return Text(
-                  'Defina seu gênero favorito no onboarding ou edite seu perfil.',
-                  style: ReadLogType.mono(size: 11, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-                );
-              }
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [_GenreChip(label: genre)],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GenreChip extends StatelessWidget {
+class _LinkRow extends StatelessWidget {
+  final IconData icon;
   final String label;
-
-  const _GenreChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: ReadLogColors.brass.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: ReadLogColors.brass.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.bookmark_outline, size: 11, color: ReadLogColors.brass),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: ReadLogType.mono(size: 11, color: ReadLogColors.charcoal.withValues(alpha: 0.75)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// _FavoriteAuthorsCard
-// ══════════════════════════════════════════════════════════════════════════════
-
-class _FavoriteAuthorsCard extends StatelessWidget {
-  final AsyncValue<UserProfile?> profileAsync;
-
-  const _FavoriteAuthorsCard({required this.profileAsync});
-
-  @override
-  Widget build(BuildContext context) {
-    return _card(
-      child: profileAsync.when(
-        loading: () => Text(
-          'Carregando...',
-          style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-        ),
-        error: (_, __) => Text(
-          'Não foi possível carregar.',
-          style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-        ),
-        data: (profile) {
-          final authors = (profile?.favoriteAuthors ?? '')
-              .split(',')
-              .map((author) => author.trim())
-              .where((author) => author.isNotEmpty)
-              .toList();
-          if (authors.isEmpty) {
-            return Text(
-              'Adicione autores favoritos no seu perfil.',
-              style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-            );
-          }
-          return Column(
-            children: [
-              ...authors.asMap().entries.map((e) {
-                final isLast = e.key == authors.length - 1;
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 9),
-                      child: Row(
-                        children: [
-                          Icon(Icons.person_outline_rounded, size: 16, color: ReadLogColors.brass),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              e.value,
-                              style: ReadLogType.mono(size: 13, color: ReadLogColors.charcoal),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (!isLast)
-                      Divider(height: 1, thickness: 1, color: ReadLogColors.paperDeep.withValues(alpha: 0.5)),
-                  ],
-                );
-              }),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// _FavoriteBooksCard
-// ══════════════════════════════════════════════════════════════════════════════
-
-class _FavoriteBooksCard extends StatelessWidget {
-  final AsyncValue<UserProfile?> profileAsync;
-
-  const _FavoriteBooksCard({required this.profileAsync});
-
-  @override
-  Widget build(BuildContext context) {
-    return _card(
-      child: profileAsync.when(
-        loading: () => Text(
-          'Carregando...',
-          style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-        ),
-        error: (_, __) => Text(
-          'Não foi possível carregar.',
-          style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-        ),
-        data: (profile) {
-          final favoriteBook = profile?.favoriteBook?.trim();
-          if (favoriteBook == null || favoriteBook.isEmpty) {
-            return Text(
-              'Defina seu livro favorito no perfil.',
-              style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-            );
-          }
-          return Row(
-            children: [
-              Row(
-                children: List.generate(
-                  5,
-                  (_) => Icon(Icons.star_rounded, size: 14, color: ReadLogColors.brass),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  favoriteBook,
-                  style: ReadLogType.mono(size: 13, color: ReadLogColors.charcoal),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// _ClubsCard — dados reais
-// ══════════════════════════════════════════════════════════════════════════════
-
-class _ClubsCard extends ConsumerWidget {
+  final String? value;
   final VoidCallback onTap;
+  final bool isLast;
 
-  const _ClubsCard({required this.onTap});
+  const _LinkRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.value,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          border: isLast
+              ? null
+              : Border(bottom: BorderSide(color: LumenColors.divider)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 15, color: LumenColors.inkMuted),
+            const SizedBox(width: LumenSpace.sm),
+            Expanded(
+              child: Text(
+                label,
+                style: LumenType.mono(size: 13, color: LumenColors.ink),
+              ),
+            ),
+            if (value != null) ...[
+              Text(
+                value!,
+                style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
+              ),
+              const SizedBox(width: 5),
+            ],
+            Icon(Icons.chevron_right, size: 14, color: LumenColors.inkMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Link rows com dados reais ──────────────────────────────────────────────
+
+class _ClubsLinkRow extends ConsumerWidget {
+  final VoidCallback onTap;
+  const _ClubsLinkRow({required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final clubsAsync = ref.watch(_clubsProvider);
-
-    return clubsAsync.when(
-      loading: () => _card(
-        child: const Center(
-          child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-      ),
-      error: (_, __) => _card(
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Text(
-            'Não foi possível carregar.',
-            style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-          ),
-        ),
-      ),
-      data: (clubs) {
-        final total = clubs.length;
-        final asAdmin = clubs.where((c) => c.isAdmin).length;
-        final asOwner = clubs.where((c) => c.isOwner).length;
-
-        return _card(
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(child: _MiniStatTile(icon: Icons.groups_outlined, label: 'Participando', value: '$total')),
-                  const _VSep(),
-                  Expanded(child: _MiniStatTile(icon: Icons.manage_accounts_outlined, label: 'Administrador', value: '$asAdmin')),
-                  const _VSep(),
-                  Expanded(child: _MiniStatTile(icon: Icons.add_circle_outline, label: 'Criados', value: '$asOwner')),
-                ],
-              ),
-              _divider(),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: onTap,
-                  icon: const Icon(Icons.chevron_right_rounded, size: 16),
-                  label: const Text('Ver Clubes'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: ReadLogColors.ink,
-                    textStyle: ReadLogType.mono(size: 12, color: ReadLogColors.ink),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    final value = clubsAsync.whenOrNull(
+      data: (clubs) => '${clubs.length} participando',
     );
+    return _LinkRow(icon: Icons.groups_outlined, label: 'Clubes', value: value, onTap: onTap);
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// _FriendsCard — dados reais
-// ══════════════════════════════════════════════════════════════════════════════
-
-class _FriendsCard extends ConsumerWidget {
+class _FriendsLinkRow extends ConsumerWidget {
   final VoidCallback onTap;
-
-  const _FriendsCard({required this.onTap});
+  const _FriendsLinkRow({required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final countAsync = ref.watch(_friendsCountProvider);
-
-    return _card(
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Icon(Icons.people_outline, size: 22, color: ReadLogColors.brass),
-              const SizedBox(width: 10),
-              Text(
-                'Amigos',
-                style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.65)),
-              ),
-              const Spacer(),
-              countAsync.when(
-                loading: () => const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                error: (_, __) => Text(
-                  '—',
-                  style: ReadLogType.display(size: 18, color: ReadLogColors.charcoal),
-                ),
-                data: (count) => Text(
-                  '$count',
-                  style: ReadLogType.display(size: 18, color: ReadLogColors.charcoal),
-                ),
-              ),
-            ],
-          ),
-          _divider(),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: onTap,
-              icon: const Icon(Icons.chevron_right_rounded, size: 16),
-              label: const Text('Ver todos'),
-              style: TextButton.styleFrom(
-                foregroundColor: ReadLogColors.ink,
-                textStyle: ReadLogType.mono(size: 12, color: ReadLogColors.ink),
-                padding: EdgeInsets.zero,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    final value = countAsync.whenOrNull(data: (n) => '$n');
+    return _LinkRow(icon: Icons.person_outline, label: 'Amigos', value: value, onTap: onTap);
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// _CalendarCard — dados reais
-// ══════════════════════════════════════════════════════════════════════════════
-
-class _CalendarCard extends ConsumerWidget {
+class _CalendarLinkRow extends ConsumerWidget {
   final VoidCallback onTap;
+  const _CalendarLinkRow({required this.onTap});
 
-  const _CalendarCard({required this.onTap});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final heatmapAsync = ref.watch(_profileHeatmapProvider);
+    final value = heatmapAsync.whenOrNull(
+      data: (heatmap) {
+        final activeDays = heatmap.where((e) => ((e['total_minutes'] as num?) ?? 0) > 0).length;
+        return '$activeDays dias ativos';
+      },
+    );
+    return _LinkRow(icon: Icons.calendar_today_outlined, label: 'Calendário', value: value, onTap: onTap);
+  }
+}
+
+class _AchievementsLinkRow extends ConsumerWidget {
+  final VoidCallback onTap;
+  const _AchievementsLinkRow({required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(_profileStatsProvider);
-
-    return _card(
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Icon(Icons.calendar_month_outlined, size: 22, color: ReadLogColors.brass),
-              const SizedBox(width: 10),
-              Text(
-                'Dias lidos este ano',
-                style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.65)),
-              ),
-              const Spacer(),
-              statsAsync.when(
-                loading: () => const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                error: (_, __) => Text(
-                  '—',
-                  style: ReadLogType.display(size: 18, color: ReadLogColors.charcoal),
-                ),
-                data: (stats) {
-                  // Conta dias com leitura no heatmap do ano
-                  // _profileStatsProvider não carrega heatmap, usamos total de dias aproximado
-                  // via fetchPeriodStats: se há minutos, houve leitura
-                  final yearStats = stats['yearStats'] as Map<String, dynamic>;
-                  final totalMinutes = (yearStats['total_minutes'] as int?) ?? 0;
-                  // Sem dados granulares de dias aqui — mostramos total de horas como proxy
-                  final hours = totalMinutes ~/ 60;
-                  return Text(
-                    '${hours}h',
-                    style: ReadLogType.display(size: 18, color: ReadLogColors.charcoal),
-                  );
-                },
-              ),
-            ],
-          ),
-          _divider(),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: onTap,
-              icon: const Icon(Icons.chevron_right_rounded, size: 16),
-              label: const Text('Abrir calendário'),
-              style: TextButton.styleFrom(
-                foregroundColor: ReadLogColors.ink,
-                textStyle: ReadLogType.mono(size: 12, color: ReadLogColors.ink),
-                padding: EdgeInsets.zero,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// _RecentAchievementsCard — dados reais
-// ══════════════════════════════════════════════════════════════════════════════
-
-class _RecentAchievementsCard extends ConsumerWidget {
-  final VoidCallback onTap;
-
-  const _RecentAchievementsCard({required this.onTap});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(_profileStatsProvider);
-
-    return statsAsync.when(
-      loading: () => _card(
-        child: const Center(
-          child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-      ),
-      error: (_, __) => _card(
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Text(
-            'Não foi possível carregar.',
-            style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-          ),
-        ),
-      ),
+    final value = statsAsync.whenOrNull(
       data: (stats) {
         final achievements = stats['achievements'] as List<Achievement>;
-        final unlocked = achievements
-            .where((a) => a.isUnlocked)
-            .toList()
-          ..sort((a, b) => b.unlockedAt!.compareTo(a.unlockedAt!));
-
-        if (unlocked.isEmpty) {
-          return _card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  child: Text(
-                    'Nenhuma conquista desbloqueada ainda.',
-                    style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-                  ),
-                ),
-                _divider(),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: onTap,
-                    icon: const Icon(Icons.chevron_right_rounded, size: 16),
-                    label: const Text('Ver todas'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: ReadLogColors.ink,
-                      textStyle: ReadLogType.mono(size: 12, color: ReadLogColors.ink),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        final recent = unlocked.take(3).toList();
-
-        return _card(
-          child: Column(
-            children: [
-              ...recent.asMap().entries.map((e) {
-                final isLast = e.key == recent.length - 1;
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 9),
-                      child: Row(
-                        children: [
-                          Icon(Icons.military_tech_outlined, size: 18, color: ReadLogColors.brass),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              e.value.name,
-                              style: ReadLogType.mono(size: 13, color: ReadLogColors.charcoal),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (!isLast)
-                      Divider(height: 1, thickness: 1, color: ReadLogColors.paperDeep.withValues(alpha: 0.5)),
-                  ],
-                );
-              }),
-              _divider(),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: onTap,
-                  icon: const Icon(Icons.chevron_right_rounded, size: 16),
-                  label: const Text('Ver todas'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: ReadLogColors.ink,
-                    textStyle: ReadLogType.mono(size: 12, color: ReadLogColors.ink),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
+        final unlocked = achievements.where((a) => a.isUnlocked).length;
+        return '$unlocked de ${achievements.length}';
       },
+    );
+    return _LinkRow(
+      icon: Icons.workspace_premium_outlined,
+      label: 'Conquistas recentes',
+      value: value,
+      onTap: onTap,
     );
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// _CollectionCard — dados reais
-// ══════════════════════════════════════════════════════════════════════════════
-
-class _CollectionCard extends ConsumerWidget {
+class _CollectionLinkRow extends ConsumerWidget {
   final VoidCallback onTap;
-
-  const _CollectionCard({required this.onTap});
+  const _CollectionLinkRow({required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(_profileStatsProvider);
-
-    return statsAsync.when(
-      loading: () => _card(
-        child: const Center(
-          child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-      ),
-      error: (_, __) => _card(
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Text(
-            'Não foi possível carregar.',
-            style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.45)),
-          ),
-        ),
-      ),
+    final value = statsAsync.whenOrNull(
       data: (stats) {
         final books = stats['books'] as List<Book>;
-        final total = books.length;
-        final wantToRead = books.where((b) => b.status == BookStatus.wantToRead).length;
-        final reading = books.where((b) => b.status == BookStatus.reading).length;
-        final read = books.where((b) => b.status == BookStatus.read).length;
-        final abandoned = books.where((b) => b.status == BookStatus.abandoned).length;
-
-        return _card(
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(child: _MiniStatTile(icon: Icons.local_library_outlined, label: 'Total', value: '$total')),
-                  const _VSep(),
-                  Expanded(child: _MiniStatTile(icon: Icons.bookmark_border_outlined, label: 'Quero ler', value: '$wantToRead')),
-                  const _VSep(),
-                  Expanded(child: _MiniStatTile(icon: Icons.import_contacts_outlined, label: 'Lendo', value: '$reading')),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(child: _MiniStatTile(icon: Icons.check_circle_outline, label: 'Lidos', value: '$read')),
-                  const _VSep(),
-                  Expanded(child: _MiniStatTile(icon: Icons.cancel_outlined, label: 'Abandonados', value: '$abandoned')),
-                  const Expanded(child: SizedBox()),
-                ],
-              ),
-              _divider(),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: onTap,
-                  icon: const Icon(Icons.chevron_right_rounded, size: 16),
-                  label: const Text('Ver biblioteca'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: ReadLogColors.ink,
-                    textStyle: ReadLogType.mono(size: 12, color: ReadLogColors.ink),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
+        return '${books.length} livros';
       },
     );
-  }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// Widgets auxiliares reutilizáveis
-// ══════════════════════════════════════════════════════════════════════════════
-
-class _MiniStatTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _MiniStatTile({required this.icon, required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        children: [
-          Icon(icon, size: 18, color: ReadLogColors.brass),
-          const SizedBox(height: 5),
-          Text(
-            value,
-            style: ReadLogType.display(size: 16, color: ReadLogColors.charcoal),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: ReadLogType.mono(size: 10, color: ReadLogColors.charcoal.withValues(alpha: 0.5)),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return _LinkRow(
+      icon: Icons.local_library_outlined,
+      label: 'Coleção',
+      value: value,
+      isLast: true,
+      onTap: onTap,
     );
   }
 }
 
-class _VSep extends StatelessWidget {
-  const _VSep();
+// ══════════════════════════════════════════════════════════════════════════════
+// _HeatmapSection — monocromático, variação só de opacidade
+// ══════════════════════════════════════════════════════════════════════════════
+
+class _HeatmapSection extends ConsumerWidget {
+  const _HeatmapSection();
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 52,
-      color: ReadLogColors.paperDeep.withValues(alpha: 0.5),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final heatmapAsync = ref.watch(_profileHeatmapProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? LumenColors.inkInverse : LumenColors.ink;
+
+    return heatmapAsync.when(
+      loading: () => const SizedBox(
+        height: 60,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (heatmap) {
+        // Normaliza para intensidade 0–3
+        final data = <String, int>{
+          for (final e in heatmap)
+            (e['date'] as String? ?? ''): (e['total_minutes'] as num?)?.toInt() ?? 0,
+        };
+
+        // Gera lista de 365 dias mais recentes
+        final today = DateTime.now();
+        final intensities = List.generate(365, (i) {
+          final date = today.subtract(Duration(days: 364 - i));
+          final key =
+              '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+          final minutes = data[key] ?? 0;
+          if (minutes == 0) return 0;
+          if (minutes < 10) return 1;
+          if (minutes < 30) return 2;
+          return 3;
+        });
+
+        const columns = 26;
+        const opacities = [0.06, 0.22, 0.42, 0.70];
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: intensities.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 2,
+            crossAxisSpacing: 2,
+          ),
+          itemBuilder: (_, i) {
+            final level = intensities[i].clamp(0, 3);
+            return Container(
+              decoration: BoxDecoration(
+                color: baseColor.withValues(alpha: opacities[level]),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -1346,22 +903,22 @@ class _Avatar extends StatelessWidget {
 
     if (url != null && url!.isNotEmpty) {
       return CircleAvatar(
-        radius: 48,
-        backgroundColor: ReadLogColors.ink.withValues(alpha: 0.12),
+        radius: 28,
+        backgroundColor: LumenColors.ink.withValues(alpha: 0.12),
         child: ClipOval(
           child: CachedNetworkImage(
             imageUrl: url!,
-            width: 96,
-            height: 96,
+            width: 56,
+            height: 56,
             fit: BoxFit.cover,
-            placeholder: (_, __) => const CircularProgressIndicator(),
-            errorWidget: (_, __, ___) => _InitialsAvatar(initials: initials),
+            placeholder: (_, __) => const CircularProgressIndicator(strokeWidth: 2),
+            errorWidget: (_, __, ___) => _InitialsAvatar(initials: initials, radius: 28),
           ),
         ),
       );
     }
 
-    return _InitialsAvatar(initials: initials, radius: 48);
+    return _InitialsAvatar(initials: initials, radius: 28);
   }
 
   static String _initials(String name) {
@@ -1377,125 +934,25 @@ class _InitialsAvatar extends StatelessWidget {
   final String initials;
   final double radius;
 
-  const _InitialsAvatar({required this.initials, this.radius = 48});
+  const _InitialsAvatar({required this.initials, this.radius = 28});
 
   @override
   Widget build(BuildContext context) {
     return CircleAvatar(
       radius: radius,
-      backgroundColor: ReadLogColors.ink,
+      backgroundColor: LumenColors.ink,
       child: Text(
         initials,
         style: TextStyle(
-          color: ReadLogColors.cream,
+          color: LumenColors.surface,
           fontSize: radius * 0.58,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
           fontFamily: 'Fraunces',
         ),
       ),
     );
   }
 }
-
-
-// ══════════════════════════════════════════════════════════════════════════════
-// _QuickLinksGrid — grade 3×N de atalhos para seções sem aba própria
-// ══════════════════════════════════════════════════════════════════════════════
-
-class _QuickLink {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _QuickLink({required this.icon, required this.label, required this.onTap});
-}
-
-class _QuickLinksGrid extends StatelessWidget {
-  final List<_QuickLink> links;
-  const _QuickLinksGrid({required this.links});
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 1.1,
-      ),
-      itemCount: links.length,
-      itemBuilder: (_, i) {
-        final link = links[i];
-        return GestureDetector(
-          onTap: link.onTap,
-          child: Container(
-            decoration: BoxDecoration(
-              color: ReadLogColors.cream,
-              borderRadius: BorderRadius.circular(3),
-              border: Border.all(color: ReadLogColors.paperDeep.withValues(alpha: 0.5)),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(link.icon, size: 22, color: ReadLogColors.charcoal.withValues(alpha: 0.7)),
-                const SizedBox(height: 6),
-                Text(
-                  link.label,
-                  style: ReadLogType.mono(
-                    size: 10,
-                    color: ReadLogColors.charcoal.withValues(alpha: 0.75),
-                    weight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-
-
-// ══════════════════════════════════════════════════════════════════════════════
-// _ActivityHeatmapCard — heatmap de atividade de leitura
-// ══════════════════════════════════════════════════════════════════════════════
-
-class _ActivityHeatmapCard extends ConsumerWidget {
-  const _ActivityHeatmapCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final heatmapAsync = ref.watch(_profileHeatmapProvider);
-
-    return heatmapAsync.when(
-      loading: () => const SizedBox(
-        height: 80,
-        child: Center(child: CircularProgressIndicator(color: ReadLogColors.brass)),
-      ),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (heatmap) {
-        // Converte List<Map> (date, total_minutes) → Map<String,int>
-        final data = <String, int>{
-          for (final e in heatmap)
-            (e['date'] as String? ?? ''): (e['total_minutes'] as num?)?.toInt() ?? 0,
-        };
-        return _card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ReadLogReadingHeatmap(data: data),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
 
 // ══════════════════════════════════════════════════════════════════════════════
 // _SettingsSheet
@@ -1515,7 +972,7 @@ class _SettingsSheet extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.symmetric(vertical: LumenSpace.lg),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1525,7 +982,7 @@ class _SettingsSheet extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 'Configurações',
-                style: ReadLogType.display(size: 18, color: cs.onSurface),
+                style: LumenType.bookTitle(size: 18, color: cs.onSurface),
               ),
             ),
           ),
@@ -1545,17 +1002,17 @@ class _SettingsSheet extends ConsumerWidget {
             },
           ),
           const Divider(height: 1, indent: 20, endIndent: 20),
-          const SizedBox(height: 8),
+          const SizedBox(height: LumenSpace.sm),
           ListTile(
-            leading: const Icon(Icons.logout_outlined, size: 20, color: AppColors.error),
+            leading: Icon(Icons.logout_outlined, size: 20, color: LumenColors.danger),
             title: Text(
               'Sair',
-              style: ReadLogType.mono(size: 13, color: AppColors.error),
+              style: LumenType.mono(size: 13, color: LumenColors.danger),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
             onTap: () => _confirmSignOut(context, ref),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: LumenSpace.sm),
         ],
       ),
     );
@@ -1570,7 +1027,7 @@ class _SettingsSheet extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
     return ListTile(
       leading: Icon(icon, size: 20, color: cs.onSurface),
-      title: Text(label, style: ReadLogType.mono(size: 13, color: cs.onSurface)),
+      title: Text(label, style: LumenType.mono(size: 13, color: cs.onSurface)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
       onTap: onTap,
     );
@@ -1578,35 +1035,27 @@ class _SettingsSheet extends ConsumerWidget {
 
   void _confirmSignOut(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    // Captura o Navigator do bottom sheet (context local do _SettingsSheet)
-    // antes de abrir o dialog. Isso garante que os pops subsequentes fechem
-    // os overlays corretos em vez de serem interceptados pelo GoRouter.
     final sheetNavigator = Navigator.of(context);
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Sair', style: ReadLogType.display(size: 16, color: cs.onSurface)),
+        title: Text('Sair', style: LumenType.bookTitle(size: 16, color: cs.onSurface)),
         content: Text(
           'Tem certeza que deseja sair da sua conta?',
-          style: ReadLogType.mono(size: 13, color: cs.onSurface),
+          style: LumenType.mono(size: 13, color: cs.onSurface),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text('Cancelar', style: ReadLogType.mono(size: 13, color: cs.onSurface)),
+            child: Text('Cancelar', style: LumenType.mono(size: 13, color: cs.onSurface)),
           ),
           TextButton(
             onPressed: () {
-              // Fecha dialog e bottom sheet de forma síncrona antes de
-              // qualquer await. O signOut() dispara o authStateProvider que
-              // aciona o redirect do GoRouter — a árvore precisa estar
-              // completamente estável nesse momento para evitar o
-              // '!_debugLocked' no NavigatorState.
-              Navigator.of(dialogContext).pop(); // fecha o dialog
-              sheetNavigator.pop();              // fecha o bottom sheet
+              Navigator.of(dialogContext).pop();
+              sheetNavigator.pop();
               _performSignOut(ref);
             },
-            child: Text('Sair', style: ReadLogType.mono(size: 13, color: AppColors.error)),
+            child: Text('Sair', style: LumenType.mono(size: 13, color: LumenColors.danger)),
           ),
         ],
       ),
@@ -1622,8 +1071,6 @@ class _SettingsSheet extends ConsumerWidget {
     ref.invalidate(onboardingCompletedProvider);
     await GoogleSignIn().signOut();
     await Supabase.instance.client.auth.signOut();
-    // A navegação para /auth/login é feita automaticamente pelo
-    // authStateProvider escutado no SplashScreen / redirect do router.
   }
 }
 
@@ -1755,8 +1202,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     return Consumer(
       builder: (context, ref, _) => Padding(
         padding: EdgeInsets.only(
-          left: 24, right: 24, top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          left: LumenSpace.lg, right: LumenSpace.lg, top: LumenSpace.lg,
+          bottom: MediaQuery.of(context).viewInsets.bottom + LumenSpace.lg,
         ),
         child: Form(
           key: _formKey,
@@ -1765,9 +1212,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Editar perfil', style: ReadLogType.display(size: 18, color: ReadLogColors.charcoal)),
-                const SizedBox(height: 20),
-                // ── Avatar picker ──────────────────────────────────────────
+                Text('Editar perfil', style: LumenType.bookTitle(size: 18)),
+                const SizedBox(height: LumenSpace.lg),
+                // ── Avatar picker ────────────────────────────────────────────
                 Center(
                   child: GestureDetector(
                     onTap: _showImageSourceSheet,
@@ -1775,7 +1222,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                       children: [
                         CircleAvatar(
                           radius: 44,
-                          backgroundColor: ReadLogColors.ink.withValues(alpha: 0.12),
+                          backgroundColor: LumenColors.ink.withValues(alpha: 0.12),
                           child: _pickedImage != null
                               ? ClipOval(child: Image.file(_pickedImage!, width: 88, height: 88, fit: BoxFit.cover))
                               : (widget.currentAvatarUrl != null && widget.currentAvatarUrl!.isNotEmpty)
@@ -1792,26 +1239,26 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                           bottom: 0, right: 0,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: ReadLogColors.ink,
+                              color: LumenColors.ink,
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
+                              border: Border.all(color: LumenColors.surface, width: 2),
                             ),
                             padding: const EdgeInsets.all(5),
-                            child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                            child: Icon(Icons.camera_alt, size: 14, color: LumenColors.surface),
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: LumenSpace.lg),
                 TextFormField(
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(labelText: 'Nome de exibição'),
                   validator: (v) => (v == null || v.trim().isEmpty) ? 'Informe seu nome' : null,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: LumenSpace.md),
                 TextFormField(
                   controller: _bioController,
                   maxLines: 2,
@@ -1819,7 +1266,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(labelText: 'Biografia (opcional)'),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: LumenSpace.xs),
                 TextFormField(
                   controller: _yearlyGoalController,
                   keyboardType: TextInputType.number,
@@ -1833,37 +1280,42 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: LumenSpace.md),
                 TextFormField(
                   controller: _genreController,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(labelText: 'Gênero favorito (opcional)'),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: LumenSpace.md),
                 TextFormField(
                   controller: _favoriteBookController,
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(labelText: 'Livro favorito (opcional)'),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: LumenSpace.md),
                 TextFormField(
                   controller: _authorsController,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Autores favoritos (opcional)',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Autores favoritos (opcional)'),
                 ),
                 if (_errorMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Text(_errorMessage!, style: TextStyle(color: AppColors.error, fontSize: 13)),
+                  const SizedBox(height: LumenSpace.md),
+                  Text(
+                    _errorMessage!,
+                    style: TextStyle(color: LumenColors.danger, fontSize: 13),
+                  ),
                 ],
-                const SizedBox(height: 24),
+                const SizedBox(height: LumenSpace.lg),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: _loading ? null : () => _save(ref),
                     child: _loading
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
                         : const Text('Salvar'),
                   ),
                 ),
