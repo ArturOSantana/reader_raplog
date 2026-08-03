@@ -3,5 +3,5 @@
     "enabled": false
   },
   "framework": "nextjs",
-  "installCommand": "ln -sfn ../../node_modules ./node_modules"
+  "installCommand": "echo skip"
 }
