@@ -2,7 +2,8 @@ import path from 'path'
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  outputFileTracingRoot: path.join(__dirname),
+  // Aponta para a raiz do workspace onde node_modules realmente existe
+  outputFileTracingRoot: path.join(__dirname, '../..'),
   transpilePackages: ['@lumen/ui', '@lumen/types', '@lumen/supabase'],
   eslint: { ignoreDuringBuilds: true },
   images: {
