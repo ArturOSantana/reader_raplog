@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lumen/features/splash/presentation/screens/splash_screen.dart';
 import 'package:lumen/shared/providers/providers.dart';
 import 'package:lumen/core/theme/app_theme.dart';
@@ -48,31 +49,53 @@ void main() {
   });
 
   group('SplashScreen — estrutura visual', () {
-    /// Cria o widget com o stream de auth mockado (vazio = sem navegação automática).
+    /// Cria o widget com o stream de auth mockado e um router mínimo.
     Widget buildSplash() {
+      final router = GoRouter(
+        initialLocation: '/',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, __) => const SplashScreen(),
+          ),
+          GoRoute(
+            path: '/auth/login',
+            builder: (_, __) => const SizedBox.shrink(),
+          ),
+          GoRoute(
+            path: '/onboarding',
+            builder: (_, __) => const SizedBox.shrink(),
+          ),
+          GoRoute(
+            path: '/home',
+            builder: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
+      );
+
       return ProviderScope(
         overrides: [
           authStateProvider.overrideWith((_) => const Stream.empty()),
         ],
-        child: MaterialApp(
+        child: MaterialApp.router(
           theme: AppTheme.light,
-          home: const SplashScreen(),
+          routerConfig: router,
         ),
       );
     }
 
-    testWidgets('exibe o nome "ReadLog"', (tester) async {
+    testWidgets('exibe o nome "Lumen"', (tester) async {
       await tester.pumpWidget(buildSplash());
       await tester.pump(); // processa o primeiro frame
 
-      expect(find.text('ReadLog'), findsOneWidget);
+      expect(find.text('Lumen'), findsOneWidget);
     });
 
-    testWidgets('exibe o subtítulo "Seu diário de leitura"', (tester) async {
+    testWidgets('exibe o subtítulo "Seu companheiro de leitura"', (tester) async {
       await tester.pumpWidget(buildSplash());
       await tester.pump();
 
-      expect(find.text('Seu diário de leitura'), findsOneWidget);
+      expect(find.text('Seu companheiro de leitura'), findsOneWidget);
     });
 
     testWidgets('exibe o indicador de carregamento (CircularProgressIndicator)',

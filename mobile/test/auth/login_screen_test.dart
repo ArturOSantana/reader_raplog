@@ -17,9 +17,9 @@ Widget _wrap(Widget child) {
 
 void main() {
   group('LoginScreen — estrutura visual', () {
-    testWidgets('exibe o título "Readlog"', (tester) async {
+    testWidgets('exibe o título "Lumen"', (tester) async {
       await tester.pumpWidget(_wrap(const LoginScreen()));
-      expect(find.text('Readlog'), findsOneWidget);
+      expect(find.text('Lumen'), findsOneWidget);
     });
 
     testWidgets('exibe subtítulo "Bem-vindo de volta" no modo login', (tester) async {

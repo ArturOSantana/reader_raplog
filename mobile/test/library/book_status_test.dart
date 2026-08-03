@@ -32,7 +32,7 @@ SupabaseClient _noTimerClient() => SupabaseClient(
 class _FakeBookRepository extends BookRepository {
   Map<String, dynamic>? lastUpdated;
   String? deletedId;
-  final Book _current;
+  Book _current;
 
   _FakeBookRepository(this._current) : super(_noTimerClient());
 

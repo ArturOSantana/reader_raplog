@@ -314,7 +314,7 @@ void main() {
         );
 
     test('sessão ativa tem status active', () {
-      expect(_activeSession().status, SessionStatus.active);
+      expect(activeSession().status, SessionStatus.active);
     });
 
     test('fromMap parseia status "finished" corretamente', () {
@@ -367,7 +367,7 @@ void main() {
     });
 
     test('toMap produz status "finished" para o Supabase acionar trigger', () {
-      final session = _activeSession().copyWith(
+      final session = activeSession().copyWith(
         status: SessionStatus.finished,
         endPage: 100,
         pagesRead: 50,
@@ -377,7 +377,7 @@ void main() {
     });
 
     test('mood é serializado com o dbValue correto', () {
-      final session = _activeSession().copyWith(
+      final session = activeSession().copyWith(
         status: SessionStatus.finished,
         mood: SessionMood.excited,
       );
@@ -385,7 +385,7 @@ void main() {
     });
 
     test('miniReview é preservada no toMap', () {
-      final session = _activeSession().copyWith(
+      final session = activeSession().copyWith(
         status: SessionStatus.finished,
         miniReview: 'Capítulo incrível!',
       );
@@ -528,7 +528,7 @@ void main() {
       await tester.pumpWidget(buildScreen(sessionId: 'sess-1'));
       expect(
         find.text(
-          'Seu check-in já foi registrado automaticamente.\nAdicione uma impressão se quiser compartilhar!',
+          'Seu check-in já foi registrado automaticamente.\nAdicione uma impressão se quiser compartilhar.',
         ),
         findsOneWidget,
       );
@@ -537,7 +537,7 @@ void main() {
     testWidgets('exibe todos os 5 botões de humor', (tester) async {
       await tester.pumpWidget(buildScreen(sessionId: 'sess-1'));
       for (final mood in SessionMood.values) {
-        expect(find.text(mood.emoji), findsOneWidget);
+        expect(find.text(mood.label), findsOneWidget);
       }
     });
 
@@ -560,20 +560,18 @@ void main() {
       await tester.pump();
 
       // Sem mood e sem texto, o confirm() vai para _done=true imediatamente
-      expect(find.text('Impressão salva!'), findsOneWidget);
+      expect(find.text('Impressão salva.'), findsOneWidget);
       expect(find.text('Voltar ao clube'), findsOneWidget);
     });
 
-    testWidgets('tela de sucesso exibe mensagem da ofensiva coletiva', (tester) async {
+    testWidgets('tela de sucesso exibe mensagem atual', (tester) async {
       await tester.pumpWidget(buildScreen(sessionId: 'sess-1'));
       await tester.ensureVisible(find.text('Pular'));
       await tester.tap(find.text('Pular'), warnIfMissed: false);
       await tester.pump();
 
       expect(
-        find.text(
-          'Sua sessão e impressão foram registradas.\nA ofensiva coletiva do clube continua!',
-        ),
+        find.text('Sua sessão e impressão foram registradas.'),
         findsOneWidget,
       );
     });
@@ -589,7 +587,7 @@ void main() {
     const uid = 'user-teste';
     const bookId = 'livro-clube-1';
 
-    Map<String, dynamic> _sessionMap({
+    Map<String, dynamic> sessionMap({
       required String id,
       required String status,
       String? mood,
@@ -622,7 +620,7 @@ void main() {
 
     test('insere sessão ativa e recupera pelo fetchById', () async {
       final repo = LocalSessionRepository();
-      await repo.insert(_sessionMap(id: 'sess-1', status: 'active'));
+      await repo.insert(sessionMap(id: 'sess-1', status: 'active'));
 
       final session = await repo.fetchById('sess-1');
       expect(session, isNotNull);
@@ -632,7 +630,7 @@ void main() {
 
     test('fetchActiveSession retorna sessão active do usuário', () async {
       final repo = LocalSessionRepository();
-      await repo.insert(_sessionMap(id: 'sess-1', status: 'active'));
+      await repo.insert(sessionMap(id: 'sess-1', status: 'active'));
 
       final active = await repo.fetchActiveSession(uid);
       expect(active, isNotNull);
@@ -641,7 +639,7 @@ void main() {
 
     test('atualizar status para finished (simula finalização que aciona trigger)', () async {
       final repo = LocalSessionRepository();
-      await repo.insert(_sessionMap(id: 'sess-1', status: 'active'));
+      await repo.insert(sessionMap(id: 'sess-1', status: 'active'));
 
       // Simula o que OfflineSessionRepository faz ao finalizar
       await repo.update('sess-1', {
@@ -662,7 +660,7 @@ void main() {
     test('sessão finished não é retornada pelo fetchActiveSession', () async {
       final repo = LocalSessionRepository();
       await repo.insert(
-          _sessionMap(id: 'sess-1', status: 'finished', endPage: 100));
+          sessionMap(id: 'sess-1', status: 'finished', endPage: 100));
 
       final active = await repo.fetchActiveSession(uid);
       expect(active, isNull);
@@ -670,7 +668,7 @@ void main() {
 
     test('mood e mini_review são persistidos ao finalizar a sessão', () async {
       final repo = LocalSessionRepository();
-      await repo.insert(_sessionMap(id: 'sess-1', status: 'active'));
+      await repo.insert(sessionMap(id: 'sess-1', status: 'active'));
 
       await repo.update('sess-1', {
         'status': 'finished',
@@ -688,7 +686,7 @@ void main() {
 
     test('book_id do clube permanece associado à sessão finalizada', () async {
       final repo = LocalSessionRepository();
-      await repo.insert(_sessionMap(id: 'sess-1', status: 'active'));
+      await repo.insert(sessionMap(id: 'sess-1', status: 'active'));
       await repo.update('sess-1', {
         'status': 'finished',
         'duration_minutes': 30,

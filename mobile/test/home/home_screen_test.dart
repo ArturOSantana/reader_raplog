@@ -117,6 +117,7 @@ Widget _buildHome({
       goalRepositoryProvider.overrideWithValue(
         goalRepo ?? _FakeGoalRepository([]),
       ),
+      currentUserProvider.overrideWith((_) => null),
     ],
     child: MaterialApp(
       theme: AppTheme.dark,
@@ -129,35 +130,34 @@ Widget _buildHome({
 
 void main() {
   group('HomeScreen — estado de carregamento', () {
-    testWidgets('exibe CircularProgressIndicator enquanto carrega', (tester) async {
+    testWidgets('exibe skeleton enquanto carrega', (tester) async {
       await tester.pumpWidget(_buildHome());
-      // Antes de resolver o future, o indicador deve aparecer
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
     });
   });
 
   group('HomeScreen — lista de leitura vazia', () {
-    testWidgets('exibe "Nenhum livro em leitura" quando não há livros', (tester) async {
+    testWidgets('exibe "Nenhum livro\nem leitura." quando não há livros', (tester) async {
       await tester.pumpWidget(
         _buildHome(bookRepo: _FakeBookRepository([])),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Nenhum livro em leitura'), findsOneWidget);
+      expect(find.text('Nenhum livro\nem leitura.'), findsOneWidget);
     });
 
-    testWidgets('exibe botão "Adicionar livro" quando lista está vazia', (tester) async {
+    testWidgets('exibe botão "Adicionar livro →" quando lista está vazia', (tester) async {
       await tester.pumpWidget(_buildHome(bookRepo: _FakeBookRepository([])));
       await tester.pumpAndSettle();
 
-      expect(find.text('Adicionar livro'), findsOneWidget);
+      expect(find.text('Adicionar livro →'), findsOneWidget);
     });
 
-    testWidgets('exibe botão "Iniciar leitura"', (tester) async {
+    testWidgets('exibe rótulo "BIBLIOTECA" quando a lista está vazia', (tester) async {
       await tester.pumpWidget(_buildHome());
       await tester.pumpAndSettle();
 
-      expect(find.text('Iniciar leitura'), findsOneWidget);
+      expect(find.text('BIBLIOTECA'), findsOneWidget);
     });
   });
 
@@ -238,14 +238,19 @@ void main() {
       expect(find.byType(LinearProgressIndicator), findsWidgets);
     });
 
-    testWidgets('exibe "Meta: Páginas por dia" quando tipo é dailyPages', (tester) async {
+    testWidgets('exibe progresso percentual quando tipo é dailyPages', (tester) async {
       final goal = _makeGoal(type: GoalType.dailyPages, targetValue: 30);
       await tester.pumpWidget(
-        _buildHome(goalRepo: _FakeGoalRepository([goal])),
+        _buildHome(
+          sessionRepo: _FakeSessionRepository(
+            dailyStats: {'total_minutes': 0, 'total_pages': 15},
+          ),
+          goalRepo: _FakeGoalRepository([goal]),
+        ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Páginas por dia'), findsOneWidget);
+      expect(find.text('50%'), findsOneWidget);
     });
   });
 }
