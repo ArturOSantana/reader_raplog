@@ -56,11 +56,18 @@
 # ─── Google Sign-In ───────────────────────────────────────────────────────────
 -keep class com.google.android.gms.auth.** { *; }
 
+# ─── app_links ────────────────────────────────────────────────────────────────
+-keep class com.llfbandit.app_links.** { *; }
+
 # ─── connectivity_plus ────────────────────────────────────────────────────────
 -keep class dev.fluttercommunity.plus.connectivity.** { *; }
 
 # ─── flutter_local_notifications ──────────────────────────────────────────────
 -keep class com.dexterous.flutterlocalnotifications.** { *; }
+
+# ─── jni / jni_flutter ────────────────────────────────────────────────────────
+-keep class com.github.dart_lang.jni.** { *; }
+-keep class com.github.dart_lang.jni_flutter.** { *; }
 
 # ─── share_plus ───────────────────────────────────────────────────────────────
 -keep class dev.fluttercommunity.plus.share.** { *; }

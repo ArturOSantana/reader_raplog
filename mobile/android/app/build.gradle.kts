@@ -54,11 +54,15 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            // O plugin Flutter (dev.flutter.flutter-gradle-plugin) já configura
-            // isMinifyEnabled = true, isShrinkResources = true,
-            // proguard-android-optimize.txt e flutter_proguard_rules.pro no release.
-            // proguardFile() (singular) acrescenta sem substituir a lista existente.
-            proguardFile("proguard-rules.pro")
+            // proguardFiles() (plural) garante que AMBOS os arquivos são aplicados:
+            // 1. proguard-android-optimize.txt — regras padrão do Android SDK
+            // 2. proguard-rules.pro            — regras customizadas do app
+            // Usar proguardFile() (singular) pode fazer o R8 ignorar o arquivo
+            // customizado em algumas versões do Flutter Gradle Plugin.
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
