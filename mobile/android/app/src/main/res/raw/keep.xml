@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Preserva recursos referenciados apenas por nome string em código Dart/Flutter
+  (ex: flutter_local_notifications busca ícones via Resources.getIdentifier).
+  Sem este arquivo, isShrinkResources=true os remove do APK release.
+  https://developer.android.com/studio/build/shrink-code#keep-resources
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_reading_notification" />
