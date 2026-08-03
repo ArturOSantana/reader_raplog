@@ -85,7 +85,12 @@ jobs:
       - name: Build
         working-directory: platform
         run: |
-          # Exporta NEXT_PUBLIC_* do .env.production.local para o processo atual
+          ENV_FILE="apps/${{ matrix.app }}/.vercel/.env.production.local"
+          if [ ! -f "$ENV_FILE" ]; then
+            echo "::error::$ENV_FILE não encontrado — verifique se as env vars estão configuradas no Vercel Dashboard para o projeto ${{ matrix.app }}"
+            exit 1
+          fi
+          # Exporta NEXT_PUBLIC_* do .env.production.local para o processo de build
           while IFS= read -r line; do
             [[ "$line" =~ ^NEXT_PUBLIC_ ]] || continue
             key="${line%%=*}"
@@ -93,7 +98,7 @@ jobs:
             val="${val%\"}"
             val="${val#\"}"
             export "$key=$val"
-          done < apps/${{ matrix.app }}/.vercel/.env.production.local
+          done < "$ENV_FILE"
           vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/${{ matrix.app }}
 
       - name: Relocate Vercel output
