@@ -5,11 +5,15 @@
 -keep class io.flutter.view.** { *; }
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
--dontwarn io.flutter.embedding.**
+-keep class io.flutter.embedding.** { *; }
 
 # ─── App classes ──────────────────────────────────────────────────────────────
-# MainActivity (referenciada por nome no manifesto)
--keep class com.readlog.readlog.MainActivity { *; }
+# MainActivity: mantida pelo nome (referenciada no AndroidManifest) e pela
+# hierarquia de herança do Flutter embedding (FlutterActivity → Activity).
+-keep public class com.readlog.readlog.MainActivity
+-keepclassmembers public class com.readlog.readlog.MainActivity { *; }
+-keep class * extends io.flutter.embedding.android.FlutterActivity
+-keep class * extends io.flutter.embedding.android.FlutterFragmentActivity
 
 # Widgets nativos (referenciados por nome no AndroidManifest)
 -keep class com.readlog.readlog.widgets.** { *; }
