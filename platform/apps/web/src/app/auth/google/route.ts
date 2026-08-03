@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
   const { origin } = new URL(request.url)
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return NextResponse.redirect(`${origin}/login?error=missing_env`)
+  }
+
   const supabase = await createServerSupabase()
 
   const { data, error } = await supabase.auth.signInWithOAuth({
