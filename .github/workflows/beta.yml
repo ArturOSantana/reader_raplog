@@ -63,11 +63,11 @@ jobs:
       # ── 5. .env com os segredos ────────────────────────────────────────────
       - name: Create .env
         run: |
-          cat > .env <<EOF
-          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
-          GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}
-          EOF
+          printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\nGOOGLE_WEB_CLIENT_ID=%s\n' \
+            '${{ secrets.SUPABASE_URL }}' \
+            '${{ secrets.SUPABASE_ANON_KEY }}' \
+            '${{ secrets.GOOGLE_WEB_CLIENT_ID }}' \
+            > .env
 
       # ── 6. Dependências ────────────────────────────────────────────────────
       - name: Flutter pub get
@@ -96,9 +96,20 @@ jobs:
           KEY_PASS: ${{ secrets.KEYSTORE_KEY_PASS }}
           KEY_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
         run: |
-          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=keystore.jks\n' \
+          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=%s\n' \
             "$STORE_PASS" "$KEY_PASS" "$KEY_ALIAS" \
+            "$(pwd)/android/app/keystore.jks" \
             > android/key.properties
+
+      # ── 8b. Verificar key.properties gerado ───────────────────────────────
+      - name: Verify key.properties
+        run: |
+          echo "=== key.properties (senhas mascaradas) ==="
+          sed 's/\(Password\|password\)=.*/\1=***/' android/key.properties
+          echo "=== keystore.jks exists ==="
+          ls -la android/app/keystore.jks
+          echo "=== .env (valores mascarados) ==="
+          sed 's/=.*/=***/' .env
 
       # ── 9. Build APK release ───────────────────────────────────────────────
       - name: Build APK
@@ -106,6 +117,16 @@ jobs:
           flutter build apk --release \
             --build-number=${{ steps.ver.outputs.code }} \
             --build-name=${{ steps.ver.outputs.name }}
+
+      # ── 9b. Verificar APK gerado ──────────────────────────────────────────
+      - name: Verify APK
+        run: |
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          echo "=== APK size ===" && ls -lh "$APK"
+          echo "=== MainActivity in dex ==="
+          unzip -p "$APK" classes.dex | strings | grep -c "MainActivity" || true
+          echo "=== APK signature ==="
+          unzip -l "$APK" | grep -E "META-INF.*SF|META-INF.*RSA|META-INF.*DSA" || true
 
       # ── 10. Renomeia o artefato com a versão ──────────────────────────────
       - name: Rename APK
