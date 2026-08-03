@@ -5,11 +5,7 @@
  *
  * Arquitetura (spec §2 — Google Books Cache Layer):
  *   Usuário pesquisa → cache LRU em memória → Google Books API → normalização → salvar → responder
- *
- * Design Redis-ready: implementa `BookSearchCacheProvider` — trocar por
- * `RedisCacheProvider` (Upstash) sem alterar nenhum consumidor.
- *
- * TTL padrão: 6h por query (queries com mesmo texto normalizado reutilizam hit)
+ *=6h por query (queries com mesmo texto normalizado reutilizam hit)
  */
 
 // ── Tipo normalizado (BookMetadata) ─────────────────────────────────────────
