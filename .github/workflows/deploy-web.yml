@@ -82,17 +82,19 @@ jobs:
             --token=${{ secrets.VERCEL_TOKEN }} \
             --cwd apps/${{ matrix.app }}
 
-      - name: Load production env
-        working-directory: platform
-        run: |
-          grep "^NEXT_PUBLIC" apps/${{ matrix.app }}/.vercel/.env.production.local \
-            | sed 's/^//' \
-            | sed 's/="\(.*\)"$/=\1/' \
-            >> $GITHUB_ENV
-
       - name: Build
         working-directory: platform
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/${{ matrix.app }}
+        run: |
+          # Exporta NEXT_PUBLIC_* do .env.production.local para o processo atual
+          while IFS= read -r line; do
+            [[ "$line" =~ ^NEXT_PUBLIC_ ]] || continue
+            key="${line%%=*}"
+            val="${line#*=}"
+            val="${val%\"}"
+            val="${val#\"}"
+            export "$key=$val"
+          done < apps/${{ matrix.app }}/.vercel/.env.production.local
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/${{ matrix.app }}
 
       - name: Relocate Vercel output
         working-directory: platform
