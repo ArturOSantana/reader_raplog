@@ -28,7 +28,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     // Usuário logado: força nova leitura do repositório
     ref.invalidate(onboardingCompletedProvider);
-    final completed = await ref.read(onboardingCompletedProvider.future);
+    // Timeout de 8s para não travar em redes lentas ou sem conectividade;
+    // em caso de falha assume false e envia para /onboarding, que tentará
+    // de novo quando o usuário avançar.
+    final bool completed;
+    try {
+      completed = await ref
+          .read(onboardingCompletedProvider.future)
+          .timeout(const Duration(seconds: 8));
+    } on Object {
+      if (!mounted) return;
+      context.go('/onboarding');
+      return;
+    }
     if (!mounted) return;
 
     // Escreve o resultado síncrono para que o redirect do router funcione
