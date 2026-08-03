@@ -84,7 +84,7 @@ jobs:
 
       - name: Build
         working-directory: platform
-        run: npx turbo build --filter=@lumen/${{ matrix.app }}
+        run: npx turbo build --filter=@lumen/${{ matrix.app }} --force
 
       - name: Package for Vercel
         working-directory: platform
