@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +19,19 @@ import 'theme/readlog_theme.dart';
 // Para alterar os tokens de cor ou tipografia, edite lib/theme/readlog_theme.dart.
 
 Future<void> main() async {
+  // runZonedGuarded captura qualquer exceção não tratada no boot (antes do
+  // runApp) e durante a vida do app, garantindo que erros de inicialização
+  // sejam reportados ao ObservabilityService em vez de causar crash silencioso.
+  await runZonedGuarded(_boot, (error, stack) {
+    ObservabilityService.instance.captureFatal(
+      error,
+      stack,
+      context: 'uncaught_zone_error',
+    );
+  });
+}
+
+Future<void> _boot() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Configura hooks de erro do Flutter → ObservabilityService.
@@ -36,19 +51,49 @@ Future<void> main() async {
     await dotenv.load(fileName: '.env');
   }
 
-  await Supabase.initialize(
-    url: AppEnv.supabaseUrl,
-    // ignore: deprecated_member_use
-    anonKey: AppEnv.supabaseAnonKey,
-  );
+  // Inicializa Supabase com timeout de 10s para não travar o splash em redes lentas.
+  try {
+    await Supabase.initialize(
+      url: AppEnv.supabaseUrl,
+      // ignore: deprecated_member_use
+      anonKey: AppEnv.supabaseAnonKey,
+    ).timeout(const Duration(seconds: 10));
+  } on TimeoutException {
+    // Continua sem conexão — o app mostrará banner offline.
+    ObservabilityService.instance.log(
+      ObsLevel.warning,
+      'supabase.initialize.timeout',
+    );
+  }
 
   await initializeDateFormatting('pt_BR');
 
-  // Inicializa banco SQLite antes do runApp
-  await LocalDatabase.instance.db;
+  // Inicializa banco SQLite antes do runApp.
+  // Se o banco falhar (ex: migração corrompida), recria do zero para não
+  // bloquear o usuário indefinidamente.
+  try {
+    await LocalDatabase.instance.db;
+  } catch (e, s) {
+    ObservabilityService.instance.captureError(
+      e,
+      s,
+      context: 'local_database.open',
+    );
+    // Tenta recriar o banco zerado como último recurso.
+    await LocalDatabase.instance.deleteAndRecreate();
+  }
 
-  // Inicializa plugin de widgets nativos (Android / iOS)
-  await WidgetManager.init();
+  // Inicializa plugin de widgets nativos (Android / iOS).
+  // Falha silenciosa: widgets nativos são opcionais e não devem impedir o boot.
+  try {
+    await WidgetManager.init();
+  } catch (e, s) {
+    ObservabilityService.instance.captureError(
+      e,
+      s,
+      context: 'widget_manager.init',
+    );
+  }
 
   final lastRoute = await loadLastRoute();
 

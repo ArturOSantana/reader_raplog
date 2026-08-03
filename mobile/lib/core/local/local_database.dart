@@ -128,43 +128,50 @@ class LocalDatabase {
   }
 
   /// Migração incremental para usuários que já têm o banco em versões anteriores.
+  ///
+  /// Cada bloco é protegido individualmente por try/catch para tolerar builds
+  /// intermediários em que a coluna já pode existir (duplicate column → ignora).
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await db.execute(
-          'ALTER TABLE reading_sessions ADD COLUMN paused_duration_seconds INTEGER NOT NULL DEFAULT 0');
-      await db.execute(
-          'ALTER TABLE reading_sessions ADD COLUMN pages_read INTEGER');
-      await db.execute(
-          "ALTER TABLE reading_sessions ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
-      await db.execute(
-          'ALTER TABLE reading_sessions ADD COLUMN session_goal TEXT');
-      await db.execute(
-          'ALTER TABLE reading_sessions ADD COLUMN goal_value INTEGER');
+      await _tryAlter(db, 'ALTER TABLE reading_sessions ADD COLUMN paused_duration_seconds INTEGER NOT NULL DEFAULT 0');
+      await _tryAlter(db, 'ALTER TABLE reading_sessions ADD COLUMN pages_read INTEGER');
+      await _tryAlter(db, "ALTER TABLE reading_sessions ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
+      await _tryAlter(db, 'ALTER TABLE reading_sessions ADD COLUMN session_goal TEXT');
+      await _tryAlter(db, 'ALTER TABLE reading_sessions ADD COLUMN goal_value INTEGER');
       await db.execute(
           "UPDATE reading_sessions SET status = 'finished' WHERE ended_at IS NOT NULL");
     }
     if (oldVersion < 3) {
-      // Adiciona colunas faltantes na tabela profile
-      await db.execute('ALTER TABLE profile ADD COLUMN favorite_authors TEXT');
-      await db.execute('ALTER TABLE profile ADD COLUMN favorite_book TEXT');
-      await db.execute(
-          'ALTER TABLE profile ADD COLUMN onboarding_completed INTEGER NOT NULL DEFAULT 0');
+      await _tryAlter(db, 'ALTER TABLE profile ADD COLUMN favorite_authors TEXT');
+      await _tryAlter(db, 'ALTER TABLE profile ADD COLUMN favorite_book TEXT');
+      await _tryAlter(db, 'ALTER TABLE profile ADD COLUMN onboarding_completed INTEGER NOT NULL DEFAULT 0');
     }
     if (oldVersion < 4) {
-      await db.execute('ALTER TABLE books ADD COLUMN source_club_id TEXT');
+      await _tryAlter(db, 'ALTER TABLE books ADD COLUMN source_club_id TEXT');
     }
     if (oldVersion < 5) {
-      // Coluna para persistir o timestamp de início da pausa atual
-      await db.execute(
-          'ALTER TABLE reading_sessions ADD COLUMN paused_at TEXT');
+      await _tryAlter(db, 'ALTER TABLE reading_sessions ADD COLUMN paused_at TEXT');
     }
     if (oldVersion < 6) {
-      await db.execute('ALTER TABLE reading_sessions ADD COLUMN mood TEXT');
-      await db.execute(
-          'ALTER TABLE reading_sessions ADD COLUMN mini_review TEXT');
+      await _tryAlter(db, 'ALTER TABLE reading_sessions ADD COLUMN mood TEXT');
+      await _tryAlter(db, 'ALTER TABLE reading_sessions ADD COLUMN mini_review TEXT');
     }
     if (oldVersion < 7) {
-      await db.execute('ALTER TABLE books ADD COLUMN deadline TEXT');
+      await _tryAlter(db, 'ALTER TABLE books ADD COLUMN deadline TEXT');
+    }
+  }
+
+  /// Executa um ALTER TABLE ignorando erros de "duplicate column".
+  /// Qualquer outro erro é re-lançado normalmente.
+  Future<void> _tryAlter(Database db, String sql) async {
+    try {
+      await db.execute(sql);
+    } catch (e) {
+      // SQLite retorna "duplicate column name" quando a coluna já existe.
+      // Isso acontece em devices que instalaram builds intermediárias.
+      if (!e.toString().toLowerCase().contains('duplicate column')) {
+        rethrow;
+      }
     }
   }
 
@@ -183,6 +190,18 @@ class LocalDatabase {
   Future<void> close() async {
     await _db?.close();
     _db = null;
+  }
+
+  /// Deleta o banco e o recria do zero.
+  ///
+  /// Usado como último recurso quando a abertura/migração falha de forma
+  /// irrecuperável. O usuário perde dados locais mas o app volta a funcionar.
+  Future<void> deleteAndRecreate() async {
+    await close();
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, 'readlog.db');
+    await deleteDatabase(path);
+    await db; // reabre/cria do zero
   }
 
   /// Injeta um banco externo no singleton — uso exclusivo em testes.

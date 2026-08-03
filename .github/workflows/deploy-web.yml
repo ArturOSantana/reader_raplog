@@ -44,6 +44,9 @@ jobs:
         working-directory: platform
         run: npm ci
 
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
       - name: Select Project ID
         shell: bash
         run: |
