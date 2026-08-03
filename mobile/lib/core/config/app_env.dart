@@ -17,21 +17,42 @@ abstract final class AppEnv {
         'SUPABASE_ANON_KEY',
       );
 
-  static String get googleWebClientId => _get(
+  /// Pode ser vazio — Google Sign-In é opcional quando não configurado.
+  static String get googleWebClientId => _getOptional(
         const String.fromEnvironment('GOOGLE_WEB_CLIENT_ID'),
         'GOOGLE_WEB_CLIENT_ID',
       );
 
   /// Retorna [defineValue] se foi injetado via --dart-define,
   /// ou faz fallback para dotenv (mobile/desktop/dev local).
+  ///
+  /// Lança [AppEnvException] (não [StateError]) para que o caller possa
+  /// capturar de forma específica sem derrubar o isolate.
   static String _get(String defineValue, String key) {
     if (defineValue.isNotEmpty) return defineValue;
     final fromDotenv = dotenv.maybeGet(key);
     if (fromDotenv != null && fromDotenv.isNotEmpty) return fromDotenv;
-    throw StateError(
-      '[AppEnv] Variável "$key" não encontrada. '
+    throw AppEnvException(
+      'Variável "$key" não encontrada. '
       'Web: passe --dart-define=$key=... no build. '
-      'Mobile: verifique o arquivo .env.',
+      'Mobile: verifique o arquivo .env na raiz do projeto.',
     );
   }
+
+  /// Igual a [_get] mas retorna string vazia em vez de lançar exceção.
+  static String _getOptional(String defineValue, String key) {
+    if (defineValue.isNotEmpty) return defineValue;
+    return dotenv.maybeGet(key) ?? '';
+  }
+}
+
+/// Exceção lançada quando uma variável de ambiente obrigatória está ausente.
+///
+/// Mais específica que [StateError], permite captura direcionada no boot.
+class AppEnvException implements Exception {
+  const AppEnvException(this.message);
+  final String message;
+
+  @override
+  String toString() => '[AppEnv] $message';
 }

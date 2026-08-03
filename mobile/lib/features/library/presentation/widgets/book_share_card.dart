@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/models/book.dart';
 
 /// Card PNG de compartilhamento de livro.

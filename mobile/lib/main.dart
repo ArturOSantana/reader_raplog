@@ -12,11 +12,12 @@ import 'core/local/local_database.dart';
 import 'core/observability/observability_service.dart';
 import 'core/router/app_router.dart';
 import 'core/router/route_persistence.dart';
+import 'core/services/reading_notification_service.dart';
 import 'core/widgets/widget_manager.dart';
-import 'theme/readlog_theme.dart';
+import 'theme/lumen_theme.dart';
 
 // O app segue sempre o tema do sistema operacional (ThemeMode.system).
-// Para alterar os tokens de cor ou tipografia, edite lib/theme/readlog_theme.dart.
+// Para alterar os tokens de cor ou tipografia, edite lib/theme/lumen_theme.dart.
 
 Future<void> main() async {
   // runZonedGuarded captura qualquer exceção não tratada no boot (antes do
@@ -48,7 +49,15 @@ Future<void> _boot() async {
   // não há arquivo .env bundled (evita exposição via HTTP em assets/).
   // No mobile/desktop carrega normalmente via flutter_dotenv.
   if (!kIsWeb) {
-    await dotenv.load(fileName: '.env');
+    // Falha silenciosa se .env não existir — AppEnv.supabaseUrl lançará
+    // AppEnvException abaixo com mensagem clara para o desenvolvedor.
+    try {
+      await dotenv.load(fileName: '.env');
+    } catch (_) {
+      // Arquivo ausente em produção é esperado quando variáveis chegam
+      // via --dart-define. Em mobile, o AppEnv lançará AppEnvException
+      // com diagnóstico claro se as variáveis não estiverem disponíveis.
+    }
   }
 
   // Inicializa Supabase com timeout de 10s para não travar o splash em redes lentas.
@@ -95,6 +104,21 @@ Future<void> _boot() async {
     );
   }
 
+  // Inicializa o plugin de notificações locais para que o pedido de permissão
+  // iOS aconteça no launch e o canal Android seja registrado antes do primeiro uso.
+  // Falha silenciosa: não impede o boot.
+  if (!kIsWeb) {
+    try {
+      await ReadingNotificationService.instance.init();
+    } catch (e, s) {
+      ObservabilityService.instance.captureError(
+        e,
+        s,
+        context: 'reading_notification_service.init',
+      );
+    }
+  }
+
   final lastRoute = await loadLastRoute();
 
   runApp(ProviderScope(
@@ -129,8 +153,8 @@ class ReadlogApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Lumen',
       debugShowCheckedModeBanner: false,
-      theme: ReadLogTheme.light(),
-      darkTheme: ReadLogTheme.dark(),
+      theme: LumenTheme.light(),
+      darkTheme: LumenTheme.dark(),
       themeMode: ThemeMode.system,
       routerConfig: router,
       // Bouncing scroll em todos os lists, mesmo no Android

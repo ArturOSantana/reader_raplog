@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/club_presence_stats.dart';
 import '../../../../shared/providers/providers.dart';
-import '../../../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 /// Card "Vocês já leram juntos" — métricas coletivas do clube.
+/// Sem pílulas coloridas — dados como linhas separadas por Divider.
 class ClubCollectiveStatsCard extends ConsumerWidget {
   final String clubId;
 
@@ -34,91 +35,53 @@ class _StatsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final headStyle = ReadLogType.display(
-      size: 13,
-      color: ReadLogColors.inkMuted,
-    );
-    final bigStyle = ReadLogType.display(
-      size: 28,
-      color: ReadLogColors.ink,
-      weight: FontWeight.w700,
-    );
-    final subStyle = ReadLogType.mono(
-      size: 11,
-      color: ReadLogColors.inkMuted,
-    );
-    final myPctStyle = ReadLogType.mono(
-      size: 12,
-      color: ReadLogColors.progress,
-      weight: FontWeight.w600,
-    );
-
     final myPct = stats.myPagesPct.toStringAsFixed(1);
     final hasContribution = stats.myPagesPct > 0;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: ReadLogColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ReadLogColors.hairline),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Kicker
-          Text('VOCÊS JÁ LERAM JUNTOS', style: headStyle),
-          const SizedBox(height: 16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'VOCÊS JÁ LERAM JUNTOS',
+          style: ReadLogType.mono(
+            size: 10,
+            color: ReadLogColors.inkGhost,
+          ).copyWith(letterSpacing: 1.4),
+        ),
+        const SizedBox(height: 12),
 
-          // Linha 1: Páginas
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(stats.pagesFormatted, style: bigStyle),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text('páginas', style: subStyle),
-              ),
-            ],
+        // Número grande de páginas
+        Text(
+          stats.pagesFormatted,
+          style: ReadLogType.display(
+            size: 36,
+            color: ReadLogColors.ink,
+            weight: FontWeight.w400,
           ),
-          const SizedBox(height: 8),
+        ),
+        Text(
+          'páginas',
+          style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+        ),
+        const SizedBox(height: 16),
 
-          // Linha 2: Sessões e livros
-          Row(
-            children: [
-              _StatPill(
-                value: _fmt(stats.totalSessions),
-                label: 'sessões',
-              ),
-              const SizedBox(width: 12),
-              _StatPill(
-                value: _fmt(stats.totalBooksRead),
-                label: 'livros',
-              ),
-              const SizedBox(width: 12),
-              _StatPill(
-                value: '${stats.minutesToHours}h',
-                label: 'de leitura',
-              ),
-            ],
+        // Linhas de detalhe — sem pílulas, sem cor
+        const Divider(height: 1, color: ReadLogColors.hairline),
+        _StatRow(label: 'Sessões', value: _fmt(stats.totalSessions)),
+        const Divider(height: 1, color: ReadLogColors.hairline),
+        _StatRow(label: 'Livros lidos', value: _fmt(stats.totalBooksRead)),
+        const Divider(height: 1, color: ReadLogColors.hairline),
+        _StatRow(label: 'Horas de leitura', value: '${stats.minutesToHours}h'),
+
+        if (hasContribution) ...[
+          const Divider(height: 1, color: ReadLogColors.hairline),
+          _StatRow(
+            label: 'Sua contribuição',
+            value: '$myPct%',
+            highlightValue: true,
           ),
-
-          if (hasContribution) ...[
-            const SizedBox(height: 14),
-            Divider(color: ReadLogColors.hairline, height: 1),
-            const SizedBox(height: 12),
-            // Contribuição do usuário
-            Row(
-              children: [
-                Text('Você contribuiu com ', style: subStyle),
-                Text('$myPct%', style: myPctStyle),
-                Text(' disso.', style: subStyle),
-              ],
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 
@@ -130,38 +93,34 @@ class _StatsBody extends StatelessWidget {
   }
 }
 
-class _StatPill extends StatelessWidget {
-  final String value;
+class _StatRow extends StatelessWidget {
   final String label;
+  final String value;
+  final bool highlightValue;
 
-  const _StatPill({required this.value, required this.label});
+  const _StatRow({
+    required this.label,
+    required this.value,
+    this.highlightValue = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: ReadLogColors.surfaceSubtle,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ReadLogColors.hairline),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Text(
+            label,
+            style: ReadLogType.mono(size: 12, color: ReadLogColors.inkMuted),
+          ),
           Text(
             value,
             style: ReadLogType.mono(
               size: 12,
-              color: ReadLogColors.ink,
+              color: highlightValue ? ReadLogColors.progress : ReadLogColors.ink,
               weight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: ReadLogType.mono(
-              size: 11,
-              color: ReadLogColors.inkMuted,
             ),
           ),
         ],

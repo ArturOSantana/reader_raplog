@@ -43,6 +43,8 @@ import '../../features/clubs/presentation/screens/club_open_polls_screen.dart';
 import '../../features/clubs/presentation/screens/club_review_screen.dart';
 import '../../features/clubs/presentation/screens/club_book_reviews_screen.dart';
 import '../../features/clubs/presentation/screens/club_social_heatmap_screen.dart';
+import '../../features/clubs/presentation/screens/club_discussions_screen.dart';
+import '../../features/clubs/presentation/screens/club_theories_screen.dart';
 import '../../shared/models/club_reviews.dart';
 
 import '../../shared/models/club_schedule_milestones_challenges.dart';
@@ -460,6 +462,30 @@ final routerProvider = Provider<GoRouter>((ref) {
                       return ClubSocialHeatmapScreen(
                         clubId: state.pathParameters['clubId']!,
                         clubName: extra['clubName'] ?? 'Clube',
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'discussions',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ClubDiscussionsScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        canManage: extra['canManage'] as bool? ?? false,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'theories',
+                    builder: (_, state) {
+                      final extra =
+                          state.extra as Map<String, dynamic>? ?? {};
+                      return ClubTheoriesScreen(
+                        clubId: state.pathParameters['clubId']!,
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        canManage: extra['canManage'] as bool? ?? false,
                       );
                     },
                   ),

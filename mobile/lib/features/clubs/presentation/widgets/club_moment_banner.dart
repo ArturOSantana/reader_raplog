@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/providers/providers.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
@@ -19,8 +19,11 @@ final _userConfirmedMomentProvider =
       .userConfirmedMomentToday(clubId);
 });
 
-// ── Widget: Banner do Momento do Clube ────────────────────────────────────────
+// ── Widget: Momento do Clube (linha editorial) ─────────────────────────────────
+//
 // Inserido na BookClubDetailScreen quando reading_moment_active = true.
+// Sem Container colorido, sem FilledButton preenchido, sem ícone Material.
+// Conceito: momento coletivo no horário habitual — parte do loop de hábito.
 
 class ClubMomentBanner extends ConsumerWidget {
   final String clubId;
@@ -36,7 +39,6 @@ class ClubMomentBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirmAsync = ref.watch(_momentConfirmationsProvider(clubId));
     final confirmedAsync = ref.watch(_userConfirmedMomentProvider(clubId));
@@ -44,82 +46,78 @@ class ClubMomentBanner extends ConsumerWidget {
     final confirmCount = confirmAsync.valueOrNull ?? 0;
     final userConfirmed = confirmedAsync.valueOrNull ?? false;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.forestGreen.withValues(alpha: 0.12)
-            : AppColors.forestGreen.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: AppColors.forestGreen.withValues(alpha: 0.3)),
-      ),
+    final muted = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
+    final ink   = isDark ? LumenColors.inkInverse       : LumenColors.ink;
+
+    // Sub-legenda: "Hoje às 21h · 3 confirmações" ou "3 membros confirmaram hoje"
+    final String sublabel;
+    if (momentTime != null) {
+      final suffix = confirmCount == 1 ? '1 confirmação' : '$confirmCount confirmações';
+      sublabel = 'Hoje às $momentTime · $suffix';
+    } else {
+      sublabel = confirmCount == 1
+          ? '1 membro confirmou hoje'
+          : '$confirmCount membros confirmaram hoje';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
         children: [
-          Icon(Icons.menu_book_outlined, size: 22, color: AppColors.forestGreen),
-          const SizedBox(width: 12),
+          // Ponto de presença — mesmo vocabulário do ClubPresenceStrip
+          Container(
+            width: 5,
+            height: 5,
+            margin: const EdgeInsets.only(right: 8, top: 3),
+            decoration: BoxDecoration(
+              color: LumenColors.read,
+              shape: BoxShape.circle,
+            ),
+          ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  momentLabel ?? 'Momento do Clube',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 14),
+                  (momentLabel ?? 'Momento do Clube').toUpperCase(),
+                  style: LumenType.kicker(size: 10, color: LumenColors.read)
+                      .copyWith(letterSpacing: 1.2),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  momentTime != null
-                      ? 'Hoje às $momentTime · $confirmCount ${confirmCount == 1 ? "confirmação" : "confirmações"}'
-                      : '$confirmCount ${confirmCount == 1 ? "membro confirmou" : "membros confirmaram"} hoje',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: cs.onSurface.withValues(alpha: 0.65)),
+                  sublabel,
+                  style: LumenType.mono(size: 11, color: muted),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          userConfirmed
-              ? Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.forestGreen.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.check_rounded,
-                          size: 14, color: AppColors.forestGreen),
-                      const SizedBox(width: 4),
-                      Text('Confirmado',
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.forestGreen)),
-                    ],
-                  ),
-                )
-              : FilledButton(
-                  onPressed: () async {
-                    await ref
-                        .read(bookClubRepositoryProvider)
-                        .confirmReadingMoment(clubId);
-                    ref.invalidate(_momentConfirmationsProvider(clubId));
-                    ref.invalidate(_userConfirmedMomentProvider(clubId));
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.forestGreen,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text('Confirmar',
-                      style: TextStyle(fontSize: 12)),
+          const SizedBox(width: 12),
+          // CTA como link textual — sem botão preenchido
+          if (!userConfirmed)
+            GestureDetector(
+              onTap: () async {
+                await ref
+                    .read(bookClubRepositoryProvider)
+                    .confirmReadingMoment(clubId);
+                ref.invalidate(_momentConfirmationsProvider(clubId));
+                ref.invalidate(_userConfirmedMomentProvider(clubId));
+              },
+              child: Text(
+                'Confirmar leitura',
+                style: LumenType.mono(
+                  size: 12,
+                  color: ink,
+                  weight: FontWeight.w500,
                 ),
+              ),
+            )
+          else
+            Text(
+              'Confirmado.',
+              style: LumenType.mono(size: 12, color: muted),
+            ),
         ],
       ),
     );

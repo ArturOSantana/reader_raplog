@@ -996,18 +996,36 @@ class BookClubRepository {
     return result as bool? ?? false;
   }
 
-  // ── F-08 Nudge — comparação com média do clube ───────────────────────────
+  // ── Progresso coletivo do desafio ────────────────────────────────────────
 
-  /// Retorna a diferença percentual do usuário em relação à média do clube.
-  /// Positivo = acima, negativo = abaixo.
-  Future<double?> fetchWeeklyNudge(String challengeId) async {
-    final data = await _client.rpc('challenge_personal_nudge', params: {
-      'p_challenge_id': challengeId,
-    });
+  /// Retorna o progresso agregado do clube no desafio via RPC.
+  /// Usado pelo bloco coletivo na tela de detalhe e no nudge semanal.
+  Future<ChallengeCollectiveProgress?> fetchCollectiveProgress(
+      String challengeId) async {
+    final data = await _client.rpc(
+      'club_challenge_collective_progress',
+      params: {'p_challenge_id': challengeId},
+    );
+    final rows = data as List?;
+    if (rows == null || rows.isEmpty) return null;
+    return ChallengeCollectiveProgress.fromMap(
+        rows.first as Map<String, dynamic>);
+  }
+
+  // ── Contribuição pessoal do usuário corrente no desafio ─────────────────
+
+  /// Retorna o percentual de contribuição do usuário no total coletivo.
+  /// Ex: 8.0 = "você contribuiu com 8% do progresso do clube".
+  /// Retorna null se não houver progresso coletivo ainda.
+  Future<double?> fetchMyContributionPct(String challengeId) async {
+    final data = await _client.rpc(
+      'challenge_my_contribution_pct',
+      params: {'p_challenge_id': challengeId},
+    );
     final rows = data as List?;
     if (rows == null || rows.isEmpty) return null;
     final row = rows.first as Map<String, dynamic>;
-    return (row['pct_vs_avg'] as num?)?.toDouble();
+    return (row['contribution_pct'] as num?)?.toDouble();
   }
 
   // ── F-09 Perfil histórico (all-time) ─────────────────────────────────────
@@ -1303,5 +1321,99 @@ class BookClubRepository {
       'p_new_member_id': newMemberId,
       if (message != null) 'p_message': message,
     });
+  }
+
+  // ── Tópicos de Discussão Geral ───────────────────────────────────────────
+
+  /// Lista todos os tópicos de discussão geral do clube.
+  Future<List<ClubDiscussionTopic>> listDiscussionTopics(String clubId) async {
+    final data = await _client
+        .from('club_milestone_topics')
+        .select('*, profile:profiles!created_by(name, avatar_url)')
+        .eq('club_id', clubId)
+        .order('created_at', ascending: true);
+    return (data as List)
+        .map((e) => ClubDiscussionTopic.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Adiciona um tópico ou resposta de discussão geral.
+  Future<ClubDiscussionTopic> addDiscussionTopic({
+    required String clubId,
+    required String content,
+    String? parentId,
+  }) async {
+    final inserted = await _client
+        .from('club_milestone_topics')
+        .insert({
+          'club_id': clubId,
+          'created_by': _userId,
+          'content': content,
+          if (parentId != null) 'parent_id': parentId,
+        })
+        .select('*, profile:profiles!created_by(name, avatar_url)')
+        .single();
+    return ClubDiscussionTopic.fromMap(
+        Map<String, dynamic>.from(inserted as Map));
+  }
+
+  // ── Teorias do Clube ──────────────────────────────────────────────────────
+
+  /// Lista todas as teorias de um clube, ordenadas do mais votado para o menos.
+  Future<List<ClubTheory>> listTheories(String clubId) async {
+    final data = await _client.rpc('list_club_theories', params: {
+      'p_club_id': clubId,
+      'p_user_id': _userId,
+    });
+    return (data as List)
+        .map((e) => ClubTheory.fromMap(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Cria uma nova teoria.
+  Future<ClubTheory> addTheory({
+    required String clubId,
+    required String content,
+    String? milestoneId,
+  }) async {
+    final inserted = await _client
+        .from('club_theories')
+        .insert({
+          'club_id': clubId,
+          'created_by': _userId,
+          'content': content,
+          'status': 'open',
+          if (milestoneId != null) 'milestone_id': milestoneId,
+        })
+        .select('id')
+        .single();
+    final rows = await _client.rpc('list_club_theories', params: {
+      'p_club_id': clubId,
+      'p_user_id': _userId,
+    });
+    final id = inserted['id'] as String;
+    final row = (rows as List)
+        .cast<Map<String, dynamic>>()
+        .firstWhere((e) => e['id'] == id);
+    return ClubTheory.fromMap(row);
+  }
+
+  /// Alterna o voto do usuário em uma teoria (toggle).
+  Future<void> toggleTheoryVote(String theoryId) async {
+    await _client.rpc('toggle_theory_vote', params: {
+      'p_theory_id': theoryId,
+      'p_user_id': _userId,
+    });
+  }
+
+  /// Atualiza o status de uma teoria. Apenas managers.
+  Future<void> setTheoryStatus({
+    required String theoryId,
+    required String status, // 'open' | 'confirmed' | 'wrong'
+  }) async {
+    await _client
+        .from('club_theories')
+        .update({'status': status})
+        .eq('id', theoryId);
   }
 }

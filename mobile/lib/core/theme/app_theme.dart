@@ -1,44 +1,44 @@
 // app_theme.dart — Aliases de compatibilidade para ReadLog Design System.
-// Mapeia as cores do legado (AppColors.*) para os tokens atuais de ReadLogColors,
+// Mapeia as cores do legado (AppColors.*) para os tokens atuais de LumenColors,
 // garantindo que todas as telas existentes continuem compilando sem alteração.
 
 import 'package:flutter/material.dart';
-import '../../theme/readlog_theme.dart';
+import '../../theme/lumen_theme.dart';
 
-export '../../theme/readlog_theme.dart';
+export '../../theme/lumen_theme.dart';
 
 class AppColors {
   AppColors._();
 
   // ── Primárias ──────────────────────────────────────────────────────────────
-  static const forestGreen = ReadLogColors.ink;
-  static const forestGreenLight = ReadLogColors.inkAlt;
-  static const warmGold = ReadLogColors.brass;
-  static const warmGoldLight = ReadLogColors.brassLight;
+  static const forestGreen      = LumenColors.read;
+  static const forestGreenLight = LumenColors.readLight;
+  static const warmGold         = LumenColors.warning;
+  static const warmGoldLight    = Color(0xFFB8843A); // warm gold light
 
   // ── Superfícies ────────────────────────────────────────────────────────────
-  static const offWhite = ReadLogColors.paper;
-  static const surface = ReadLogColors.cream;
-  static const surfaceVariant = ReadLogColors.paperAlt;
-  static const border = ReadLogColors.paperDeep;
+  static const offWhite       = LumenColors.surface;
+  static const surface        = LumenColors.surface;
+  static const surfaceVariant = LumenColors.surfaceVariant;
+  static const border         = LumenColors.surfaceSubtle;
 
   // ── Texto ──────────────────────────────────────────────────────────────────
-  static const textPrimary = ReadLogColors.charcoal;
-  static const textSecondary = Color(0xFF5C5C4A); // tom compatível com charcoal
-  static const textMuted = Color(0xFF9C9C8A);
+  static const textPrimary   = LumenColors.ink;
+  static const textSecondary = Color(0xFF5C5C4A);
+  static const textMuted     = LumenColors.inkMuted;
 
   // ── Estados ────────────────────────────────────────────────────────────────
-  static const success = ReadLogColors.sage;
-  static const error = ReadLogColors.stamp;
-  static const warning = ReadLogColors.brass;
+  static const success = LumenColors.success;
+  static const error   = LumenColors.danger;
+  static const warning = LumenColors.warning;
 
   // ── Dark ───────────────────────────────────────────────────────────────────
-  static const darkBackground = ReadLogColors.ink;
-  static const darkSurface = ReadLogColors.inkAlt;
+  static const darkBackground    = LumenColors.canvas;
+  static const darkSurface       = LumenColors.canvasVariant;
   static const darkSurfaceVariant = Color(0xFF243B2D);
-  static const darkBorder = Color(0xFF2E4A38);
-  static const darkTextPrimary = ReadLogColors.cream;
-  static const darkTextSecondary = ReadLogColors.brassLight;
+  static const darkBorder        = Color(0xFF2E4A38);
+  static const darkTextPrimary   = LumenColors.inkInverse;
+  static const darkTextSecondary = LumenColors.readLight;
 }
 
 class AppTextStyles {
@@ -105,8 +105,8 @@ class AppTextStyles {
   );
 }
 
-/// AppTheme mantido para compatibilidade — internamente usa ReadLogTheme.
+/// AppTheme mantido para compatibilidade — internamente usa LumenTheme.
 class AppTheme {
-  static ThemeData get light => ReadLogTheme.light();
-  static ThemeData get dark => ReadLogTheme.dark();
+  static ThemeData get light => LumenTheme.light();
+  static ThemeData get dark  => LumenTheme.dark();
 }

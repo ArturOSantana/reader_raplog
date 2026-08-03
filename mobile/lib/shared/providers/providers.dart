@@ -22,6 +22,7 @@ import '../../core/providers/impl/shared_prefs_cache_impl.dart';
 import '../../core/observability/observability_service.dart';
 import '../../features/library/data/book_search_service.dart';
 import '../../features/library/data/cached_book_search_service.dart';
+import '../models/club_extras.dart';
 import '../models/club_presence_stats.dart';
 import '../../core/local/connectivity_provider.dart';
 import '../../core/local/sync_service.dart';
@@ -199,6 +200,16 @@ final clubCollectiveStatsProvider =
 final clubSocialHeatmapProvider =
     FutureProvider.family<List<ClubHeatmapDay>, String>((ref, clubId) {
   return ref.watch(bookClubRepositoryProvider).fetchSocialHeatmap(clubId);
+});
+
+// ── Ranking do clube ──────────────────────────────────────────────────────
+// Chave: (clubId, period) — ex.: ('abc', 'current_book') ou ('abc', 'all')
+
+final clubRankingProvider = FutureProvider.family<
+    List<ClubRankingEntry>, (String clubId, String period)>((ref, args) {
+  return ref
+      .watch(bookClubRepositoryProvider)
+      .fetchRanking(args.$1, period: args.$2, criteria: 'sessions');
 });
 
 

@@ -4,8 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../theme/readlog_theme.dart';
-import '../../../../theme/readlog_components.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/models/goal.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../shared/widgets/skel_shimmer.dart';

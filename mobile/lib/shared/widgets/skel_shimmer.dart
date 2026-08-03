@@ -10,7 +10,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import '../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 // ── Motor do shimmer ──────────────────────────────────────────────────────────
 

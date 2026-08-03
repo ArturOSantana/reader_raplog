@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../data/notification_models.dart';
 import '../../../inspiration/data/inspiration_quotes.dart';

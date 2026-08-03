@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/models/friend.dart';
 import '../../../../shared/providers/providers.dart';
 import '../widgets/invite_friend_sheet.dart';

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../theme/readlog_theme.dart';
-import '../../../../theme/readlog_components.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../shared/widgets/skel_shimmer.dart';

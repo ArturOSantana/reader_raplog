@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../data/inspiration_quotes.dart';
 
 /// Card de "Inspiração do Dia" exibido como bottom-sheet ou dialog in-app.

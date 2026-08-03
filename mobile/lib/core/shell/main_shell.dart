@@ -3,14 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../shared/providers/providers.dart';
 import '../../shared/widgets/offline_banner.dart';
-import '../../theme/readlog_theme.dart';
-import '../../theme/readlog_components.dart';
+import '../../theme/lumen_theme.dart';
 import '../../features/session/presentation/notifiers/session_notifier.dart';
 
 final mainScaffoldKey = GlobalKey<ScaffoldState>();
 
+// Referência global ao ScaffoldKey para que outros widgets possam abrir o Drawer.
+GlobalKey<ScaffoldState>? _appScaffoldKey;
+
 /// Abre o drawer global de qualquer lugar do app.
-void openAppDrawer() => mainScaffoldKey.currentState?.openDrawer();
+void openAppDrawer() => _appScaffoldKey?.currentState?.openDrawer();
 
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -27,8 +29,8 @@ class _MainShellState extends ConsumerState<MainShell> {
   @override
   void initState() {
     super.initState();
-    // Registra o ScaffoldKey para que ReadLogPageHeader possa abrir o Drawer.
-    registerAppScaffoldKey(mainScaffoldKey);
+    // Registra o ScaffoldKey globalmente para que outros widgets possam abrir o Drawer.
+    _appScaffoldKey = mainScaffoldKey;
     ref.listenManual(isOnlineProvider, (previous, next) async {
       if (next && _wasOffline) {
         await ref.read(syncServiceProvider).sync();
@@ -88,7 +90,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         children: [
           const OfflineBanner(),
           if (showRibbon)
-            ReadLogSessionRibbon(
+            _SessionRibbon(
               bookTitle: 'Em leitura',
               elapsed: fmtElapsed(sessionState.elapsedSeconds),
               onTap: () => context.go('/session'),
@@ -96,10 +98,166 @@ class _MainShellState extends ConsumerState<MainShell> {
           Expanded(child: widget.child),
         ],
       ),
-      bottomNavigationBar: ReadLogSpineNavBar(
+      bottomNavigationBar: _SpineNavBar(
         currentIndex: index,
         sessionActive: sessionActive,
         onTap: (i) => _onTap(context, i),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ribbon de sessão ativa
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SessionRibbon extends StatelessWidget {
+  final String bookTitle;
+  final String elapsed;
+  final VoidCallback onTap;
+
+  const _SessionRibbon({
+    required this.bookTitle,
+    required this.elapsed,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        color: LumenColors.read,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: SafeArea(
+          bottom: false,
+          child: Row(
+            children: [
+              const Icon(Icons.menu_book_outlined,
+                  size: 16, color: LumenColors.inkInverse),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  bookTitle,
+                  style: LumenType.mono(
+                    size: 12,
+                    color: LumenColors.inkInverse,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                elapsed,
+                style: LumenType.mono(
+                  size: 12,
+                  weight: FontWeight.w600,
+                  color: LumenColors.inkInverse,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right,
+                  size: 16, color: LumenColors.inkInverse),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bottom navigation bar
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SpineNavBar extends StatelessWidget {
+  final int currentIndex;
+  final bool sessionActive;
+  final ValueChanged<int> onTap;
+
+  static const _icons = [
+    Icons.home_outlined,
+    Icons.groups_2_outlined,
+    Icons.play_circle_outline,
+    Icons.menu_book_outlined,
+    Icons.person_outline,
+  ];
+
+  static const _labels = ['Home', 'Clubes', 'Sessão', 'Biblioteca', 'Perfil'];
+
+  const _SpineNavBar({
+    required this.currentIndex,
+    required this.sessionActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? LumenColors.canvas : LumenColors.surface;
+    final active = isDark ? LumenColors.inkInverse : LumenColors.ink;
+    final inactive = isDark
+        ? LumenColors.inkInverse.withValues(alpha: 0.4)
+        : LumenColors.ink.withValues(alpha: 0.35);
+    final border = isDark ? LumenColors.hairlineDark : LumenColors.hairline;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border(top: BorderSide(color: border, width: 1)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: List.generate(_icons.length, (i) {
+            final isActive = i == currentIndex;
+            final isSession = i == 2;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => onTap(i),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Icon(
+                            _icons[i],
+                            size: 22,
+                            color: isActive ? active : inactive,
+                          ),
+                          if (isSession && sessionActive)
+                            Positioned(
+                              top: -2,
+                              right: -4,
+                              child: Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: LumenColors.read,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        _labels[i],
+                        style: LumenType.mono(
+                          size: 9,
+                          color: isActive ? active : inactive,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -134,7 +292,7 @@ class _AppDrawer extends ConsumerWidget {
     }
 
     return Drawer(
-      backgroundColor: ReadLogColors.ink,
+      backgroundColor: LumenColors.canvas,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -151,15 +309,15 @@ class _AppDrawer extends ConsumerWidget {
                       height: 46,
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
-                        color: ReadLogColors.brass,
+                        color: LumenColors.read,
                         shape: BoxShape.circle,
                       ),
                       child: Text(
                         initials.isEmpty ? '?' : initials,
-                        style: ReadLogType.mono(
+                        style: LumenType.mono(
                           size: 16,
                           weight: FontWeight.w700,
-                          color: ReadLogColors.charcoal,
+                          color: LumenColors.inkInverse,
                         ),
                       ),
                     ),
@@ -171,16 +329,16 @@ class _AppDrawer extends ConsumerWidget {
                       children: [
                         if (fullName != null)
                           Text(fullName,
-                              style: ReadLogType.display(
+                              style: LumenType.display(
                                 size: 15,
-                                color: ReadLogColors.cream,
+                                color: LumenColors.inkInverse,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis),
                         Text(email,
-                            style: ReadLogType.mono(
+                            style: LumenType.mono(
                               size: 11,
-                              color: ReadLogColors.cream.withValues(alpha: 0.5),
+                              color: LumenColors.inkInverse.withValues(alpha: 0.5),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),
@@ -189,14 +347,14 @@ class _AppDrawer extends ConsumerWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close,
-                        color: ReadLogColors.cream, size: 20),
+                        color: LumenColors.inkInverse, size: 20),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
             ),
             Divider(
-              color: ReadLogColors.cream.withValues(alpha: 0.1),
+              color: LumenColors.inkInverse.withValues(alpha: 0.1),
               height: 1,
             ),
             // ── Navegação principal ───────────────────────────────────────
@@ -305,9 +463,9 @@ class _DrawerSection extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
       child: Text(
         label,
-        style: ReadLogType.mono(
+        style: LumenType.mono(
           size: 9,
-          color: ReadLogColors.brass,
+          color: LumenColors.read,
         ).copyWith(letterSpacing: 2),
       ),
     );
@@ -339,12 +497,12 @@ class _DrawerTile extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(
-                color: active ? ReadLogColors.stamp : Colors.transparent,
+                color: active ? LumenColors.read : Colors.transparent,
                 width: 3,
               ),
             ),
             color: active
-                ? ReadLogColors.cream.withValues(alpha: 0.06)
+                ? LumenColors.inkInverse.withValues(alpha: 0.06)
                 : Colors.transparent,
           ),
           child: Row(
@@ -353,17 +511,17 @@ class _DrawerTile extends StatelessWidget {
                 icon,
                 size: 18,
                 color: active
-                    ? ReadLogColors.cream
-                    : ReadLogColors.cream.withValues(alpha: 0.55),
+                    ? LumenColors.inkInverse
+                    : LumenColors.inkInverse.withValues(alpha: 0.55),
               ),
               const SizedBox(width: 14),
               Text(
                 label,
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 13,
                   color: active
-                      ? ReadLogColors.cream
-                      : ReadLogColors.cream.withValues(alpha: 0.65),
+                      ? LumenColors.inkInverse
+                      : LumenColors.inkInverse.withValues(alpha: 0.65),
                 ),
               ),
             ],

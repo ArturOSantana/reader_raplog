@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 import 'share_stats_card.dart';
 
 /// Exibe um bottom sheet com o card de estatísticas pronto para compartilhar.

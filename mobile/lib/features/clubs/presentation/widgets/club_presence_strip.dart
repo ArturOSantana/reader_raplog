@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/club_presence_stats.dart';
 import '../../../../shared/providers/providers.dart';
-import '../../../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 
-/// Faixa horizontal "quem está lendo agora" — exibida no detalhe do clube.
+/// Faixa de presença "quem está lendo agora" — exibida na Home do clube.
+/// Sem avatar circular com anel colorido, sem indicador de status por pessoa.
+/// A presença global já fica no LumenLiveIndicator do topo — aqui é lista.
 class ClubPresenceStrip extends ConsumerWidget {
   final String clubId;
 
@@ -43,17 +45,14 @@ class _PresenceStripBody extends StatelessWidget {
           'LENDO AGORA',
           style: ReadLogType.mono(
             size: 10,
-            color: ReadLogColors.cream.withValues(alpha: 0.5),
+            color: ReadLogColors.inkMuted,
           ).copyWith(letterSpacing: 1.4),
         ),
         const SizedBox(height: 10),
-        // Lista de membros
+        // Lista de membros ativos — nome + tempo, sem avatar
         ...active.map((m) => _PresenceRow(member: m)),
         if (active.isNotEmpty && recent.isNotEmpty)
-          Divider(
-            height: 16,
-            color: ReadLogColors.inkLine,
-          ),
+          const Divider(height: 16, color: ReadLogColors.hairline),
         ...recent.take(3).map((m) => _PresenceRow(member: m)),
       ],
     );
@@ -67,70 +66,43 @@ class _PresenceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dotColor =
-        member.isActive ? ReadLogColors.online : ReadLogColors.idle;
-    final nameStyle = ReadLogType.mono(
-      size: 13,
-      color: ReadLogColors.cream,
-      weight: FontWeight.w500,
-    );
-    final subStyle = ReadLogType.mono(
-      size: 11,
-      color: ReadLogColors.cream.withValues(alpha: 0.5),
-    );
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Avatar com dot de presença
-          Stack(
+          // Ponto de presença + nome
+          Row(
             children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor:
-                    ReadLogColors.brass.withValues(alpha: 0.25),
-                backgroundImage: member.avatarUrl != null
-                    ? NetworkImage(member.avatarUrl!)
-                    : null,
-                child: member.avatarUrl == null
-                    ? Text(
-                        (member.userName ?? '?')[0].toUpperCase(),
-                        style: ReadLogType.mono(
-                          size: 12,
-                          color: ReadLogColors.brass,
-                          weight: FontWeight.w700,
-                        ),
-                      )
-                    : null,
+              Container(
+                width: 5,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: member.isActive
+                      ? ReadLogColors.progress
+                      : ReadLogColors.inkGhost,
+                  shape: BoxShape.circle,
+                ),
               ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 9,
-                  height: 9,
-                  decoration: BoxDecoration(
-                    color: dotColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: ReadLogColors.surface,
-                      width: 1.5,
-                    ),
-                  ),
+              const SizedBox(width: 8),
+              Text(
+                member.userName ?? 'Leitor',
+                style: ReadLogType.mono(
+                  size: 13,
+                  color: member.isActive
+                      ? ReadLogColors.ink
+                      : ReadLogColors.inkMuted,
+                  weight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 10),
-          // Nome e label
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(member.userName ?? 'Leitor', style: nameStyle),
-                Text(member.presenceLabel, style: subStyle),
-              ],
+          // Tempo
+          Text(
+            member.presenceLabel,
+            style: ReadLogType.mono(
+              size: 11,
+              color: ReadLogColors.inkGhost,
             ),
           ),
         ],

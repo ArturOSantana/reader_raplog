@@ -9,14 +9,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/local/local_database.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/models/goal.dart';
 import '../../../../shared/models/achievement.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/models/user_profile.dart';
 import '../../../../shared/providers/providers.dart';
-import '../../../../theme/readlog_components.dart';
 import '../../../../core/shell/main_shell.dart' show openAppDrawer;
 
 // ── Providers ──────────────────────────────────────────────────────────────

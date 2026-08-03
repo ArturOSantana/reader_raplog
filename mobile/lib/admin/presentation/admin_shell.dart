@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 /// Shell exclusiva do painel admin — completamente separada do [MainShell] do app.
 class AdminShell extends StatelessWidget {

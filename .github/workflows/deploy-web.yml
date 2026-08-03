@@ -63,10 +63,9 @@ jobs:
           esac
 
       - name: Link project
-        working-directory: platform/apps/${{ matrix.app }}
         run: |
-          mkdir -p .vercel
-          cat > .vercel/project.json <<EOF
+          mkdir -p platform/apps/${{ matrix.app }}/.vercel
+          cat > platform/apps/${{ matrix.app }}/.vercel/project.json <<EOF
           {
             "projectId":"${VERCEL_PROJECT_ID}",
             "orgId":"${VERCEL_ORG_ID}"
@@ -74,24 +73,24 @@ jobs:
           EOF
 
       - name: Pull environment
-        working-directory: platform/apps/${{ matrix.app }}
         run: |
           vercel pull \
             --yes \
             --environment=production \
-            --token=${{ secrets.VERCEL_TOKEN }}
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --cwd platform/apps/${{ matrix.app }}
 
       - name: Build
-        working-directory: platform/apps/${{ matrix.app }}
         run: |
           vercel build \
             --prod \
-            --token=${{ secrets.VERCEL_TOKEN }}
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --cwd platform/apps/${{ matrix.app }}
 
       - name: Deploy
-        working-directory: platform/apps/${{ matrix.app }}
         run: |
           vercel deploy \
             --prebuilt \
             --prod \
-            --token=${{ secrets.VERCEL_TOKEN }}
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --cwd platform/apps/${{ matrix.app }}

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/models/goal.dart';
 import '../../../../shared/providers/providers.dart';
 

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// Gerencia a notificação persistente exibida na barra de status
@@ -25,7 +27,18 @@ class ReadingNotificationService {
     const androidSettings =
         AndroidInitializationSettings('ic_reading_notification');
 
-    const settings = InitializationSettings(android: androidSettings);
+    // iOS/macOS: solicita permissão de alerta e som na primeira inicialização.
+    const darwinSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: false, // notificações de sessão não precisam de som
+    );
+
+    final settings = InitializationSettings(
+      android: androidSettings,
+      iOS: Platform.isIOS ? darwinSettings : null,
+      macOS: Platform.isMacOS ? darwinSettings : null,
+    );
     await _plugin.initialize(settings);
 
     _initialized = true;
@@ -74,6 +87,7 @@ class ReadingNotificationService {
     required String elapsed,
   }) async {
     await init();
+    await _ensurePermission();
 
     const androidDetails = AndroidNotificationDetails(
       _channelId,

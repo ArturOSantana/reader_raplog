@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../shared/widgets/skel_shimmer.dart';
-import '../../../../theme/readlog_components.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -53,7 +52,6 @@ class BookClubsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: ReadLogColors.paper,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -66,15 +64,14 @@ class BookClubsScreen extends ConsumerWidget {
               showMenuButton: true,
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.search,
-                      size: 20, color: ReadLogColors.charcoal),
+                  icon: LumenIcon('search', size: 20, color: ReadLogColors.charcoal),
                   onPressed: () {},
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
+                // Ação de criar/entrar — ícone + no topo, sem FAB
                 IconButton(
-                  icon: const Icon(Icons.add,
-                      size: 22, color: ReadLogColors.charcoal),
+                  icon: LumenIcon('add', size: 22, color: ReadLogColors.charcoal),
                   onPressed: () {},
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -101,7 +98,6 @@ class BookClubsBody extends ConsumerStatefulWidget {
 class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
   _ClubFilter _activeFilter = _ClubFilter.all;
   String _search = '';
-  bool _fabOpen = false;
 
   List<BookClub> _applyFilter(List<BookClub> clubs) {
     return clubs.where((c) {
@@ -132,151 +128,100 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
   Widget build(BuildContext context) {
     final clubsAsync = ref.watch(_myClubsProvider);
 
-    return Stack(
-      children: [
-        clubsAsync.when(
-          loading: () => const SkelScreenList(),
-          error: (e, _) => Center(child: Text('Erro: $e')),
-          data: (clubs) {
-            final filtered = _applyFilter(clubs);
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Barra de busca ─────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Buscar clube...',
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                    ),
-                    onChanged: (v) => setState(() => _search = v),
-                  ),
+    return clubsAsync.when(
+      loading: () => const SkelScreenList(),
+      error: (e, _) => Center(child: Text('Erro: $e')),
+      data: (clubs) {
+        final filtered = _applyFilter(clubs);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Barra de busca ─────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Buscar clube…',
+                  hintStyle: ReadLogType.authorName(
+                      color: ReadLogColors.inkGhost, size: 14),
+                  prefixIcon: Icon(Icons.search,
+                      size: 18, color: ReadLogColors.inkGhost),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 ),
-                // ── Chips de filtro — ReadLogChip ──────────────────────────
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
-                  child: Row(
-                    children: _ClubFilter.values
-                        .map(
-                          (f) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ReadLogChip(
-                              label: f.label,
-                              isSelected: _activeFilter == f,
-                              onTap: () =>
-                                  setState(() => _activeFilter = f),
-                            ),
+                onChanged: (v) => setState(() => _search = v),
+              ),
+            ),
+            // ── Abas de filtro — texto, sem chip preenchido ───────────
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                children: _ClubFilter.values
+                    .map(
+                      (f) => Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child: GestureDetector(
+                          onTap: () => setState(() => _activeFilter = f),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                f.label,
+                                style: ReadLogType.authorName(
+                                  size: 13,
+                                  color: _activeFilter == f
+                                      ? ReadLogColors.ink
+                                      : ReadLogColors.inkMuted,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                height: 1.5,
+                                width: 20,
+                                color: _activeFilter == f
+                                    ? ReadLogColors.ink
+                                    : Colors.transparent,
+                              ),
+                            ],
                           ),
-                        )
-                        .toList(),
-                  ),
-                ),
-                // ── Lista ──────────────────────────────────────────────────
-                Expanded(
-                  child: filtered.isEmpty
-                      ? _EmptyState(
-                          hasClubs: clubs.isNotEmpty,
-                          onCreate: () => _showCreateSheet(context),
-                          onJoin: () => _showJoinSheet(context),
-                        )
-                      : RefreshIndicator(
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+            // ── Lista ──────────────────────────────────────────────────
+            Expanded(
+              child: filtered.isEmpty
+                  ? _EmptyState(
+                      hasClubs: clubs.isNotEmpty,
+                      onCreate: () => _showCreateSheet(context),
+                      onJoin: () => _showJoinSheet(context),
+                    )
+                  : RefreshIndicator(
                       onRefresh: () async =>
                           ref.invalidate(_myClubsProvider),
                       child: ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                        padding:
+                            const EdgeInsets.fromLTRB(20, 0, 20, 80),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) =>
-                            const SizedBox(height: 8),
+                            const Divider(height: 1),
                         itemBuilder: (_, i) {
                           final c = filtered[i];
-                          return ReadLogClubCard(
-                            clubName: c.name,
-                            currentBookTitle:
-                                c.currentBookTitle ?? 'Sem livro definido',
-                            currentBookAuthor:
-                                c.currentBookAuthor ?? '',
-                            progress: 0,
-                            memberCount: c.memberCount,
-                            streakDays: 0,
-                            status: c.isClosed
-                                ? ReadLogClubStatus.archived
-                                : c.isOnVacation
-                                    ? ReadLogClubStatus.vacation
-                                    : ReadLogClubStatus.active,
-                            isOwner: c.isOwner,
-                            onTap: () =>
-                                context.push('/clubs/${c.id}'),
+                          return _ClubRow(
+                            club: c,
+                            onTap: () => context.push('/clubs/${c.id}'),
                           );
                         },
                       ),
                     ),
-                ),
-              ],
-            );
-          },
-        ),
-        // ── FAB posicionado dentro do Stack para funcionar em TabBarView ──
-        if (_fabOpen)
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () => setState(() => _fabOpen = false),
-              child: const ColoredBox(color: Colors.transparent),
             ),
-          ),
-        if (_fabOpen) ...[
-          Positioned(
-            right: 20,
-            bottom: 84,
-            child: _FabMenuItem(
-              icon: Icons.login,
-              label: 'Entrar com código',
-              onTap: () {
-                setState(() => _fabOpen = false);
-                _showJoinSheet(context);
-              },
-            ),
-          ),
-          Positioned(
-            right: 20,
-            bottom: 140,
-            child: _FabMenuItem(
-              icon: Icons.add,
-              label: 'Criar clube',
-              onTap: () {
-                setState(() => _fabOpen = false);
-                _showCreateSheet(context);
-              },
-            ),
-          ),
-        ],
-        Positioned(
-          right: 16,
-          bottom: 16,
-          child: FloatingActionButton(
-            heroTag: 'clubs_fab',
-            onPressed: () => setState(() => _fabOpen = !_fabOpen),
-            backgroundColor: AppColors.forestGreen,
-            foregroundColor: Colors.white,
-            child: AnimatedRotation(
-              turns: _fabOpen ? 0.125 : 0,
-              duration: const Duration(milliseconds: 200),
-              child: const Icon(Icons.add),
-            ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -284,10 +229,6 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => _JoinClubSheet(
         onJoined: (club) {
           ref.invalidate(_myClubsProvider);
@@ -301,15 +242,71 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => _CreateClubSheet(
         onCreated: (club) {
           ref.invalidate(_myClubsProvider);
           if (context.mounted) context.push('/clubs/${club.id}');
         },
+      ),
+    );
+  }
+}
+
+// ── Linha de clube — sem card, só linha com Divider ───────────────────────────
+
+class _ClubRow extends StatelessWidget {
+  final BookClub club;
+  final VoidCallback onTap;
+
+  const _ClubRow({required this.club, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    String statusText = '';
+    if (club.isClosed) statusText = 'encerrado';
+    if (club.isOnVacation) statusText = 'em férias';
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(club.name, style: ReadLogType.bookTitle(size: 15)),
+                  const SizedBox(height: 2),
+                  Text(
+                    club.currentBookTitle != null
+                        ? '${club.currentBookTitle}'
+                        : 'Sem livro definido',
+                    style: ReadLogType.authorName(
+                        color: ReadLogColors.inkMuted, size: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    [
+                      '${club.memberCount} membros',
+                      if (statusText.isNotEmpty) statusText,
+                      if (club.isOwner) 'proprietário',
+                      if (club.isAdmin && !club.isOwner) 'admin',
+                    ].join(' · '),
+                    style: ReadLogType.mono(
+                        size: 11, color: ReadLogColors.inkGhost),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(Icons.chevron_right,
+                size: 18, color: ReadLogColors.inkGhost),
+          ],
+        ),
       ),
     );
   }
@@ -336,15 +333,11 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.library_add_outlined,
-              size: 48,
-              color: ReadLogColors.charcoal.withValues(alpha: 0.25),
-            ),
-            const SizedBox(height: 20),
             Text(
-              hasClubs ? 'Nenhum clube encontrado' : 'Você ainda não\nestá em nenhum clube',
-              style: ReadLogType.display(size: 18, color: ReadLogColors.charcoal),
+              hasClubs
+                  ? 'Nenhum clube encontrado.'
+                  : 'Você ainda não\nestá em nenhum clube.',
+              style: ReadLogType.bookTitle(size: 18),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -352,38 +345,22 @@ class _EmptyState extends StatelessWidget {
               hasClubs
                   ? 'Tente ajustar os filtros ou a busca.'
                   : 'Crie um clube, convide amigos\ne leiam juntos.',
-              style: ReadLogType.mono(
-                size: 12,
-                color: ReadLogColors.charcoal.withValues(alpha: 0.5),
-              ),
+              style: ReadLogType.authorName(
+                  color: ReadLogColors.inkMuted, size: 14),
               textAlign: TextAlign.center,
             ),
             if (!hasClubs) ...[
-              const SizedBox(height: 24),
-              OutlinedButton.icon(
+              const SizedBox(height: 28),
+              TextButton(
                 onPressed: onCreate,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Criar clube'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: ReadLogColors.charcoal,
-                  side: const BorderSide(color: ReadLogColors.paperDeep),
-                  textStyle: ReadLogType.mono(size: 12, weight: FontWeight.w600),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(3)),
-                ),
+                child: Text('Criar clube',
+                    style: ReadLogType.authorName(size: 14)),
               ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
+              const SizedBox(height: 4),
+              TextButton(
                 onPressed: onJoin,
-                icon: const Icon(Icons.login, size: 16),
-                label: const Text('Entrar com código'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: ReadLogColors.brass,
-                  side: BorderSide(color: ReadLogColors.brass.withValues(alpha: 0.5)),
-                  textStyle: ReadLogType.mono(size: 12, weight: FontWeight.w600),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(3)),
-                ),
+                child: Text('Entrar com código',
+                    style: ReadLogType.authorName(size: 14)),
               ),
             ],
           ],
@@ -460,7 +437,7 @@ class _CreateClubSheetState extends ConsumerState<_CreateClubSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Novo clube', style: AppTextStyles.headlineMedium),
+            Text('Novo clube', style: ReadLogType.bookTitle(size: 20)),
             const SizedBox(height: 20),
             TextFormField(
               controller: _nameController,
@@ -489,9 +466,9 @@ class _CreateClubSheetState extends ConsumerState<_CreateClubSheet> {
             // ── Visibilidade ─────────────────────────────────────────────
             Row(
               children: [
-                const Text('Visibilidade:',
-                    style: TextStyle(
-                        fontSize: 13, color: AppColors.textSecondary)),
+                Text('Visibilidade:',
+                    style: ReadLogType.authorName(
+                        color: ReadLogColors.inkMuted, size: 13)),
                 const SizedBox(width: 12),
                 _VisibilityToggle(
                   value: _visibility,
@@ -502,12 +479,12 @@ class _CreateClubSheetState extends ConsumerState<_CreateClubSheet> {
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: ElevatedButton(
                 onPressed: _loading ? null : _create,
                 child: _loading
                     ? const SizedBox(
-                        height: 20,
-                        width: 20,
+                        height: 18,
+                        width: 18,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2),
                       )
@@ -534,106 +511,33 @@ class _VisibilityToggle extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _toggle(ClubVisibility.private, Icons.lock_outline, 'Privado'),
-        const SizedBox(width: 8),
-        _toggle(ClubVisibility.public, Icons.public, 'Público'),
+        _toggle(ClubVisibility.private, 'Privado'),
+        const SizedBox(width: 16),
+        _toggle(ClubVisibility.public, 'Público'),
       ],
     );
   }
 
-  Widget _toggle(ClubVisibility v, IconData icon, String label) {
+  Widget _toggle(ClubVisibility v, String label) {
     final active = value == v;
     return GestureDetector(
       onTap: () => onChanged(v),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: active
-              ? AppColors.forestGreen.withValues(alpha: 0.12)
-              : AppColors.surfaceVariant,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: active ? AppColors.forestGreen : AppColors.border,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon,
-                size: 14,
-                color:
-                    active ? AppColors.forestGreen : AppColors.textMuted),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: active ? AppColors.forestGreen : AppColors.textMuted,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── FAB Menu Item ─────────────────────────────────────────────────────────────
-
-class _FabMenuItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _FabMenuItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+          Text(
+            label,
+            style: ReadLogType.authorName(
+              size: 13,
+              color: active ? ReadLogColors.ink : ReadLogColors.inkMuted,
             ),
-            child: Text(label,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500)),
           ),
-          const SizedBox(width: 8),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.forestGreen,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: Colors.white, size: 20),
+          const SizedBox(height: 3),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            height: 1.5,
+            width: 24,
+            color: active ? ReadLogColors.ink : Colors.transparent,
           ),
         ],
       ),
@@ -672,7 +576,8 @@ class _JoinClubSheetState extends ConsumerState<_JoinClubSheet> {
       if (club == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Código inválido ou clube não encontrado.')),
+            const SnackBar(
+                content: Text('Código inválido ou clube não encontrado.')),
           );
         }
         return;
@@ -685,7 +590,8 @@ class _JoinClubSheetState extends ConsumerState<_JoinClubSheet> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro ao entrar no clube. Tente novamente.')),
+          const SnackBar(
+              content: Text('Erro ao entrar no clube. Tente novamente.')),
         );
       }
     } finally {
@@ -706,11 +612,12 @@ class _JoinClubSheetState extends ConsumerState<_JoinClubSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Entrar em um clube', style: AppTextStyles.headlineMedium),
+          Text('Entrar em um clube', style: ReadLogType.bookTitle(size: 20)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Peça o código de convite ao dono ou admin do clube.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: ReadLogType.authorName(
+                color: ReadLogColors.inkMuted, size: 13),
           ),
           const SizedBox(height: 20),
           TextField(
@@ -719,19 +626,18 @@ class _JoinClubSheetState extends ConsumerState<_JoinClubSheet> {
             textCapitalization: TextCapitalization.characters,
             decoration: const InputDecoration(
               labelText: 'Código de convite',
-              prefixIcon: Icon(Icons.key_outlined),
             ),
             onSubmitted: (_) => _join(),
           ),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
-            child: FilledButton(
+            child: ElevatedButton(
               onPressed: _loading ? null : _join,
               child: _loading
                   ? const SizedBox(
-                      height: 20,
-                      width: 20,
+                      height: 18,
+                      width: 18,
                       child: CircularProgressIndicator(
                           color: Colors.white, strokeWidth: 2),
                     )

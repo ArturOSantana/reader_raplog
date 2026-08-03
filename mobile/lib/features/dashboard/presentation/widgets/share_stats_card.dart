@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 /// Card visual gerado para compartilhamento de estatísticas de leitura.
 /// Deve ser envolvido em um [RepaintBoundary] identificado com [repaintKey]

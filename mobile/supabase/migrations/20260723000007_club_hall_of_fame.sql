@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS club_hall_of_fame (
   top_reader_pages        INTEGER,
 
   top_streak_user_id      UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  top_streak_name         TEXT,
+  top_streak_name         TEXT,xq
   top_streak_days         INTEGER,
 
   top_sessions_user_id    UUID REFERENCES auth.users(id) ON DELETE SET NULL,

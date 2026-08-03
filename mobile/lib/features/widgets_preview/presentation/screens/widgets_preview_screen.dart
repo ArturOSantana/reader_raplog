@@ -2,7 +2,7 @@
 // Exibe todos os 15 widgets + o Painel do Leitor com dados de exemplo.
 
 import 'package:flutter/material.dart';
-import '../../../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../widgets/home_widgets.dart';
 import '../widgets/reader_panel_widget.dart';
 

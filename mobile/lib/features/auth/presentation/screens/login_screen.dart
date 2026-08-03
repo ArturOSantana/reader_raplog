@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/config/app_env.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -65,7 +65,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
-      final webClientId = dotenv.maybeGet('GOOGLE_WEB_CLIENT_ID') ?? '';
+      // Usa AppEnv para consistência com o restante do app.
+      // Retorna string vazia se não configurado (getOptional).
+      final webClientId = AppEnv.googleWebClientId;
 
       final GoogleSignIn googleSignIn = GoogleSignIn(
         serverClientId: webClientId.isNotEmpty ? webClientId : null,

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/social_feed.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../shared/widgets/feed_card.dart';
 import '../../../../shared/widgets/skel_shimmer.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -27,28 +27,18 @@ class ClubFeedScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkBackground : AppColors.offWhite;
     final feedAsync = ref.watch(_clubFeedProvider(clubId));
 
     return Scaffold(
-      backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: bgColor,
-        elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Feed do clube',
-              style: AppTextStyles.titleMedium
-                  .copyWith(color: cs.onSurface, fontSize: 15),
-            ),
+            Text('Feed', style: ReadLogType.bookTitle(size: 16)),
             Text(
               clubName,
-              style: AppTextStyles.labelMedium
-                  .copyWith(color: AppColors.textMuted),
+              style: ReadLogType.authorName(
+                  color: ReadLogColors.inkMuted, size: 12),
             ),
           ],
         ),
@@ -96,12 +86,9 @@ class _FeedList extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: items.length,
-        separatorBuilder: (_, __) => Divider(
-          height: 1,
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        separatorBuilder: (_, __) => const Divider(height: 1),
         itemBuilder: (_, i) {
           final item = items[i];
           return _FeedItemWithCheer(
@@ -129,17 +116,13 @@ class _EmptyFeed extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.dynamic_feed_outlined, size: 48, color: AppColors.textMuted),
-            const SizedBox(height: 16),
-            Text(
-              'Nenhuma atividade ainda.',
-              style: AppTextStyles.headlineMedium,
-              textAlign: TextAlign.center,
-            ),
+            Text('Nenhuma atividade ainda.',
+                style: ReadLogType.bookTitle(size: 18),
+                textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(
               'Quando alguém ler, terminar um livro\nou entrar no clube, vai aparecer aqui.',
-              style: AppTextStyles.bodyMedium,
+              style: ReadLogType.authorName(color: ReadLogColors.inkMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -149,7 +132,7 @@ class _EmptyFeed extends StatelessWidget {
   }
 }
 
-// ── F-06 Cheer — card com botão de torcida ────────────────────────────────────
+// ── Feed item com cheer ───────────────────────────────────────────────────────
 
 class _FeedItemWithCheer extends ConsumerStatefulWidget {
   final FeedItem item;
@@ -171,10 +154,12 @@ class _FeedItemWithCheer extends ConsumerStatefulWidget {
 class _FeedItemWithCheerState extends ConsumerState<_FeedItemWithCheer> {
   bool _cheering = false;
   bool _cheeredByMe = false;
-  // O count exato exigiria uma query extra; usamos flag local para feedback imediato.
 
   @override
   Widget build(BuildContext context) {
+    final cheerColor =
+        _cheeredByMe || _cheering ? ReadLogColors.progress : ReadLogColors.inkMuted;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -184,15 +169,15 @@ class _FeedItemWithCheerState extends ConsumerState<_FeedItemWithCheer> {
           onLikeToggle: () async {
             await ref
                 .read(socialFeedRepositoryProvider)
-                .toggleLike(widget.item.id, currentlyLiked: widget.item.likedByMe);
+                .toggleLike(widget.item.id,
+                    currentlyLiked: widget.item.likedByMe);
             widget.onRefresh();
           },
         ),
-        // Botão de cheer (reação rápida de um toque — toggle_cheer RPC)
+        // Botão de cheer — texto simples, sem ícone preenchido
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
           child: InkWell(
-            borderRadius: BorderRadius.circular(8),
             onTap: _cheering
                 ? null
                 : () async {
@@ -208,28 +193,11 @@ class _FeedItemWithCheerState extends ConsumerState<_FeedItemWithCheer> {
                     }
                   },
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                   Icons.volunteer_activism_outlined,
-                   size: 16,
-                   color: _cheeredByMe || _cheering
-                       ? AppColors.warmGold
-                       : AppColors.textMuted,
-                 ),
-                 const SizedBox(width: 4),
-                 Text(
-                   _cheeredByMe ? 'Torcendo!' : 'Torcer',
-                   style: AppTextStyles.labelMedium.copyWith(
-                     fontSize: 12,
-                     color: _cheeredByMe || _cheering
-                         ? AppColors.warmGold
-                         : AppColors.textMuted,
-                   ),
-                 ),
-                ],
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                _cheeredByMe ? 'Torcendo 👏' : 'Torcer',
+                style: ReadLogType.kicker(
+                    color: cheerColor, size: 11),
               ),
             ),
           ),

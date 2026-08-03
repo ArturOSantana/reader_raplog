@@ -41,6 +41,9 @@ android {
 
     defaultConfig {
         applicationId = "com.readlog.readlog"
+        // Fixado em 23 para cobrir o requisito mínimo real das dependências:
+        // home_widget, flutter_local_notifications e share_plus exigem API 23+.
+        // Usar flutter.minSdkVersion (21) causaria crash em Android 5.x/6.0.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

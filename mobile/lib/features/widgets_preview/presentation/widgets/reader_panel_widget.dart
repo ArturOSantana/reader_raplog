@@ -2,7 +2,7 @@
 // Reúne livro atual, ofensiva, meta diária, próximo evento e frase.
 
 import 'package:flutter/material.dart';
-import '../../../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 class ReaderPanelWidget extends StatelessWidget {
   final String bookTitle;

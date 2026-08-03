@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/providers/providers.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -39,28 +39,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Verifica sessão imediatamente (sem esperar o stream emitir)
-    final currentSession = Supabase.instance.client.auth.currentSession;
-    if (currentSession != null) {
-      // Já tem sessão ativa — navega assim que o frame estiver pronto
-      WidgetsBinding.instance.addPostFrameCallback((_) => _navigate(currentSession));
-    }
-    // Se não tiver sessão, aguarda o stream (listener abaixo no build)
+    // Agenda a verificação de sessão para após o primeiro frame, garantindo
+    // que o widget esteja montado e o contexto disponível. Toda a lógica de
+    // navegação passa por _navigate, que é protegida pelo flag _navigated.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final currentSession = Supabase.instance.client.auth.currentSession;
+      _navigate(currentSession);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Escuta mudanças de auth (login, logout, token refresh)
+    // Escuta mudanças futuras de auth (login após tela, logout, token refresh).
+    // É o único ponto de disparo de navegação além do initState.
     ref.listen(authStateProvider, (_, next) {
       next.whenData((state) => _navigate(state.session));
     });
-
-    // Se ainda não temos sessão e o stream está loading, redireciona para login
-    final auth = ref.watch(authStateProvider);
-    if (auth is AsyncData && !_navigated) {
-      final session = auth.valueOrNull?.session;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _navigate(session));
-    }
+    // Observa authStateProvider para forçar rebuild quando o stream emitir,
+    // garantindo que o listen acima seja registrado antes de qualquer emissão.
+    ref.watch(authStateProvider);
 
     return Scaffold(
       backgroundColor: AppColors.forestGreen,

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/club_schedule_milestones_challenges.dart';
 import '../../../../shared/providers/providers.dart';
-import '../../../../shared/widgets/feed_card.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -60,7 +59,6 @@ class _MilestoneDiscussionScreenState
           );
       _ctrl.clear();
       setState(() => _spoilerLevel = 'none');
-      // Invalida o provider para recarregar a lista
       ref.invalidate(_milestoneTopicsProvider(widget.milestone.id));
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -69,74 +67,55 @@ class _MilestoneDiscussionScreenState
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final topics = ref.watch(_milestoneTopicsProvider(widget.milestone.id));
-    final milestoneColor = _milestoneColor(widget.milestone.milestonePct);
+    final isUnlocked = widget.milestone.isUnlocked;
 
     return Scaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              widget.milestone.label,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            Text(
-              widget.clubName,
-              style: TextStyle(fontSize: 12, color: cs.onSurface.withValues(alpha: 0.6)),
-            ),
+            Text(widget.milestone.label,
+                style: ReadLogType.bookTitle(size: 16)),
+            Text(widget.clubName,
+                style: ReadLogType.authorName(
+                    color: ReadLogColors.inkMuted, size: 12)),
           ],
         ),
-        centerTitle: false,
       ),
       body: Column(
         children: [
-          // ── Banner do marco ──────────────────────────────────────────────
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: milestoneColor.withValues(alpha: isDark ? 0.18 : 0.1),
-            child: Row(
+          // ── Banner do marco — LumenUnlockBanner + LumenSpoilerNote ────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  widget.milestone.icon,
-                  size: 24,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.milestone.label,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: milestoneColor,
-                          fontSize: 15,
-                        ),
-                      ),
-                      if (widget.milestone.isUnlocked)
-                        Text(
-                          'Destravado em ${_fmtDate(widget.milestone.unlockedAt!)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: cs.onSurface.withValues(alpha: 0.6),
-                          ),
-                        )
-                      else
-                        Text(
-                          'Ainda não destravado — leia mais para participar',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: cs.onSurface.withValues(alpha: 0.5),
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                    ],
+                if (isUnlocked)
+                  LumenUnlockBanner(
+                    label: 'Marco ${widget.milestone.milestonePct}% liberado',
+                  )
+                else
+                  Text(
+                    'Marco ${widget.milestone.milestonePct}%',
+                    style: ReadLogType.kicker(
+                        size: 11, color: ReadLogColors.inkMuted),
                   ),
-                ),
+                if (isUnlocked && widget.milestone.unlockedAt != null) ...[
+                  const SizedBox(height: 4),
+                  LumenSpoilerNote(
+                    text:
+                        'Destravado em ${_fmtDate(widget.milestone.unlockedAt!)}. '
+                        'Comentários além deste ponto ficam ocultos para quem ainda não chegou aqui.',
+                  ),
+                ] else if (!isUnlocked) ...[
+                  const SizedBox(height: 4),
+                  LumenSpoilerNote(
+                    text: 'Leia até este ponto para participar desta discussão.',
+                  ),
+                ],
+                const SizedBox(height: 14),
+                const Divider(height: 1, color: ReadLogColors.hairline),
               ],
             ),
           ),
@@ -151,7 +130,8 @@ class _MilestoneDiscussionScreenState
                   child: Text(
                     'Não foi possível carregar as discussões.\n$e',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5)),
+                    style:
+                        ReadLogType.authorName(color: ReadLogColors.inkMuted),
                   ),
                 ),
               ),
@@ -163,26 +143,14 @@ class _MilestoneDiscussionScreenState
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            widget.milestone.icon,
-                            size: 40,
-                          ),
-                          const SizedBox(height: 12),
+                          Text('Nenhuma discussão ainda.',
+                              style: ReadLogType.bookTitle(size: 18)),
+                          const SizedBox(height: 6),
                           Text(
-                            'Nenhuma discussão ainda.',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: cs.onSurface.withValues(alpha: 0.6),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Seja o primeiro a compartilhar sua impressão!',
+                            'Seja o primeiro a compartilhar sua impressão.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: cs.onSurface.withValues(alpha: 0.45),
-                            ),
+                            style: ReadLogType.authorName(
+                                color: ReadLogColors.inkMuted),
                           ),
                         ],
                       ),
@@ -190,22 +158,23 @@ class _MilestoneDiscussionScreenState
                   );
                 }
 
-                // Separa tópicos raiz das respostas
                 final roots = list.where((t) => t.parentId == null).toList();
-                final replies = list.where((t) => t.parentId != null).toList();
+                final replies =
+                    list.where((t) => t.parentId != null).toList();
 
                 return RefreshIndicator(
                   onRefresh: () async => ref
                       .invalidate(_milestoneTopicsProvider(widget.milestone.id)),
                   child: ListView.separated(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
                     itemCount: roots.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, __) => const SizedBox(height: 16),
                     itemBuilder: (context, i) {
                       final root = roots[i];
-                      final children =
-                          replies.where((r) => r.parentId == root.id).toList();
+                      final children = replies
+                          .where((r) => r.parentId == root.id)
+                          .toList();
                       return _TopicCard(
                         topic: root,
                         replies: children,
@@ -246,16 +215,6 @@ class _MilestoneDiscussionScreenState
     );
   }
 
-  Color _milestoneColor(int pct) {
-    switch (pct) {
-      case 25:  return AppColors.forestGreenLight;
-      case 50:  return AppColors.forestGreen;
-      case 75:  return AppColors.warmGold;
-      case 100: return AppColors.warmGoldLight;
-      default:  return AppColors.forestGreen;
-    }
-  }
-
   String _fmtDate(DateTime dt) =>
       DateFormat("d 'de' MMM", 'pt_BR').format(dt.toLocal());
 }
@@ -281,7 +240,7 @@ class _TopicCard extends StatelessWidget {
         _TopicTile(topic: topic, onReply: () => onReply(topic.id)),
         if (replies.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(left: 40),
+            padding: const EdgeInsets.only(left: 16, top: 4),
             child: Column(
               children: replies
                   .map((r) => _TopicTile(
@@ -310,85 +269,54 @@ class _TopicTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
+      padding: EdgeInsets.only(bottom: isReply ? 8 : 0),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MiniAvatar(
-            url: topic.userAvatarUrl,
-            name: topic.userName ?? '?',
-            radius: isReply ? 14 : 18,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isDark ? cs.surface : cs.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                    color: cs.outlineVariant.withValues(alpha: 0.5)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
+          // Cabeçalho: nome + tempo + spoiler label
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(
+                      topic.userName ?? 'Membro',
+                      style: ReadLogType.authorName(size: 13),
+                    ),
+                    if (topic.hasSpoiler) ...[
+                      const SizedBox(width: 6),
                       Text(
-                        topic.userName ?? 'Membro',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 13),
-                      ),
-                      if (topic.hasSpoiler) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            topic.spoilerLevel == 'full'
-                                ? 'spoiler'
-                                : 'parcial',
-                            style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.orange,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                      const Spacer(),
-                      Text(
-                        _timeAgo(topic.createdAt),
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: cs.onSurface.withValues(alpha: 0.45)),
+                        topic.spoilerLevel == 'full'
+                            ? '· spoiler'
+                            : '· parcial',
+                        style: ReadLogType.mono(
+                            size: 10, color: ReadLogColors.inkMuted),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(topic.content, style: const TextStyle(fontSize: 14)),
-                  const SizedBox(height: 6),
-                  GestureDetector(
-                    onTap: onReply,
-                    child: Text(
-                      'Responder',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: cs.primary,
-                          fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              Text(
+                _timeAgo(topic.createdAt),
+                style: ReadLogType.mono(
+                    size: 10, color: ReadLogColors.inkGhost),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(topic.content,
+              style: ReadLogType.authorName(size: 14)),
+          const SizedBox(height: 6),
+          GestureDetector(
+            onTap: onReply,
+            child: Text(
+              'Responder',
+              style: ReadLogType.kicker(
+                  color: ReadLogColors.inkMuted, size: 11),
             ),
           ),
+          if (!isReply) const Divider(height: 16),
         ],
       ),
     );
@@ -423,44 +351,38 @@ class _ComposerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     return SafeArea(
       child: Container(
-        padding: EdgeInsets.only(
-          left: 12,
-          right: 8,
-          top: 8,
-          bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 8,
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
         decoration: BoxDecoration(
-          color: cs.surface,
-          border: Border(top: BorderSide(color: cs.outlineVariant)),
+          color: theme.colorScheme.surface,
+          border: Border(
+              top: BorderSide(color: ReadLogColors.divider, width: 1)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Seletor de spoiler
+            // Seletor de spoiler — abas de texto
             Row(
               children: [
-                Text(
-                  'Aviso de spoiler:',
-                  style: TextStyle(
-                      fontSize: 12, color: cs.onSurface.withValues(alpha: 0.6)),
-                ),
-                const SizedBox(width: 6),
-                _SpoilerChip(
+                Text('Spoiler:',
+                    style: ReadLogType.mono(
+                        size: 11, color: ReadLogColors.inkMuted)),
+                const SizedBox(width: 8),
+                _SpoilerTab(
                     label: 'Nenhum',
                     value: 'none',
                     selected: spoilerLevel == 'none',
                     onTap: onSpoilerChanged),
-                const SizedBox(width: 4),
-                _SpoilerChip(
+                const SizedBox(width: 12),
+                _SpoilerTab(
                     label: 'Parcial',
                     value: 'partial',
                     selected: spoilerLevel == 'partial',
                     onTap: onSpoilerChanged),
-                const SizedBox(width: 4),
-                _SpoilerChip(
+                const SizedBox(width: 12),
+                _SpoilerTab(
                     label: 'Spoiler',
                     value: 'full',
                     selected: spoilerLevel == 'full',
@@ -478,11 +400,9 @@ class _ComposerBar extends StatelessWidget {
                     minLines: 1,
                     maxLength: 2000,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Compartilhe sua impressão…',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(
+                      contentPadding: EdgeInsets.symmetric(
                           horizontal: 12, vertical: 10),
                       counterText: '',
                     ),
@@ -493,15 +413,14 @@ class _ComposerBar extends StatelessWidget {
                     ? const Padding(
                         padding: EdgeInsets.all(10),
                         child: SizedBox(
-                          width: 22,
-                          height: 22,
+                          width: 20,
+                          height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       )
                     : IconButton(
                         onPressed: onSend,
                         icon: const Icon(Icons.send_rounded),
-                        color: cs.primary,
                       ),
               ],
             ),
@@ -512,13 +431,13 @@ class _ComposerBar extends StatelessWidget {
   }
 }
 
-class _SpoilerChip extends StatelessWidget {
+class _SpoilerTab extends StatelessWidget {
   final String label;
   final String value;
   final bool selected;
   final void Function(String) onTap;
 
-  const _SpoilerChip({
+  const _SpoilerTab({
     required this.label,
     required this.value,
     required this.selected,
@@ -527,23 +446,13 @@ class _SpoilerChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () => onTap(value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: selected ? cs.primary : cs.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: selected ? cs.onPrimary : cs.onSurface.withValues(alpha: 0.7),
-          ),
+      child: Text(
+        label,
+        style: ReadLogType.mono(
+          size: 11,
+          color: selected ? ReadLogColors.ink : ReadLogColors.inkGhost,
         ),
       ),
     );
@@ -602,22 +511,18 @@ class _ReplySheetState extends ConsumerState<_ReplySheet> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Responder',
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: cs.onSurface)),
+                style: ReadLogType.bookTitle(size: 18)),
             const SizedBox(height: 12),
             TextField(
               controller: _ctrl,
@@ -626,25 +531,23 @@ class _ReplySheetState extends ConsumerState<_ReplySheet> {
               maxLength: 2000,
               autofocus: true,
               textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Escreva sua resposta…',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 counterText: '',
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text('Cancelar'),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: FilledButton(
+                  child: ElevatedButton(
                     onPressed: _sending ? null : _send,
                     child: _sending
                         ? const SizedBox(

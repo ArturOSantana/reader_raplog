@@ -1,5 +1,5 @@
-// theme_controller.dart — Ponto de re-exportação do tema do ReadLog.
+// theme_controller.dart — Re-exportação do tema Lumen.
 //
 // O app segue sempre ThemeMode.system (definido em main.dart).
-// Para customizar tokens de cor ou tipografia, edite readlog_theme.dart.
-export 'readlog_theme.dart';
+// Para customizar tokens de cor ou tipografia, edite lumen_theme.dart.
+export 'lumen_theme.dart';

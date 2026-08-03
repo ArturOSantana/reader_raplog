@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../theme/readlog_theme.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../admin_providers.dart';
 
 class AdminMetricsScreen extends ConsumerWidget {

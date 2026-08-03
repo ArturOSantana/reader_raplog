@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/club_seals.dart';
 import '../../../../shared/providers/providers.dart';
-import '../../../../shared/widgets/feed_card.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -15,15 +14,14 @@ final _clubSealsProvider =
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
-/// Tela de Selos do Clube — lista os selos distribuídos automaticamente.
-/// Managers podem atribuir selos manualmente enquanto a lógica automática
-/// não estiver totalmente implementada.
+/// Selos do clube — lista os reconhecimentos concedidos.
+/// Managers podem atribuir selos manualmente via sheet.
 class ClubSealsScreen extends ConsumerWidget {
   final String clubId;
   final String clubName;
   final bool isManager;
 
-  /// Lista de membros disponíveis para receber selos (id → nome + avatar).
+  /// Lista de membros disponíveis para receber selos.
   final List<ClubMemberSummary> members;
 
   const ClubSealsScreen({
@@ -36,77 +34,68 @@ class ClubSealsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkBackground : AppColors.offWhite;
     final sealsAsync = ref.watch(_clubSealsProvider(clubId));
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: ReadLogColors.surface,
       appBar: AppBar(
-        backgroundColor: bgColor,
+        backgroundColor: ReadLogColors.surface,
         elevation: 0,
+        iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Selos',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            Text(clubName,
-                style: TextStyle(
-                    fontSize: 12,
-                    color: cs.onSurface.withValues(alpha: 0.6))),
+            Text(
+              'Reconhecimentos',
+              style: ReadLogType.display(
+                size: 15,
+                color: ReadLogColors.ink,
+                weight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              clubName,
+              style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+            ),
           ],
         ),
-        centerTitle: false,
         actions: [
           if (isManager)
             IconButton(
-              icon: const Icon(Icons.add),
-              tooltip: 'Atribuir selo',
+              icon: LumenIcon('add', size: 20, color: ReadLogColors.ink),
+              tooltip: 'Atribuir reconhecimento',
               onPressed: () => _showAwardSheet(context, ref),
             ),
         ],
       ),
       body: sealsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: ReadLogColors.progress),
+        ),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Não foi possível carregar os selos.\n$e',
-                textAlign: TextAlign.center,
-                style:
-                    TextStyle(color: cs.onSurface.withValues(alpha: 0.5))),
+            child: Text(
+              'Não foi possível carregar os reconhecimentos.',
+              style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
         data: (seals) {
           if (seals.isEmpty) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.workspace_premium_outlined,
-                        size: 48, color: AppColors.warmGold),
-                    const SizedBox(height: 12),
-                    Text('Nenhum selo ainda.',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: cs.onSurface.withValues(alpha: 0.6))),
-                    const SizedBox(height: 4),
-                    if (isManager)
-                      Text('Toque em + para atribuir o primeiro selo.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: cs.onSurface.withValues(alpha: 0.45)))
-                    else
-                      Text('Os selos são distribuídos automaticamente.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: cs.onSurface.withValues(alpha: 0.45))),
-                  ],
+                padding: const EdgeInsets.all(40),
+                child: Text(
+                  isManager
+                      ? 'Nenhum reconhecimento ainda.\nToque em + para conceder o primeiro.'
+                      : 'Nenhum reconhecimento ainda.\nOs selos são concedidos pelo admin do clube.',
+                  style: ReadLogType.mono(
+                    size: 13,
+                    color: ReadLogColors.inkMuted,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
             );
@@ -114,20 +103,21 @@ class ClubSealsScreen extends ConsumerWidget {
 
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(_clubSealsProvider(clubId)),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: seals.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, i) => _SealCard(
-                seal: seals[i],
-                canRevoke: isManager,
-                onRevoke: () async {
-                  await ref
-                      .read(bookClubRepositoryProvider)
-                      .revokeSeal(seals[i].id);
-                  ref.invalidate(_clubSealsProvider(clubId));
-                },
-              ),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+              children: seals.expand((s) => [
+                    _SealRow(
+                      seal: s,
+                      canRevoke: isManager,
+                      onRevoke: () async {
+                        await ref
+                            .read(bookClubRepositoryProvider)
+                            .revokeSeal(s.id);
+                        ref.invalidate(_clubSealsProvider(clubId));
+                      },
+                    ),
+                    const Divider(height: 1, color: ReadLogColors.hairline),
+                  ]).toList(),
             ),
           );
         },
@@ -139,6 +129,10 @@ class ClubSealsScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: ReadLogColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
       builder: (_) => _AwardSealSheet(
         clubId: clubId,
         members: members,
@@ -148,14 +142,14 @@ class ClubSealsScreen extends ConsumerWidget {
   }
 }
 
-// ── Card de Selo ───────────────────────────────────────────────────────────────
+// ── Linha de Selo ─────────────────────────────────────────────────────────────
 
-class _SealCard extends StatelessWidget {
+class _SealRow extends StatelessWidget {
   final ClubSeal seal;
   final bool canRevoke;
   final VoidCallback onRevoke;
 
-  const _SealCard({
+  const _SealRow({
     required this.seal,
     required this.canRevoke,
     required this.onRevoke,
@@ -163,86 +157,56 @@ class _SealCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fmt = DateFormat("d 'de' MMM yyyy", 'pt_BR');
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.border),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 13),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Ícone do selo
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.warmGold.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Icon(seal.sealType.icon,
-                  size: 22, color: AppColors.warmGold),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Conteúdo
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        seal.displayTitle,
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: cs.onSurface),
-                      ),
-                    ),
-                    if (canRevoke)
-                      GestureDetector(
-                        onTap: () => _confirmRevoke(context),
-                        child: Icon(Icons.close_rounded,
-                            size: 18,
-                            color: cs.onSurface.withValues(alpha: 0.4)),
-                      ),
-                  ],
+                Text(
+                  seal.displayTitle,
+                  style: ReadLogType.display(
+                    size: 14,
+                    color: ReadLogColors.ink,
+                    weight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 3),
-                Row(
-                  children: [
-                    MiniAvatar(
-                      url: seal.awardedToAvatar,
-                      name: seal.awardedToName ?? '?',
-                      radius: 10,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      seal.awardedToName ?? 'Membro',
-                      style: TextStyle(
-                          fontSize: 13,
-                          color: cs.onSurface.withValues(alpha: 0.7)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
                 Text(
-                  'por ${seal.awardedByName ?? 'admin'} · ${_fmtDate(seal.awardedAt)}',
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: cs.onSurface.withValues(alpha: 0.45)),
+                  '${seal.awardedToName ?? 'Membro'} · concedido por ${seal.awardedByName ?? 'admin'}',
+                  style: ReadLogType.mono(
+                    size: 11,
+                    color: ReadLogColors.inkMuted,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  fmt.format(seal.awardedAt.toLocal()),
+                  style: ReadLogType.mono(
+                    size: 10,
+                    color: ReadLogColors.inkGhost,
+                  ),
                 ),
               ],
             ),
           ),
+          if (canRevoke)
+            GestureDetector(
+              onTap: () => _confirmRevoke(context),
+              child: const Padding(
+                padding: EdgeInsets.only(left: 12, top: 2),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 16,
+                  color: ReadLogColors.inkGhost,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -252,31 +216,32 @@ class _SealCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Revogar selo?'),
+        title: const Text('Revogar reconhecimento?'),
         content: Text(
-            'Remover "${seal.displayTitle}" de ${seal.awardedToName ?? "membro"}?'),
+          'Remover "${seal.displayTitle}" de ${seal.awardedToName ?? "membro"}?',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancelar')),
-          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: ReadLogColors.danger,
+            ),
             onPressed: () {
               Navigator.of(ctx).pop();
               onRevoke();
             },
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Revogar'),
           ),
         ],
       ),
     );
   }
-
-  String _fmtDate(DateTime dt) =>
-      DateFormat("d 'de' MMM", 'pt_BR').format(dt.toLocal());
 }
 
-// ── Sheet para atribuir um novo selo ──────────────────────────────────────────
+// ── Sheet para atribuir um novo reconhecimento ────────────────────────────────
 
 class _AwardSealSheet extends ConsumerStatefulWidget {
   final String clubId;
@@ -312,7 +277,7 @@ class _AwardSealSheetState extends ConsumerState<_AwardSealSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao atribuir selo: $e')),
+          SnackBar(content: Text('Erro ao atribuir reconhecimento: $e')),
         );
       }
     } finally {
@@ -322,7 +287,6 @@ class _AwardSealSheetState extends ConsumerState<_AwardSealSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding:
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -332,126 +296,124 @@ class _AwardSealSheetState extends ConsumerState<_AwardSealSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Título ──────────────────────────────────────────────────────
-            Text('Atribuir Selo',
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    color: cs.onSurface)),
-            const SizedBox(height: 16),
+            Text(
+              'Atribuir reconhecimento',
+              style: ReadLogType.display(
+                size: 18,
+                color: ReadLogColors.ink,
+                weight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 24),
 
-            // ── Para quem? ──────────────────────────────────────────────────
-            _sectionLabel(context, 'Para quem?'),
+            // Para quem?
+            Text(
+              'MEMBRO',
+              style: ReadLogType.mono(
+                size: 10,
+                color: ReadLogColors.inkGhost,
+              ).copyWith(letterSpacing: 1.4),
+            ),
             const SizedBox(height: 8),
             DropdownButtonFormField<ClubMemberSummary>(
-              hint: const Text('Selecionar membro'),
+              hint: Text(
+                'Selecionar membro',
+                style: ReadLogType.mono(
+                  size: 13,
+                  color: ReadLogColors.inkMuted,
+                ),
+              ),
               decoration: InputDecoration(
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: const BorderSide(color: ReadLogColors.divider),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: const BorderSide(color: ReadLogColors.divider),
+                ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               items: widget.members
                   .map((m) => DropdownMenuItem(
                         value: m,
-                        child: Row(
-                          children: [
-                            MiniAvatar(
-                                url: m.avatarUrl, name: m.name, radius: 12),
-                            const SizedBox(width: 8),
-                            Text(m.name),
-                          ],
+                        child: Text(
+                          m.name,
+                          style: ReadLogType.mono(
+                            size: 13,
+                            color: ReadLogColors.ink,
+                          ),
                         ),
                       ))
                   .toList(),
               onChanged: (v) => setState(() => _selectedMember = v),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
-            // ── Tipo base ───────────────────────────────────────────────────
-            _sectionLabel(context, 'Tipo de selo'),
+            // Tipo
+            Text(
+              'TIPO',
+              style: ReadLogType.mono(
+                size: 10,
+                color: ReadLogColors.inkGhost,
+              ).copyWith(letterSpacing: 1.4),
+            ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: SealType.values
-                  .map((t) => GestureDetector(
-                        onTap: () => setState(() => _selectedType = t),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 7),
-                          decoration: BoxDecoration(
+            ...SealType.values.map(
+              (t) => GestureDetector(
+                onTap: () => setState(() => _selectedType = t),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          t.label,
+                          style: ReadLogType.mono(
+                            size: 13,
                             color: _selectedType == t
-                                ? AppColors.warmGold.withValues(alpha: 0.2)
-                                : cs.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: _selectedType == t
-                                  ? AppColors.warmGold
-                                  : Colors.transparent,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(t.icon,
-                                  size: 14,
-                                  color: _selectedType == t
-                                      ? AppColors.warmGold
-                                      : cs.onSurface.withValues(alpha: 0.7)),
-                              const SizedBox(width: 5),
-                              Text(t.label,
-                                  style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500)),
-                            ],
+                                ? ReadLogColors.ink
+                                : ReadLogColors.inkMuted,
+                            weight: _selectedType == t
+                                ? FontWeight.w600
+                                : FontWeight.w400,
                           ),
                         ),
-                      ))
-                  .toList(),
+                      ),
+                      if (_selectedType == t)
+                        const Icon(
+                          Icons.check,
+                          size: 16,
+                          color: ReadLogColors.ink,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 24),
 
-            // ── Botões ──────────────────────────────────────────────────────
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancelar'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: (_selectedMember == null || _saving)
-                        ? null
-                        : _award,
-                    child: _saving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Text('Atribuir Selo'),
-                  ),
-                ),
-              ],
+            // Confirmar
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: (_selectedMember == null || _saving) ? null : _award,
+                child: _saving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Atribuir'),
+              ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  Widget _sectionLabel(BuildContext context, String text) {
-    return Text(text,
-        style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)));
   }
 }

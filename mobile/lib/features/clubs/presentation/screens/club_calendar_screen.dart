@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/models/club_schedule_milestones_challenges.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -38,26 +38,20 @@ class _CalEvent {
   final String title;
   final String subtitle;
   final DateTime date;
-  final IconData icon;
-  final Color color;
 
   const _CalEvent({
     required this.type,
     required this.title,
     required this.subtitle,
     required this.date,
-    required this.icon,
-    required this.color,
   });
 }
 
 // ── Utilitário Google Calendar ────────────────────────────────────────────────
 
 Future<void> _addToGoogleCalendar(_CalEvent event) async {
-  // Google Calendar exige datas no formato YYYYMMDDTHHmmssZ (UTC)
   final fmt = DateFormat("yyyyMMdd'T'HHmmss'Z'");
   final start = fmt.format(event.date.toUtc());
-  // Duração padrão: 1 hora para encontros e desafios, 30 min para cronograma
   final endDate = event.date.add(
     event.type == _CalEventType.schedule
         ? const Duration(minutes: 30)
@@ -96,11 +90,6 @@ class ClubCalendarScreen extends ConsumerWidget {
     final milestonesAsync = ref.watch(_calendarMilestonesProvider(clubId));
     final challengesAsync = ref.watch(_calendarChallengesProvider(clubId));
 
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkBackground : AppColors.offWhite;
-
-    // Se qualquer provider está carregando mostra shimmer
     final anyLoading = scheduleAsync.isLoading ||
         meetingsAsync.isLoading ||
         milestonesAsync.isLoading ||
@@ -108,16 +97,13 @@ class ClubCalendarScreen extends ConsumerWidget {
 
     if (anyLoading) {
       return Scaffold(
-        backgroundColor: bgColor,
-        appBar: _buildAppBar(context, cs, bgColor),
+        appBar: _buildAppBar(context),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
-    // Agrega todos os eventos em uma lista unificada
     final events = <_CalEvent>[];
 
-    // Cronograma de leitura
     for (final s in scheduleAsync.valueOrNull ?? []) {
       if (s.targetDate != null) {
         events.add(_CalEvent(
@@ -125,44 +111,32 @@ class ClubCalendarScreen extends ConsumerWidget {
           title: s.displayTitle,
           subtitle: s.notes ?? 'Ritmo de leitura',
           date: s.targetDate!,
-          icon: Icons.menu_book_outlined,
-          color: AppColors.forestGreen,
         ));
       }
     }
 
-    // Encontros
     for (final m in meetingsAsync.valueOrNull ?? []) {
       events.add(_CalEvent(
         type: _CalEventType.meeting,
         title: m.title,
         subtitle: m.location ?? m.onlineLink ?? 'Encontro do clube',
         date: m.scheduledAt,
-        icon: Icons.event_outlined,
-        color: AppColors.warmGold,
       ));
     }
 
-    // Desafios (data de encerramento)
     for (final c in challengesAsync.valueOrNull ?? []) {
       events.add(_CalEvent(
         type: _CalEventType.challenge,
         title: c.title,
         subtitle: 'Prazo: ${c.daysLeftLabel}',
         date: c.endsAt,
-        icon: Icons.flag_outlined,
-        color: AppColors.error,
       ));
     }
 
-    // Marcos de progresso (sem data fixa — agrupa por posição no livro)
-    // Estes aparecem em uma seção separada, não no calendário cronológico
     final milestones = milestonesAsync.valueOrNull ?? [];
 
-    // Ordena por data
     events.sort((a, b) => a.date.compareTo(b.date));
 
-    // Separa em próximos e passados
     final now = DateTime.now();
     final upcoming = events.where((e) => e.date.isAfter(now)).toList();
     final past = events
@@ -172,8 +146,7 @@ class ClubCalendarScreen extends ConsumerWidget {
         .toList();
 
     return Scaffold(
-      backgroundColor: bgColor,
-      appBar: _buildAppBar(context, cs, bgColor),
+      appBar: _buildAppBar(context),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_calendarScheduleProvider(clubId));
@@ -186,10 +159,9 @@ class ClubCalendarScreen extends ConsumerWidget {
           children: [
             // ── Marcos de progresso do livro ────────────────────────────
             if (milestones.isNotEmpty) ...[
-              _SectionHeader(
-                  title: 'Marcos de leitura', icon: Icons.flag_rounded),
+              _SectionLabel('Marcos de leitura'),
               const SizedBox(height: 10),
-              _MilestonesRow(
+              _MilestonesList(
                 milestones: milestones,
                 clubId: clubId,
                 clubName: clubName,
@@ -198,24 +170,22 @@ class ClubCalendarScreen extends ConsumerWidget {
             ],
 
             // ── Próximos eventos ────────────────────────────────────────
-            _SectionHeader(
-                title: upcoming.isEmpty
-                    ? 'Nenhum evento agendado'
-                    : 'Próximos eventos',
-                icon: Icons.schedule_outlined),
+            _SectionLabel(
+                upcoming.isEmpty ? 'Nenhum evento agendado' : 'Próximos'),
             const SizedBox(height: 10),
             if (upcoming.isEmpty)
-              _EmptyEventsCard()
+              Text('Admins podem adicionar encontros, cronograma e desafios.',
+                  style: ReadLogType.authorName(
+                      color: ReadLogColors.inkMuted, size: 13))
             else
-              ...upcoming.map(
-                  (e) => _EventCard(event: e, isPast: false)),
+              ...upcoming.map((e) => _EventRow(event: e, isPast: false)),
 
             // ── Eventos passados ────────────────────────────────────────
             if (past.isNotEmpty) ...[
               const SizedBox(height: 28),
-              _SectionHeader(title: 'Passados', icon: Icons.history_outlined),
+              _SectionLabel('Passados'),
               const SizedBox(height: 10),
-              ...past.take(10).map((e) => _EventCard(event: e, isPast: true)),
+              ...past.take(10).map((e) => _EventRow(event: e, isPast: true)),
             ],
             const SizedBox(height: 24),
           ],
@@ -224,206 +194,125 @@ class ClubCalendarScreen extends ConsumerWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(
-      BuildContext context, ColorScheme cs, Color bgColor) {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: bgColor,
-      elevation: 0,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Calendário',
-            style: AppTextStyles.titleMedium
-                .copyWith(color: cs.onSurface, fontSize: 16),
-          ),
-          Text(
-            clubName,
-            style: AppTextStyles.labelMedium.copyWith(color: AppColors.textMuted),
-          ),
+          Text('Calendário', style: ReadLogType.bookTitle(size: 16)),
+          Text(clubName,
+              style: ReadLogType.authorName(
+                  color: ReadLogColors.inkMuted, size: 12)),
         ],
       ),
     );
   }
 }
 
-// ── Cabeçalho de seção ────────────────────────────────────────────────────────
+// ── Label de seção ─────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const _SectionHeader({required this.title, required this.icon});
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel(this.label);
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Row(
+    return Text(
+      label.toUpperCase(),
+      style: ReadLogType.kicker(color: ReadLogColors.inkMuted, size: 11),
+    );
+  }
+}
+
+// ── Linha de evento ────────────────────────────────────────────────────────────
+
+class _EventRow extends StatelessWidget {
+  final _CalEvent event;
+  final bool isPast;
+
+  const _EventRow({required this.event, required this.isPast});
+
+  @override
+  Widget build(BuildContext context) {
+    final fmt = DateFormat('d MMM · HH:mm', 'pt_BR');
+    final isToday = DateUtils.isSameDay(event.date, DateTime.now());
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppColors.textMuted),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: AppTextStyles.headlineMedium
-              .copyWith(color: cs.onSurface, fontSize: 16),
+        const Divider(height: 1),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      event.title,
+                      style: ReadLogType.authorName(
+                        size: 14,
+                        color: isPast
+                            ? ReadLogColors.inkMuted
+                            : ReadLogColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      event.subtitle,
+                      style: ReadLogType.authorName(
+                          color: ReadLogColors.inkMuted, size: 12),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    isToday ? 'hoje' : fmt.format(event.date),
+                    style: ReadLogType.mono(
+                      size: 11,
+                      color: isToday
+                          ? ReadLogColors.progress
+                          : ReadLogColors.inkGhost,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                  if (!isPast) ...[
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      onTap: () => _addToGoogleCalendar(event),
+                      child: Text(
+                        '+ agenda',
+                        style: ReadLogType.mono(
+                            size: 10, color: ReadLogColors.inkGhost),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
-// ── Card de evento ────────────────────────────────────────────────────────────
+// ── Lista de marcos ────────────────────────────────────────────────────────────
 
-class _EventCard extends StatelessWidget {
-  final _CalEvent event;
-  final bool isPast;
-
-  const _EventCard({required this.event, required this.isPast});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor = isDark ? AppColors.darkSurface : Colors.white;
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.border;
-
-    final fmt = DateFormat('d MMM • HH:mm', 'pt_BR');
-    final isToday = DateUtils.isSameDay(event.date, DateTime.now());
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isPast
-              ? surfaceColor.withValues(alpha: 0.6)
-              : surfaceColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isToday
-                ? event.color.withValues(alpha: 0.5)
-                : borderColor,
-            width: isToday ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Ícone colorido
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: event.color.withValues(alpha: isPast ? 0.06 : 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                  child: Icon(event.icon, size: 20, color: event.color)),
-            ),
-            const SizedBox(width: 12),
-            // Título e subtítulo
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    event.title,
-                    style: AppTextStyles.titleMedium.copyWith(
-                      color: isPast
-                          ? AppColors.textMuted
-                          : cs.onSurface,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    event.subtitle,
-                    style: AppTextStyles.labelMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Data + botão de agenda (só para próximos eventos)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (isToday)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: event.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'HOJE',
-                      style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: event.color),
-                    ),
-                  )
-                else
-                  Text(
-                    fmt.format(event.date),
-                    style: AppTextStyles.labelMedium.copyWith(fontSize: 10),
-                    textAlign: TextAlign.right,
-                  ),
-                if (!isPast) ...[
-                  const SizedBox(height: 6),
-                  GestureDetector(
-                    onTap: () => _addToGoogleCalendar(event),
-                    child: Tooltip(
-                      message: 'Adicionar ao Google Agenda',
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppColors.warmGold.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: AppColors.warmGold.withValues(alpha: 0.35),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.calendar_month_outlined,
-                                size: 11, color: AppColors.warmGold),
-                            const SizedBox(width: 3),
-                            Text(
-                              'Agenda',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.warmGold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Fila de marcos de progresso ───────────────────────────────────────────────
-
-class _MilestonesRow extends StatelessWidget {
+class _MilestonesList extends StatelessWidget {
   final List<ClubMilestone> milestones;
   final String clubId;
   final String clubName;
 
-  const _MilestonesRow({
+  const _MilestonesList({
     required this.milestones,
     required this.clubId,
     required this.clubName,
@@ -431,130 +320,59 @@ class _MilestonesRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: milestones
-          .map((m) => Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _MilestoneChip(
-                    milestone: m,
-                    clubId: clubId,
-                    clubName: clubName,
-                  ),
-                ),
-              ))
-          .toList(),
-    );
-  }
-}
-
-class _MilestoneChip extends StatelessWidget {
-  final ClubMilestone milestone;
-  final String clubId;
-  final String clubName;
-
-  const _MilestoneChip({
-    required this.milestone,
-    required this.clubId,
-    required this.clubName,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final locked = !milestone.isUnlocked;
-    final surface = isDark ? AppColors.darkSurface : Colors.white;
-    final border = isDark ? AppColors.darkBorder : AppColors.border;
-
-    final chip = Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-      decoration: BoxDecoration(
-        color: locked ? surface : AppColors.forestGreen.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: locked
-              ? border
-              : AppColors.forestGreen.withValues(alpha: 0.35),
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(milestone.icon,
-              size: 18,
-              color: locked ? AppColors.textMuted : null),
-          const SizedBox(height: 4),
-          Text(
-            '${milestone.milestonePct}%',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: locked
-                  ? AppColors.textMuted
-                  : AppColors.forestGreen,
-            ),
-          ),
-          if (!locked)
-            Padding(
-              padding: const EdgeInsets.only(top: 3),
-              child: Text(
-                'ver',
-                style: TextStyle(
-                  fontSize: 9,
-                  color: AppColors.forestGreen.withValues(alpha: 0.7),
+    return Column(
+      children: milestones.map((m) {
+        final locked = !m.isUnlocked;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Divider(height: 1),
+            InkWell(
+              onTap: locked
+                  ? null
+                  : () => context.go(
+                        '/clubs/$clubId/milestones/${m.id}/discussion',
+                        extra: {
+                          'milestone': m,
+                          'clubName': clubName,
+                        },
+                      ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    Text(
+                      '${m.milestonePct}%',
+                      style: ReadLogType.mono(
+                        size: 13,
+                        color: locked
+                            ? ReadLogColors.inkGhost
+                            : ReadLogColors.progress,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        m.label,
+                        style: ReadLogType.authorName(
+                          size: 13,
+                          color: locked
+                              ? ReadLogColors.inkGhost
+                              : ReadLogColors.ink,
+                        ),
+                      ),
+                    ),
+                    if (!locked)
+                      Text('ver',
+                          style: ReadLogType.kicker(
+                              color: ReadLogColors.inkGhost, size: 10)),
+                  ],
                 ),
               ),
             ),
-        ],
-      ),
-    );
-
-    if (locked) return chip;
-
-    return GestureDetector(
-      onTap: () => context.go(
-        '/clubs/$clubId/milestones/${milestone.id}/discussion',
-        extra: {
-          'milestone': milestone,
-          'clubName': clubName,
-        },
-      ),
-      child: chip,
-    );
-  }
-}
-
-// ── Sem eventos ───────────────────────────────────────────────────────────────
-
-class _EmptyEventsCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.border),
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.event_available_outlined,
-              size: 32, color: AppColors.textMuted),
-          const SizedBox(height: 8),
-          Text(
-            'Nenhum evento agendado.',
-            style: AppTextStyles.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Admins podem adicionar encontros,\ncronograma e desafios.',
-            style: AppTextStyles.labelMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+          ],
+        );
+      }).toList(),
     );
   }
 }

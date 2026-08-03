@@ -287,37 +287,69 @@ class ClubChallenge extends Equatable {
   List<Object?> get props => [id, clubId, status];
 }
 
-// ── Progresso individual no desafio ──────────────────────────────────────────
+// ── Progresso coletivo do desafio ────────────────────────────────────────────
 
+/// Resultado agregado da RPC `club_challenge_collective_progress`.
+class ChallengeCollectiveProgress extends Equatable {
+  /// Total acumulado pelo clube.
+  final int currentValue;
+  /// Meta total do clube.
+  final int targetValue;
+  /// Percentual de conclusão (0–100).
+  final double pctComplete;
+  /// Dias restantes (negativo = encerrado).
+  final int daysLeft;
+  /// Total de membros participantes.
+  final int totalMembers;
+  /// Membros que já contribuíram ao menos uma vez.
+  final int activeMembers;
+
+  const ChallengeCollectiveProgress({
+    required this.currentValue,
+    required this.targetValue,
+    required this.pctComplete,
+    required this.daysLeft,
+    required this.totalMembers,
+    required this.activeMembers,
+  });
+
+  bool get isGoalReached => pctComplete >= 100;
+
+  factory ChallengeCollectiveProgress.fromMap(Map<String, dynamic> map) =>
+      ChallengeCollectiveProgress(
+        currentValue: (map['current_value'] as num).toInt(),
+        targetValue: (map['target_value'] as num).toInt(),
+        pctComplete: (map['pct_complete'] as num).toDouble(),
+        daysLeft: (map['days_left'] as num).toInt(),
+        totalMembers: (map['total_members'] as num?)?.toInt() ?? 0,
+        activeMembers: (map['active_members'] as num?)?.toInt() ?? 0,
+      );
+
+  @override
+  List<Object?> get props => [currentValue, targetValue, pctComplete];
+}
+
+// ── Contribuição individual no desafio ───────────────────────────────────────
+
+/// Entrada por membro: apenas para exibir % da contribuição pessoal no total
+/// coletivo. Sem ranking, sem posição, sem comparação entre membros.
 class ChallengeProgressEntry extends Equatable {
   final String userId;
   final String? userName;
   final String? avatarUrl;
+  /// Valor absoluto contribuído pelo membro no período do desafio.
   final int currentValue;
-  final int goalValue;
-  final double pctComplete;
-  final int rank;
+  /// Percentual de contribuição no total coletivo (não na meta individual).
+  /// Ex: 8.0 = "você contribuiu com 8% do progresso do clube".
+  final double contributionPct;
 
   const ChallengeProgressEntry({
     required this.userId,
     this.userName,
     this.avatarUrl,
     required this.currentValue,
-    required this.goalValue,
-    required this.pctComplete,
-    required this.rank,
+    required this.contributionPct,
   });
-
-  bool get isComplete => pctComplete >= 100;
-
-  String podiumLabel() {
-    switch (rank) {
-      case 1: return '1°';
-      case 2: return '2°';
-      case 3: return '3°';
-      default: return '#$rank';
-    }
-  }
 
   factory ChallengeProgressEntry.fromMap(Map<String, dynamic> map) =>
       ChallengeProgressEntry(
@@ -325,11 +357,121 @@ class ChallengeProgressEntry extends Equatable {
         userName: map['user_name'] as String?,
         avatarUrl: map['avatar_url'] as String?,
         currentValue: (map['current_value'] as num).toInt(),
-        goalValue: (map['goal_value'] as num).toInt(),
-        pctComplete: (map['pct_complete'] as num).toDouble(),
-        rank: (map['rank'] as num).toInt(),
+        contributionPct: (map['contribution_pct'] as num?)?.toDouble() ?? 0.0,
       );
 
   @override
-  List<Object?> get props => [userId, rank, pctComplete];
+  List<Object?> get props => [userId, currentValue, contributionPct];
+}
+
+// ── Teoria do clube ───────────────────────────────────────────────────────────
+
+enum TheoryStatus { open, confirmed, wrong }
+
+extension TheoryStatusX on TheoryStatus {
+  String get dbValue => name;
+
+  String get label {
+    switch (this) {
+      case TheoryStatus.open:      return 'em aberto';
+      case TheoryStatus.confirmed: return 'confirmada';
+      case TheoryStatus.wrong:     return 'errada';
+    }
+  }
+
+  static TheoryStatus fromDb(String v) =>
+      TheoryStatus.values.firstWhere(
+        (e) => e.name == v,
+        orElse: () => TheoryStatus.open,
+      );
+}
+
+class ClubTheory extends Equatable {
+  final String id;
+  final String clubId;
+  final String? milestoneId;  // opcional — travada por marco
+  final String createdBy;
+  final String? createdByName;
+  final String content;
+  final TheoryStatus status;
+  final int voteCount;
+  final bool votedByMe;
+  final DateTime createdAt;
+
+  const ClubTheory({
+    required this.id,
+    required this.clubId,
+    this.milestoneId,
+    required this.createdBy,
+    this.createdByName,
+    required this.content,
+    required this.status,
+    required this.voteCount,
+    required this.votedByMe,
+    required this.createdAt,
+  });
+
+  bool get isOpen => status == TheoryStatus.open;
+
+  factory ClubTheory.fromMap(Map<String, dynamic> map) {
+    final profile = map['profile'] as Map<String, dynamic>? ?? {};
+    return ClubTheory(
+      id: map['id'] as String,
+      clubId: map['club_id'] as String,
+      milestoneId: map['milestone_id'] as String?,
+      createdBy: map['created_by'] as String,
+      createdByName: profile['name'] as String?,
+      content: map['content'] as String,
+      status: TheoryStatusX.fromDb(map['status'] as String? ?? 'open'),
+      voteCount: (map['vote_count'] as num?)?.toInt() ?? 0,
+      votedByMe: map['voted_by_me'] as bool? ?? false,
+      createdAt: DateTime.parse(map['created_at'] as String),
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, clubId, status, voteCount, votedByMe];
+}
+
+// ── Tópico de discussão geral do clube ────────────────────────────────────────
+
+class ClubDiscussionTopic extends Equatable {
+  final String id;
+  final String clubId;
+  final String? parentId;
+  final String createdBy;
+  final String? createdByName;
+  final String? createdByAvatarUrl;
+  final String content;
+  final DateTime createdAt;
+
+  const ClubDiscussionTopic({
+    required this.id,
+    required this.clubId,
+    this.parentId,
+    required this.createdBy,
+    this.createdByName,
+    this.createdByAvatarUrl,
+    required this.content,
+    required this.createdAt,
+  });
+
+  bool get isReply => parentId != null;
+
+  factory ClubDiscussionTopic.fromMap(Map<String, dynamic> map) {
+    final profile = map['profile'] as Map<String, dynamic>? ?? {};
+    return ClubDiscussionTopic(
+      id: map['id'] as String,
+      clubId: map['club_id'] as String,
+      parentId: map['parent_id'] as String?,
+      createdBy: map['created_by'] as String,
+      createdByName: profile['name'] as String?,
+      createdByAvatarUrl: profile['avatar_url'] as String?,
+      content: map['content'] as String,
+      createdAt: DateTime.parse(map['created_at'] as String),
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, clubId, parentId, createdAt];
 }

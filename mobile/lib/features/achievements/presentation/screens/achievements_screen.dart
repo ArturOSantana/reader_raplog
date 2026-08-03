@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../theme/readlog_theme.dart';
-import '../../../../theme/readlog_components.dart';
+import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/models/achievement.dart';
 import '../../../../shared/providers/providers.dart';
 

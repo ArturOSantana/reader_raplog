@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/models/club_bets_and_polls.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../../theme/lumen_theme.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -29,33 +29,26 @@ class ClubOpenPollsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkBackground : AppColors.offWhite;
     final pollsAsync = ref.watch(_openPollsProvider(clubId));
 
     return Scaffold(
-      backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: bgColor,
-        elevation: 0,
-        centerTitle: false,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Votações',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            Text('Votações', style: ReadLogType.bookTitle(size: 16)),
             Text(clubName,
-                style: TextStyle(
-                    fontSize: 12, color: cs.onSurface.withValues(alpha: 0.6))),
+                style: ReadLogType.authorName(
+                    color: ReadLogColors.inkMuted, size: 12)),
           ],
         ),
         actions: [
           if (canManage)
-            IconButton(
-              icon: const Icon(Icons.add),
-              tooltip: 'Nova votação',
+            TextButton(
               onPressed: () => _showCreateSheet(context, ref),
+              child: Text('Nova',
+                  style: ReadLogType.kicker(
+                      color: ReadLogColors.ink, size: 12)),
             ),
         ],
       ),
@@ -72,21 +65,15 @@ class ClubOpenPollsScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.poll_outlined,
-                          size: 48,
-                          color: cs.onSurface.withValues(alpha: 0.25)),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Nenhuma votação',
-                        style: AppTextStyles.headlineMedium
-                            .copyWith(color: cs.onSurface.withValues(alpha: 0.5)),
-                      ),
+                      Text('Nenhuma votação.',
+                          style: ReadLogType.bookTitle(size: 18)),
                       const SizedBox(height: 6),
                       Text(
                         canManage
                             ? 'Crie uma votação para ouvir o clube.'
                             : 'Aguarde uma votação dos admins.',
-                        style: AppTextStyles.labelMedium,
+                        style: ReadLogType.authorName(
+                            color: ReadLogColors.inkMuted),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -95,42 +82,36 @@ class ClubOpenPollsScreen extends ConsumerWidget {
               );
             }
 
-            // Separa abertas das encerradas
             final open = polls.where((p) => p.isOpen).toList();
             final closed = polls.where((p) => !p.isOpen).toList();
 
             return ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               children: [
                 if (open.isNotEmpty) ...[
-                  _SectionHeader(
-                    icon: Icons.how_to_vote_outlined,
-                    label: 'Abertas (${open.length})',
-                    color: AppColors.forestGreen,
-                  ),
+                  _SectionLabel('Abertas · ${open.length}'),
                   const SizedBox(height: 8),
-                  ...open.map((p) => _PollCard(
+                  ...open.map((p) => _PollRow(
                         key: ValueKey(p.id),
                         poll: p,
                         clubId: clubId,
                         canManage: canManage,
-                        onChanged: () => ref.invalidate(_openPollsProvider(clubId)),
+                        onChanged: () =>
+                            ref.invalidate(_openPollsProvider(clubId)),
                       )),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                 ],
                 if (closed.isNotEmpty) ...[
-                  _SectionHeader(
-                    icon: Icons.lock_clock,
-                    label: 'Encerradas (${closed.length})',
-                    color: AppColors.textMuted,
-                  ),
+                  _SectionLabel('Encerradas · ${closed.length}'),
                   const SizedBox(height: 8),
-                  ...closed.map((p) => _PollCard(
+                  ...closed.map((p) => _PollRow(
                         key: ValueKey(p.id),
                         poll: p,
                         clubId: clubId,
                         canManage: canManage,
-                        onChanged: () => ref.invalidate(_openPollsProvider(clubId)),
+                        onChanged: () =>
+                            ref.invalidate(_openPollsProvider(clubId)),
                       )),
                 ],
                 const SizedBox(height: 24),
@@ -139,14 +120,6 @@ class ClubOpenPollsScreen extends ConsumerWidget {
           },
         ),
       ),
-      floatingActionButton: canManage
-          ? FloatingActionButton.extended(
-              onPressed: () => _showCreateSheet(context, ref),
-              backgroundColor: const Color(0xFF7c5cd8),
-              icon: const Icon(Icons.add),
-              label: const Text('Nova votação'),
-            )
-          : null,
     );
   }
 
@@ -154,10 +127,6 @@ class ClubOpenPollsScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) => _CreatePollSheet(
         clubId: clubId,
         onSaved: () => ref.invalidate(_openPollsProvider(clubId)),
@@ -166,38 +135,33 @@ class ClubOpenPollsScreen extends ConsumerWidget {
   }
 }
 
-// ── Cabeçalho de seção ────────────────────────────────────────────────────────
+// ── Label de seção ────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
-  final IconData icon;
+class _SectionLabel extends StatelessWidget {
   final String label;
-  final Color color;
-  const _SectionHeader({required this.icon, required this.label, required this.color});
+  const _SectionLabel(this.label);
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 6),
-        Text(label,
-            style: AppTextStyles.headlineMedium.copyWith(
-                color: cs.onSurface, fontSize: 13)),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        label.toUpperCase(),
+        style: ReadLogType.kicker(color: ReadLogColors.inkMuted, size: 11),
+      ),
     );
   }
 }
 
-// ── Card de votação ───────────────────────────────────────────────────────────
+// ── Linha de votação — expansível ─────────────────────────────────────────────
 
-class _PollCard extends ConsumerStatefulWidget {
+class _PollRow extends ConsumerStatefulWidget {
   final ClubOpenPoll poll;
   final String clubId;
   final bool canManage;
   final VoidCallback onChanged;
 
-  const _PollCard({
+  const _PollRow({
     super.key,
     required this.poll,
     required this.clubId,
@@ -206,10 +170,10 @@ class _PollCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_PollCard> createState() => _PollCardState();
+  ConsumerState<_PollRow> createState() => _PollRowState();
 }
 
-class _PollCardState extends ConsumerState<_PollCard> {
+class _PollRowState extends ConsumerState<_PollRow> {
   List<OpenPollOptionResult>? _results;
   bool _loadingVote = false;
   bool _expanded = false;
@@ -249,12 +213,16 @@ class _PollCardState extends ConsumerState<_PollCard> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Encerrar votação?'),
-        content: const Text('A votação será fechada e ninguém mais poderá votar.'),
+        content: const Text(
+            'A votação será fechada e ninguém mais poderá votar.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          FilledButton(
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar')),
+          TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            style: TextButton.styleFrom(
+                foregroundColor: ReadLogColors.danger),
             child: const Text('Encerrar'),
           ),
         ],
@@ -262,162 +230,121 @@ class _PollCardState extends ConsumerState<_PollCard> {
     );
     if (ok != true || !mounted) return;
     try {
-      await ref.read(bookClubRepositoryProvider).closeOpenPoll(widget.poll.id);
+      await ref
+          .read(bookClubRepositoryProvider)
+          .closeOpenPoll(widget.poll.id);
       widget.onChanged();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erro: $e')));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.darkSurface : Colors.white;
-    final border = isDark ? AppColors.darkBorder : AppColors.border;
     final poll = widget.poll;
     final results = _results;
     final isOpen = poll.isOpen;
     final fmtDate = DateFormat('dd/MM/yyyy');
-
-    // Contagem total de votos (para % de participação)
-    final totalVoters = results?.fold<int>(0, (acc, r) => acc + r.voteCount) ?? 0;
+    final totalVoters =
+        results?.fold<int>(0, (acc, r) => acc + r.voteCount) ?? 0;
     final hasVoted = results?.any((r) => r.votedByMe) ?? false;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
-      ),
-      child: Column(
-        children: [
-          // cabeçalho (sempre visível)
-          InkWell(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          poll.question,
-                          style: AppTextStyles.titleMedium
-                              .copyWith(color: cs.onSurface, fontSize: 14),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: isOpen
-                                    ? AppColors.forestGreen.withValues(alpha: 0.12)
-                                    : AppColors.textMuted.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                isOpen ? 'Aberta' : 'Encerrada',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: isOpen
-                                      ? AppColors.forestGreen
-                                      : AppColors.textMuted,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            if (poll.closesAt != null)
-                              Text(
-                                'até ${fmtDate.format(poll.closesAt!.toLocal())}',
-                                style: AppTextStyles.labelMedium.copyWith(fontSize: 10),
-                              ),
-                            const SizedBox(width: 8),
-                            if (results != null)
-                              Text(
-                                '$totalVoters voto${totalVoters != 1 ? 's' : ''}',
-                                style: AppTextStyles.labelMedium.copyWith(fontSize: 10),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Linha clicável — cabeçalho
+        InkWell(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (isOpen && widget.canManage)
-                        IconButton(
-                          icon: const Icon(Icons.lock_outline, size: 18,
-                              color: AppColors.textMuted),
-                          tooltip: 'Encerrar votação',
-                          onPressed: _close,
-                        ),
-                      Icon(
-                        _expanded ? Icons.expand_less : Icons.expand_more,
-                        color: cs.onSurface.withValues(alpha: 0.4),
+                      Text(poll.question,
+                          style: ReadLogType.authorName(size: 15)),
+                      const SizedBox(height: 3),
+                      Text(
+                        [
+                          isOpen ? 'aberta' : 'encerrada',
+                          if (poll.closesAt != null)
+                            'até ${fmtDate.format(poll.closesAt!.toLocal())}',
+                          if (results != null)
+                            '$totalVoters voto${totalVoters != 1 ? 's' : ''}',
+                        ].join(' · '),
+                        style: ReadLogType.mono(
+                            size: 11, color: ReadLogColors.inkMuted),
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                if (isOpen && widget.canManage)
+                  GestureDetector(
+                    onTap: _close,
+                    child: Text('encerrar',
+                        style: ReadLogType.kicker(
+                            color: ReadLogColors.inkGhost, size: 10)),
+                  ),
+                const SizedBox(width: 8),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  size: 16,
+                  color: ReadLogColors.inkGhost,
+                ),
+              ],
             ),
           ),
-
-          // opções (expandíveis)
-          if (_expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-              child: results == null
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Divider(height: 1),
-                        const SizedBox(height: 10),
-                        if (poll.multiSelect && isOpen && !hasVoted)
-                          _MultiSelectVoter(
-                            results: results,
+        ),
+        // Opções (expandíveis)
+        if (_expanded)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: results == null
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (poll.multiSelect && isOpen && !hasVoted)
+                        _MultiSelectVoter(
+                          results: results,
+                          loading: _loadingVote,
+                          onVote: (ids) => _vote(ids),
+                        )
+                      else
+                        ...results.map(
+                          (r) => _OptionLine(
+                            result: r,
+                            isOpen: isOpen,
                             loading: _loadingVote,
-                            onVote: (ids) => _vote(ids),
-                          )
-                        else
-                          ...results.map(
-                            (r) => _OptionBar(
-                              result: r,
-                              isOpen: isOpen,
-                              loading: _loadingVote,
-                              onTap: (isOpen && !_loadingVote)
-                                  ? () => _vote([r.optionId])
-                                  : null,
-                            ),
+                            onTap: (isOpen && !_loadingVote)
+                                ? () => _vote([r.optionId])
+                                : null,
                           ),
-                      ],
-                    ),
-            ),
-        ],
-      ),
+                        ),
+                    ],
+                  ),
+          ),
+        const Divider(height: 1),
+      ],
     );
   }
 }
 
-// ── Barra de opção com % ──────────────────────────────────────────────────────
+// ── Linha de opção com barra fina monocromática ───────────────────────────────
 
-class _OptionBar extends StatelessWidget {
+class _OptionLine extends StatelessWidget {
   final OpenPollOptionResult result;
   final bool isOpen;
   final bool loading;
   final VoidCallback? onTap;
 
-  const _OptionBar({
+  const _OptionLine({
     required this.result,
     required this.isOpen,
     required this.loading,
@@ -426,58 +353,53 @@ class _OptionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final voted = result.votedByMe;
-    final purple = const Color(0xFF7c5cd8);
-
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: voted ? purple.withValues(alpha: 0.10) : cs.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: voted ? purple.withValues(alpha: 0.4) : cs.outlineVariant,
-          ),
-        ),
-        child: Stack(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // barra de progresso
-            FractionallySizedBox(
-              widthFactor: result.pct / 100,
-              child: Container(
-                height: 44,
-                decoration: BoxDecoration(
-                  color: (voted ? purple : cs.primary).withValues(alpha: 0.08),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              child: Row(
-                children: [
-                  if (voted)
-                    const Icon(Icons.check_circle, size: 14, color: Color(0xFF7c5cd8)),
-                  if (voted) const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      result.optionLabel,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: voted ? FontWeight.w600 : FontWeight.normal,
-                        color: voted ? purple : cs.onSurface,
-                      ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    result.optionLabel,
+                    style: ReadLogType.authorName(
+                      size: 13,
+                      color: voted
+                          ? ReadLogColors.ink
+                          : ReadLogColors.inkMuted,
                     ),
                   ),
-                  Text(
-                    '${result.voteCount} (${result.pct.toStringAsFixed(0)}%)',
-                    style: AppTextStyles.labelMedium.copyWith(fontSize: 11),
+                ),
+                Text(
+                  '${result.voteCount} (${result.pct.toStringAsFixed(0)}%)',
+                  style: ReadLogType.mono(
+                      size: 11, color: ReadLogColors.inkGhost),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            // Barra fina monocromática — sem cor roxa/verde
+            LayoutBuilder(builder: (context, constraints) {
+              return Stack(
+                children: [
+                  Container(
+                      height: 2,
+                      width: constraints.maxWidth,
+                      color: ReadLogColors.hairline),
+                  Container(
+                    height: 2,
+                    width: constraints.maxWidth * (result.pct / 100).clamp(0, 1),
+                    color: voted
+                        ? ReadLogColors.ink
+                        : ReadLogColors.inkGhost,
                   ),
                 ],
-              ),
-            ),
+              );
+            }),
           ],
         ),
       ),
@@ -507,15 +429,13 @@ class _MultiSelectVoterState extends State<_MultiSelectVoter> {
 
   @override
   Widget build(BuildContext context) {
-    final purple = const Color(0xFF7c5cd8);
-    final cs = Theme.of(context).colorScheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Selecione uma ou mais opções:',
-            style: AppTextStyles.labelMedium.copyWith(fontSize: 11)),
-        const SizedBox(height: 8),
+            style: ReadLogType.kicker(
+                color: ReadLogColors.inkMuted, size: 11)),
+        const SizedBox(height: 10),
         ...widget.results.map((r) {
           final sel = _selected.contains(r.optionId);
           return GestureDetector(
@@ -526,55 +446,53 @@ class _MultiSelectVoterState extends State<_MultiSelectVoter> {
                 _selected.add(r.optionId);
               }
             }),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              decoration: BoxDecoration(
-                color: sel ? purple.withValues(alpha: 0.10) : cs.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: sel ? purple.withValues(alpha: 0.4) : cs.outlineVariant,
-                ),
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 7),
               child: Row(
                 children: [
-                  Icon(
-                    sel ? Icons.check_box : Icons.check_box_outline_blank,
-                    size: 16,
-                    color: sel ? purple : cs.onSurface.withValues(alpha: 0.5),
+                  Text(
+                    sel ? '▪' : '▫',
+                    style: ReadLogType.mono(
+                        size: 13,
+                        color: sel
+                            ? ReadLogColors.ink
+                            : ReadLogColors.inkGhost),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       r.optionLabel,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: sel ? FontWeight.w600 : FontWeight.normal,
-                        color: sel ? purple : cs.onSurface,
+                      style: ReadLogType.authorName(
+                        size: 13,
+                        color: sel
+                            ? ReadLogColors.ink
+                            : ReadLogColors.inkMuted,
                       ),
                     ),
                   ),
                   Text(
                     '${r.voteCount}',
-                    style: AppTextStyles.labelMedium.copyWith(fontSize: 11),
+                    style: ReadLogType.mono(
+                        size: 11, color: ReadLogColors.inkGhost),
                   ),
                 ],
               ),
             ),
           );
         }),
-        const SizedBox(height: 4),
+        const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
-          child: FilledButton(
+          child: ElevatedButton(
             onPressed: (_selected.isEmpty || widget.loading)
                 ? null
                 : () => widget.onVote(_selected.toList()),
-            style: FilledButton.styleFrom(backgroundColor: purple),
             child: widget.loading
                 ? const SizedBox(
-                    height: 18, width: 18,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2))
                 : const Text('Confirmar votos'),
           ),
         ),
@@ -620,7 +538,8 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
         .toList();
     if (question.isEmpty || options.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Preencha a pergunta e ao menos 2 opções.')),
+        const SnackBar(
+            content: Text('Preencha a pergunta e ao menos 2 opções.')),
       );
       return;
     }
@@ -652,12 +571,11 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final purple = const Color(0xFF7c5cd8);
-
     return Padding(
       padding: EdgeInsets.only(
-        left: 20, right: 20, top: 20,
+        left: 20,
+        right: 20,
+        top: 20,
         bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
       ),
       child: SingleChildScrollView(
@@ -665,18 +583,7 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 36, height: 4,
-                decoration: BoxDecoration(
-                  color: cs.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text('Nova Votação',
-                style: AppTextStyles.headlineMedium.copyWith(color: cs.onSurface)),
+            Text('Nova votação', style: ReadLogType.bookTitle(size: 20)),
             const SizedBox(height: 16),
             TextField(
               controller: _questionCtrl,
@@ -687,7 +594,9 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            Text('Opções (mín. 2)', style: AppTextStyles.labelMedium),
+            Text('Opções (mín. 2)',
+                style: ReadLogType.kicker(
+                    color: ReadLogColors.inkMuted, size: 11)),
             const SizedBox(height: 8),
             ..._optionCtrls.asMap().entries.map(
                   (e) => Padding(
@@ -698,52 +607,63 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
                           child: TextField(
                             controller: e.value,
                             textCapitalization: TextCapitalization.sentences,
-                            decoration: InputDecoration(labelText: 'Opção ${e.key + 1}'),
+                            decoration:
+                                InputDecoration(labelText: 'Opção ${e.key + 1}'),
                           ),
                         ),
                         if (_optionCtrls.length > 2)
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle_outline,
-                                color: AppColors.error),
+                          TextButton(
                             onPressed: () => setState(() {
                               e.value.dispose();
                               _optionCtrls.removeAt(e.key);
                             }),
+                            style: TextButton.styleFrom(
+                                foregroundColor: ReadLogColors.danger),
+                            child: const Text('−'),
                           ),
                       ],
                     ),
                   ),
                 ),
             if (_optionCtrls.length < 8)
-              TextButton.icon(
+              TextButton(
                 onPressed: () =>
                     setState(() => _optionCtrls.add(TextEditingController())),
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Adicionar opção'),
-                style: TextButton.styleFrom(foregroundColor: purple),
+                child: Text('+ Adicionar opção',
+                    style: ReadLogType.authorName(size: 13)),
               ),
             const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Permitir múltipla escolha',
-                  style: TextStyle(fontSize: 13)),
-              subtitle: const Text('Membros podem votar em mais de uma opção',
-                  style: TextStyle(fontSize: 11)),
-              value: _multiSelect,
-              activeThumbColor: purple,
-              activeTrackColor: purple.withValues(alpha: 0.5),
-              onChanged: (v) => setState(() => _multiSelect = v),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Múltipla escolha',
+                          style: ReadLogType.authorName(size: 13)),
+                      Text('Membros podem votar em mais de uma opção',
+                          style: ReadLogType.mono(
+                              size: 11, color: ReadLogColors.inkMuted)),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _multiSelect,
+                  onChanged: (v) => setState(() => _multiSelect = v),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: ElevatedButton(
                 onPressed: _loading ? null : _save,
-                style: FilledButton.styleFrom(backgroundColor: purple),
                 child: _loading
                     ? const SizedBox(
-                        height: 20, width: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
                     : const Text('Criar votação'),
               ),
             ),
