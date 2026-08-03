@@ -1,55 +1,90 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { isAdminRole } from '@lumen/types'
 
 /**
  * Middleware do Admin Console (admin.lumen.app).
  *
- * - Todas as rotas protegidas por autenticação E role de admin.
+ * Não instancia @supabase/ssr para evitar incompatibilidade com o Edge Runtime
+ * (dependência transitiva `ws` usa APIs Node.js ausentes no Edge).
+ *
+ * Estratégia: lê o JWT de sessão do cookie do Supabase e decodifica o payload
+ * Base64url sem verificar assinatura — a validação real ocorre nas chamadas à
+ * API do Supabase nos Server Components / Route Handlers.
+ *
  * - Roles aceitas: super_admin, admin, support, moderator, analyst.
  * - Qualquer outro acesso → redireciona para /login.
- * - Rota /login é pública; demais rotas requerem role válida.
  */
-export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
-          )
-        },
-      },
-    },
-  )
+const SESSION_COOKIE = 'sb-ueyamtswrlbtzzwpwddj-auth-token'
+const ADMIN_ROLES = new Set(['super_admin', 'admin', 'support', 'moderator', 'analyst'])
 
-  const { data: { user } } = await supabase.auth.getUser()
+/** Decodifica o payload de um JWT sem verificar a assinatura (Edge-safe). */
+function getJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(atob(payload))
+  } catch {
+    return null
+  }
+}
+
+/** Lê a sessão Supabase dos cookies (suporta chunked cookies). */
+function getSessionFromCookies(request: NextRequest): Record<string, unknown> | null {
+  let raw = request.cookies.get(SESSION_COOKIE)?.value ?? null
+
+  if (!raw) {
+    const chunks: string[] = []
+    for (let i = 0; i < 5; i++) {
+      const chunk = request.cookies.get(`${SESSION_COOKIE}.${i}`)?.value
+      if (!chunk) break
+      chunks.push(chunk)
+    }
+    if (chunks.length > 0) raw = chunks.join('')
+  }
+
+  if (!raw) return null
+
+  try {
+    let json = raw
+    if (raw.startsWith('base64-')) {
+      json = atob(raw.slice(7).replace(/-/g, '+').replace(/_/g, '/'))
+    }
+    const session = JSON.parse(json)
+    const accessToken: string = session?.access_token ?? session?.[0]?.access_token ?? ''
+    if (!accessToken) return null
+    const payload = getJwtPayload(accessToken)
+    if (!payload) return null
+    const exp = payload.exp as number | undefined
+    if (exp && exp * 1000 < Date.now()) return null
+    return payload
+  } catch {
+    return null
+  }
+}
+
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  const isPublicPath = pathname.startsWith('/login') ||
+  const isPublicPath =
+    pathname.startsWith('/login') ||
     pathname.startsWith('/auth/callback') ||
     pathname.startsWith('/auth/google')
 
-  if (!user && !isPublicPath) {
+  const session = getSessionFromCookies(request)
+
+  if (!session && !isPublicPath) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // Verifica role no JWT claims (user_metadata ou app_metadata)
-  if (user && !isPublicPath) {
-    const role = (user.app_metadata?.role ?? user.user_metadata?.role) as string | undefined
-    if (!isAdminRole(role)) {
+  if (session && !isPublicPath) {
+    const role =
+      (session.app_metadata as Record<string, unknown> | undefined)?.role ??
+      (session.user_metadata as Record<string, unknown> | undefined)?.role
+    if (!ADMIN_ROLES.has(role as string)) {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = '/login'
       loginUrl.searchParams.set('error', 'unauthorized')
@@ -57,13 +92,13 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (user && pathname === '/login') {
+  if (session && pathname === '/login') {
     const homeUrl = request.nextUrl.clone()
     homeUrl.pathname = '/'
     return NextResponse.redirect(homeUrl)
   }
 
-  return supabaseResponse
+  return NextResponse.next({ request })
 }
 
 export const config = {
