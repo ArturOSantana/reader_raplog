@@ -12,7 +12,7 @@ type DecorativeProps = SVGProps<SVGSVGElement> & {
   title?: string
   variant?: 'light' | 'dark'
 }
-
+//adad
 function iconProps({
   title,
   viewBox = '0 0 24 24',

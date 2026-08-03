@@ -7,6 +7,12 @@
 -keep class io.flutter.plugins.** { *; }
 -keep class io.flutter.embedding.** { *; }
 
+# ─── Google Play Core (deferred components — referenciado pelo Flutter engine) ─
+# Essas classes fazem parte do Play Core SDK. O app não usa Dynamic Delivery,
+# mas o Flutter engine as referencia. Sem -dontwarn o R8 aborta o build release.
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }
+
 # ─── App classes ──────────────────────────────────────────────────────────────
 # MainActivity: mantida pelo nome (referenciada no AndroidManifest) e pela
 # hierarquia de herança do Flutter embedding (FlutterActivity → Activity).
