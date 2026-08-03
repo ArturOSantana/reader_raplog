@@ -54,13 +54,11 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            // Ativa obfuscação e encolhimento de código
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            // O plugin Flutter (dev.flutter.flutter-gradle-plugin) já configura
+            // isMinifyEnabled = true, isShrinkResources = true,
+            // proguard-android-optimize.txt e flutter_proguard_rules.pro no release.
+            // proguardFile() (singular) acrescenta sem substituir a lista existente.
+            proguardFile("proguard-rules.pro")
         }
     }
 }
