@@ -85,6 +85,10 @@ jobs:
       - name: Build
         working-directory: platform
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/${{ matrix.app }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets[format('NEXT_PUBLIC_APP_URL_{0}', matrix.app)] }}
 
       - name: Relocate Vercel output
         working-directory: platform
