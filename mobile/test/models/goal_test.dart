@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:readlog/shared/models/goal.dart';
+import 'package:lumen/shared/models/goal.dart';
 
 void main() {
   // ── GoalPeriodX ───────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:readlog/shared/models/book.dart';
+import 'package:lumen/shared/models/book.dart';
 
 void main() {
   final now = DateTime(2024, 6, 1);

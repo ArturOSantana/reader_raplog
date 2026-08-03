@@ -6,10 +6,10 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:readlog/core/local/local_database.dart';
-import 'package:readlog/features/library/data/local_book_repository.dart';
-import 'package:readlog/features/session/data/local_session_repository.dart';
-import 'package:readlog/shared/models/book.dart';
+import 'package:lumen/core/local/local_database.dart';
+import 'package:lumen/features/library/data/local_book_repository.dart';
+import 'package:lumen/features/session/data/local_session_repository.dart';
+import 'package:lumen/shared/models/book.dart';
 
 // ─── Setup global ────────────────────────────────────────────────────────────
 

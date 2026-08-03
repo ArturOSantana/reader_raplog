@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:readlog/features/session/presentation/notifiers/session_notifier.dart';
-import 'package:readlog/shared/models/reading_session.dart';
+import 'package:lumen/features/session/presentation/notifiers/session_notifier.dart';
+import 'package:lumen/shared/models/reading_session.dart';
 
 void main() {
   // ── ActiveSessionState ─────────────────────────────────────────────────────

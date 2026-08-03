@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:readlog/features/auth/presentation/screens/login_screen.dart';
-import 'package:readlog/core/theme/app_theme.dart';
+import 'package:lumen/features/auth/presentation/screens/login_screen.dart';
+import 'package:lumen/core/theme/app_theme.dart';
 
 /// Helper: empacota o widget em um MaterialApp sem depender do GoRouter,
 /// o que evita a inicialização do Supabase durante os testes.

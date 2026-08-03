@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:readlog/shared/models/user_profile.dart';
+import 'package:lumen/shared/models/user_profile.dart';
 
 void main() {
   // ── UserProfile.fromMap ───────────────────────────────────────────────────

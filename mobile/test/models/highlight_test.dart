@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:readlog/shared/models/highlight.dart';
+import 'package:lumen/shared/models/highlight.dart';
 
 void main() {
   // ── Highlight.fromMap ─────────────────────────────────────────────────────

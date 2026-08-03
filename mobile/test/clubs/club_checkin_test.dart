@@ -18,15 +18,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'package:readlog/core/local/local_database.dart';
-import 'package:readlog/features/clubs/presentation/screens/club_checkin_screen.dart';
-import 'package:readlog/features/session/data/local_session_repository.dart';
-import 'package:readlog/features/session/data/offline_session_repository.dart';
-import 'package:readlog/features/session/presentation/notifiers/session_notifier.dart';
-import 'package:readlog/shared/models/book.dart';
-import 'package:readlog/shared/models/reading_session.dart';
-import 'package:readlog/shared/providers/providers.dart';
-import 'package:readlog/core/theme/app_theme.dart';
+import 'package:lumen/core/local/local_database.dart';
+import 'package:lumen/features/clubs/presentation/screens/club_checkin_screen.dart';
+import 'package:lumen/features/session/data/local_session_repository.dart';
+import 'package:lumen/features/session/data/offline_session_repository.dart';
+import 'package:lumen/features/session/presentation/notifiers/session_notifier.dart';
+import 'package:lumen/shared/models/book.dart';
+import 'package:lumen/shared/models/reading_session.dart';
+import 'package:lumen/shared/providers/providers.dart';
+import 'package:lumen/core/theme/app_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ── Helpers globais ──────────────────────────────────────────────────────────
@@ -303,7 +303,7 @@ void main() {
   // ── Testes do modelo ReadingSession ─────────────────────────────────────────
 
   group('ReadingSession — transição para finished (gatilho do check-in)', () {
-    ReadingSession _activeSession() => ReadingSession(
+    ReadingSession activeSession() => ReadingSession(
           id: 'sess-1',
           userId: 'u-1',
           bookId: 'b-1',

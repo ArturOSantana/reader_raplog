@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:readlog/features/splash/presentation/screens/splash_screen.dart';
-import 'package:readlog/shared/providers/providers.dart';
-import 'package:readlog/core/theme/app_theme.dart';
+import 'package:lumen/features/splash/presentation/screens/splash_screen.dart';
+import 'package:lumen/shared/providers/providers.dart';
+import 'package:lumen/core/theme/app_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Implementação em memória de [GotrueAsyncStorage] para testes.

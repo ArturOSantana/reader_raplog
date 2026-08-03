@@ -6,13 +6,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:readlog/features/library/data/book_repository.dart';
-import 'package:readlog/features/library/data/offline_book_repository.dart';
-import 'package:readlog/features/library/domain/add_book_use_case.dart';
-import 'package:readlog/features/library/presentation/screens/add_book_screen.dart';
-import 'package:readlog/shared/models/book.dart';
-import 'package:readlog/shared/providers/providers.dart';
-import 'package:readlog/core/theme/app_theme.dart';
+import 'package:lumen/features/library/data/book_repository.dart';
+import 'package:lumen/features/library/data/offline_book_repository.dart';
+import 'package:lumen/features/library/domain/add_book_use_case.dart';
+import 'package:lumen/features/library/presentation/screens/add_book_screen.dart';
+import 'package:lumen/shared/models/book.dart';
+import 'package:lumen/shared/providers/providers.dart';
+import 'package:lumen/core/theme/app_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ─── SupabaseClient sem timers (reutilizado nos fakes) ───────────────────────

@@ -131,7 +131,7 @@ class _BookReviewSheetState extends ConsumerState<_BookReviewSheet> {
           subject: 'Terminei de ler ${widget.book.title}!',
           text: 'Acabei de ler "${widget.book.title}"'
               '${widget.book.author != null ? ' de ${widget.book.author}' : ''}'
-              '${_rating > 0 ? ' — ${_rating}/5 estrelas' : ''}'
+              '${_rating > 0 ? ' — $_rating/5 estrelas' : ''}'
               '\n\nRegistrado no ReadLog',
         ),
       );

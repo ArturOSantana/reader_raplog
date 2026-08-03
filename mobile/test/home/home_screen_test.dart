@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:readlog/features/goals/data/goal_repository.dart';
-import 'package:readlog/features/library/data/offline_book_repository.dart';
-import 'package:readlog/features/session/data/offline_session_repository.dart';
-import 'package:readlog/features/home/presentation/screens/home_screen.dart';
-import 'package:readlog/shared/models/book.dart';
-import 'package:readlog/shared/models/goal.dart';
-import 'package:readlog/shared/providers/providers.dart';
-import 'package:readlog/core/theme/app_theme.dart';
+import 'package:lumen/features/goals/data/goal_repository.dart';
+import 'package:lumen/features/library/data/offline_book_repository.dart';
+import 'package:lumen/features/session/data/offline_session_repository.dart';
+import 'package:lumen/features/home/presentation/screens/home_screen.dart';
+import 'package:lumen/shared/models/book.dart';
+import 'package:lumen/shared/models/goal.dart';
+import 'package:lumen/shared/providers/providers.dart';
+import 'package:lumen/core/theme/app_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ─── SupabaseClient sem auto-refresh (sem timers) ──────────────────────────
