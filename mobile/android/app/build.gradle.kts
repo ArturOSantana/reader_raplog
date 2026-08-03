@@ -54,18 +54,12 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            // isMinifyEnabled = true ativa o R8 (shrinking + obfuscation).
-            // Sem esta flag as regras do proguardFiles() são ignoradas e o
-            // tree-shaking do AGP pode remover classes referenciadas apenas
-            // pelo AndroidManifest (como MainActivity), causando ClassNotFoundException.
-            isMinifyEnabled = true
-            // proguardFiles() garante que AMBOS os arquivos são aplicados pelo R8:
-            // 1. proguard-android-optimize.txt — regras padrão do Android SDK
-            // 2. proguard-rules.pro            — regras customizadas do app
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            // NÃO declarar isMinifyEnabled nem proguardFiles() aqui.
+            // O Flutter Gradle Plugin já configura isMinifyEnabled=true,
+            // proguard-android-optimize.txt e flutter_proguard_rules.pro.
+            // Declarar proguardFiles() aqui SUBSTITUI a lista do plugin,
+            // descartando flutter_proguard_rules.pro e causando ClassNotFoundException.
+            // O proguard-rules.pro customizado é adicionado via afterEvaluate abaixo.
         }
     }
 }
@@ -79,6 +73,14 @@ kotlin {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation("androidx.appcompat:appcompat:1.7.0")
+}
+
+// Adiciona proguard-rules.pro DEPOIS que o Flutter Plugin configurou sua lista,
+// sem substituir as regras do flutter_proguard_rules.pro.
+afterEvaluate {
+    android.buildTypes.getByName("release").proguardFiles.add(
+        file("proguard-rules.pro")
+    )
 }
 
 flutter {
