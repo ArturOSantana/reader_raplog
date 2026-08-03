@@ -2,7 +2,5 @@
   "github": {
     "enabled": false
   },
-  "framework": "nextjs",
-  "buildCommand": "npm run build:vercel",
-  "outputDirectory": ".next"
+  "framework": "nextjs"
 }

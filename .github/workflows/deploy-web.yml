@@ -84,11 +84,9 @@ jobs:
 
       - name: Build
         working-directory: platform
-        run: npx turbo build --filter=@lumen/${{ matrix.app }} --force
-
-      - name: Package for Vercel
-        working-directory: platform
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/${{ matrix.app }}
+        env:
+          NODE_PATH: ${{ github.workspace }}/platform/node_modules
 
       - name: Deploy
         working-directory: platform
