@@ -85,10 +85,10 @@ jobs:
       - name: Load production env
         working-directory: platform
         run: |
-          set -a
-          source apps/${{ matrix.app }}/.vercel/.env.production.local
-          set +a
-          env | grep "^NEXT_PUBLIC" >> $GITHUB_ENV
+          grep "^NEXT_PUBLIC" apps/${{ matrix.app }}/.vercel/.env.production.local \
+            | sed 's/^//' \
+            | sed 's/="\(.*\)"$/=\1/' \
+            >> $GITHUB_ENV
 
       - name: Build
         working-directory: platform
