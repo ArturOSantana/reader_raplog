@@ -16,8 +16,7 @@
 # ─── App classes ──────────────────────────────────────────────────────────────
 # MainActivity: mantida pelo nome (referenciada no AndroidManifest) e pela
 # hierarquia de herança do Flutter embedding (FlutterActivity → Activity).
--keep public class com.readlog.readlog.MainActivity
--keepclassmembers public class com.readlog.readlog.MainActivity { *; }
+-keep public class com.readlog.readlog.MainActivity { *; }
 -keep class * extends io.flutter.embedding.android.FlutterActivity
 -keep class * extends io.flutter.embedding.android.FlutterFragmentActivity
 
