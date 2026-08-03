@@ -54,6 +54,11 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
+            // isMinifyEnabled = true ativa o R8 (shrinking + obfuscation).
+            // Sem esta flag as regras do proguardFiles() são ignoradas e o
+            // tree-shaking do AGP pode remover classes referenciadas apenas
+            // pelo AndroidManifest (como MainActivity), causando ClassNotFoundException.
+            isMinifyEnabled = true
             // proguardFiles() garante que AMBOS os arquivos são aplicados pelo R8:
             // 1. proguard-android-optimize.txt — regras padrão do Android SDK
             // 2. proguard-rules.pro            — regras customizadas do app

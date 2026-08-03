@@ -123,10 +123,21 @@ jobs:
         run: |
           APK="build/app/outputs/flutter-apk/app-release.apk"
           echo "=== APK size ===" && ls -lh "$APK"
-          echo "=== MainActivity in dex ==="
-          unzip -p "$APK" classes.dex | strings | grep -c "MainActivity" || true
+
+          echo "=== DEX files in APK ==="
+          unzip -l "$APK" | grep "\.dex"
+
+          echo "=== MainActivity in classes.dex ==="
+          unzip -p "$APK" classes.dex | strings | grep "MainActivity" || echo "NOT FOUND in classes.dex"
+
+          echo "=== All com.readlog classes in DEX ==="
+          unzip -p "$APK" classes.dex | strings | grep "com/readlog/readlog" | head -20 || echo "NO readlog classes found"
+
+          echo "=== APK manifest activity ==="
+          unzip -p "$APK" AndroidManifest.xml | strings | grep -o "com\.readlog[^;]*" | sort -u || true
+
           echo "=== APK signature ==="
-          unzip -l "$APK" | grep -E "META-INF.*SF|META-INF.*RSA|META-INF.*DSA" || true
+          unzip -l "$APK" | grep -E "META-INF.*\.(SF|RSA|DSA|EC)" || true
 
       # ── 10. Renomeia o artefato com a versão ──────────────────────────────
       - name: Rename APK
