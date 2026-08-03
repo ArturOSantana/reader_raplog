@@ -85,8 +85,6 @@ jobs:
       - name: Build
         working-directory: platform
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/${{ matrix.app }}
-        env:
-          NODE_PATH: ${{ github.workspace }}/platform/node_modules
 
       - name: Deploy
         working-directory: platform

@@ -2,5 +2,6 @@
   "github": {
     "enabled": false
   },
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "installCommand": "echo 'Dependencies already installed'"
 }
