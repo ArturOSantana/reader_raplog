@@ -3,5 +3,5 @@
     "enabled": false
   },
   "framework": "nextjs",
-  "installCommand": "echo 'Dependencies already installed'"
+  "installCommand": "ln -sf ../../node_modules ./node_modules"
 }
