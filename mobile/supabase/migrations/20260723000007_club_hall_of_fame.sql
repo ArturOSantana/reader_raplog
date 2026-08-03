@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS club_hall_of_fame (
   book_author         TEXT,
   season_ended_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-  -- Destaques da temporada (user_id pode ser NULL se clube era pequeno)
+  --  da temporada (user_id pode ser NULL se clube era pequeno)
   top_reader_user_id      UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   top_reader_name         TEXT,
   top_reader_pages        INTEGER,
