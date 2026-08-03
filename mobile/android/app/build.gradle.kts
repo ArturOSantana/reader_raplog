@@ -54,15 +54,9 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            // proguardFiles() (plural) garante que AMBOS os arquivos são aplicados:
-            // 1. proguard-android-optimize.txt — regras padrão do Android SDK
-            // 2. proguard-rules.pro            — regras customizadas do app
-            // Usar proguardFile() (singular) pode fazer o R8 ignorar o arquivo
-            // customizado em algumas versões do Flutter Gradle Plugin.
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            // Desabilitado temporariamente para diagnóstico: confirmar se R8 é a causa do ClassNotFoundException
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
