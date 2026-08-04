@@ -114,27 +114,26 @@ jobs:
       # ── 9. Build APK release ───────────────────────────────────────────────
       - name: Pre-build diagnostics — proguardFiles resolvidos pelo Gradle
         run: |
-          # Cria init script que imprime os proguardFiles reais configurados para o buildType release
           cat > /tmp/check_proguard.gradle << 'INITSCRIPT'
           allprojects {
               afterEvaluate {
                   if (project.hasProperty("android")) {
                       def release = project.android.buildTypes.findByName("release")
                       if (release) {
-                          println "=== ProguardFiles for :${project.name} release ==="
+                          println "PROGUARD_CHECK :${project.name} release"
                           release.proguardFiles.each { f ->
-                              println "  FILE: $f  EXISTS: ${f.exists()}"
+                              println "  FILE=$f EXISTS=${f.exists()}"
                           }
                       }
                   }
               }
           }
           INITSCRIPT
-          cd android && ./gradlew :app:assembleRelease \
+          cd android && ./gradlew :app:dependencies \
+            --configuration releaseRuntimeClasspath \
             --init-script /tmp/check_proguard.gradle \
-            --dry-run \
             --no-daemon \
-            2>&1 | grep -E "FILE:|ProguardFiles for :app |===" || true
+            2>&1 | grep -E "PROGUARD_CHECK|FILE=" || echo "NO OUTPUT FROM INIT SCRIPT"
 
       - name: Build APK
         run: |
