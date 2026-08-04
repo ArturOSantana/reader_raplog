@@ -33,5 +33,3 @@ android/key.properties
 android/app/keystore.jks
 keystore_base64.txt
 
-# Subdiretório legado / artefato acidental
-readlog/

@@ -49,6 +49,12 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+        // proguardFiles no defaultConfig é ACUMULATIVO — nunca sobrescrito por buildTypes.
+        // Garante que as regras chegam ao R8 independentemente da ordem de avaliação do plugin.
+        proguardFiles(
+            getDefaultProguardFile("proguard-android-optimize.txt"),
+            "proguard-rules.pro"
+        )
     }
 
 }
