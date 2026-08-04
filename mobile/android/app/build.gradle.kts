@@ -54,12 +54,6 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            // NÃO declarar isMinifyEnabled nem proguardFiles() aqui.
-            // O Flutter Gradle Plugin já configura isMinifyEnabled=true,
-            // proguard-android-optimize.txt e flutter_proguard_rules.pro.
-            // Declarar proguardFiles() aqui SUBSTITUI a lista do plugin,
-            // descartando flutter_proguard_rules.pro e causando ClassNotFoundException.
-            // O proguard-rules.pro customizado é adicionado via afterEvaluate abaixo.
         }
     }
 }
@@ -73,14 +67,6 @@ kotlin {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation("androidx.appcompat:appcompat:1.7.0")
-}
-
-// Adiciona proguard-rules.pro DEPOIS que o Flutter Plugin configurou sua lista,
-// sem substituir as regras do flutter_proguard_rules.pro.
-afterEvaluate {
-    android.buildTypes.getByName("release").proguardFiles.add(
-        file("proguard-rules.pro")
-    )
 }
 
 flutter {
