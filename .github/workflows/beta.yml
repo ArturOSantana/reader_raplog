@@ -160,7 +160,9 @@ jobs:
           echo "=== APK manifest activity ==="
           unzip -p "$APK" AndroidManifest.xml | strings | grep -o "com\.readlog[^;]*" | sort -u || true
 
-          echo "=== APK signature ==="
+          echo "=== APK signer CN (debug=bad, release=good) ==="
+          $ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)/apksigner \
+            verify --print-certs "$APK" 2>&1 | grep -E "certificate DN|Verified using" || \
           unzip -l "$APK" | grep -E "META-INF.*\.(SF|RSA|DSA|EC)" || true
 
       # ── 10. Renomeia o artefato com a versão ──────────────────────────────
