@@ -84,16 +84,30 @@ jobs:
 
       - name: Build
         working-directory: platform
+        env:
+          # Variáveis por app — cada app lê apenas as suas
+          NEXT_PUBLIC_SUPABASE_URL_ADMIN:    ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_ADMIN: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_APP_URL_ADMIN:         ${{ secrets.NEXT_PUBLIC_APP_URL_ADMIN }}
+          NEXT_PUBLIC_SUPABASE_URL_WEB:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_WEB: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_APP_URL_WEB:           ${{ secrets.NEXT_PUBLIC_APP_URL_WEB }}
+          NEXT_PUBLIC_SUPABASE_URL_MARKETING:    ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_MARKETING: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_APP_URL_MARKETING:     ${{ secrets.NEXT_PUBLIC_APP_URL_MARKETING }}
         run: |
-          ENV_FILE="apps/${{ matrix.app }}/.vercel/.env.production.local"
-          if [ ! -f "$ENV_FILE" ]; then
-            echo "::error::$ENV_FILE não encontrado — verifique se as env vars estão configuradas no Vercel Dashboard para o projeto ${{ matrix.app }}"
-            exit 1
-          fi
-          # Copia todas as variáveis do .env.production.local para .env.production
-          # O Next.js carrega automaticamente .env.production durante o build,
-          # garantindo que NEXT_PUBLIC_* estejam disponíveis na coleta de páginas.
-          cp "$ENV_FILE" "apps/${{ matrix.app }}/.env.production"
+          APP="${{ matrix.app }}"
+          APP_UPPER="${APP^^}"
+
+          # Escreve .env.production com os valores reais dos secrets do GitHub.
+          # O vercel pull baixa vars sensíveis mascaradas ("[SENSITIVE]"), por isso
+          # usamos secrets do GitHub como fonte de verdade para NEXT_PUBLIC_*.
+          {
+            eval "echo NEXT_PUBLIC_SUPABASE_URL=\$NEXT_PUBLIC_SUPABASE_URL_${APP_UPPER}"
+            eval "echo NEXT_PUBLIC_SUPABASE_ANON_KEY=\$NEXT_PUBLIC_SUPABASE_ANON_KEY_${APP_UPPER}"
+            eval "echo NEXT_PUBLIC_APP_URL=\$NEXT_PUBLIC_APP_URL_${APP_UPPER}"
+          } > "apps/${APP}/.env.production"
+
           vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/${{ matrix.app }}
 
       - name: Relocate Vercel output
