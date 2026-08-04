@@ -90,15 +90,10 @@ jobs:
             echo "::error::$ENV_FILE não encontrado — verifique se as env vars estão configuradas no Vercel Dashboard para o projeto ${{ matrix.app }}"
             exit 1
           fi
-          # Exporta NEXT_PUBLIC_* do .env.production.local para o processo de build
-          while IFS= read -r line; do
-            [[ "$line" =~ ^NEXT_PUBLIC_ ]] || continue
-            key="${line%%=*}"
-            val="${line#*=}"
-            val="${val%\"}"
-            val="${val#\"}"
-            export "$key=$val"
-          done < "$ENV_FILE"
+          # Copia todas as variáveis do .env.production.local para .env.production
+          # O Next.js carrega automaticamente .env.production durante o build,
+          # garantindo que NEXT_PUBLIC_* estejam disponíveis na coleta de páginas.
+          cp "$ENV_FILE" "apps/${{ matrix.app }}/.env.production"
           vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/${{ matrix.app }}
 
       - name: Relocate Vercel output
