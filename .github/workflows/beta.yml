@@ -106,8 +106,9 @@ jobs:
         run: |
           echo "=== key.properties (senhas mascaradas) ==="
           sed 's/\(Password\|password\)=.*/\1=***/' android/key.properties
-          echo "=== keystore.jks exists ==="
-          ls -la android/app/keystore.jks
+          echo "=== keystore.jks size e SHA256 ==="
+          wc -c android/app/keystore.jks
+          sha256sum android/app/keystore.jks
           echo "=== .env (valores mascarados) ==="
           sed 's/=.*/=***/' .env
 
