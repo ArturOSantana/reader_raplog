@@ -1,10 +1,18 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://admin.lumen.app'
+function resolveMetadataBase(): URL {
+  try {
+    const raw = process.env.NEXT_PUBLIC_APP_URL
+    if (raw) return new URL(raw)
+  } catch {
+    // variável inválida — usa fallback
+  }
+  return new URL('https://admin.lumen.app')
+}
 
 export const metadata: Metadata = {
-  metadataBase: new URL(appUrl),
+  metadataBase: resolveMetadataBase(),
   title: {
     default: 'Lumen Admin',
     template: '%s · Admin Lumen',

@@ -1,8 +1,18 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
+function resolveMetadataBase(): URL {
+  try {
+    const raw = process.env.NEXT_PUBLIC_APP_URL
+    if (raw) return new URL(raw)
+  } catch {
+    // variável inválida — usa fallback
+  }
+  return new URL('https://lumen.app')
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://lumen.app'),
+  metadataBase: resolveMetadataBase(),
   title: {
     default: 'Lumen — Seu Companheiro de Leitura',
     template: '%s · Lumen',
