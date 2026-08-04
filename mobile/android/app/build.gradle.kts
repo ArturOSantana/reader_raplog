@@ -41,14 +41,14 @@ android {
 
     defaultConfig {
         applicationId = "com.readlog.readlog"
-        // minSdk fixado em 23 (Android 6.0, Marshmallow).
+        // minSdk fixado em 21 (Android 5.0, Lollipop) para máxima compatibilidade.
         // Piso real ditado pelos plugins:
-        //   - mobile_scanner 7.x: minSdk 23
+        //   - mobile_scanner 6.x: minSdk 21   (7.x subiu para 23 — usamos 6.x)
+        //   - shared_preferences_android 2.3.4: minSdk 21   (2.4.x subiu para 24)
+        //   - share_plus 13.x / google_sign_in_android 6.x / image_picker_android: minSdk 21
         //   - flutter_local_notifications 18.x: minSdk 19
-        //   - share_plus 13.x / home_widget 0.9.x: minSdk 16/21
-        // flutter.minSdkVersion no Flutter 3.44+ retorna 24, o que bloquearia
-        // dispositivos Android 6 desnecessariamente — fixamos em 23 aqui.
-        minSdk = 23
+        // flutter.minSdkVersion no Flutter 3.44+ retorna 24, por isso sobrescrevemos.
+        minSdk = 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -49,7 +49,10 @@ dependencies:
   # UI
   flutter_svg: ^2.1.0
   image_picker: ^1.1.2
-  mobile_scanner: ^7.4.0
+  # mobile_scanner: versão 7.x subiu minSdk de 21 para 23. Usando 6.x (minSdk 21)
+  # para manter compatibilidade com Android 5.0+. API usada (MobileScannerController,
+  # MobileScanner, BarcodeCapture, BarcodeFormat, DetectionSpeed) existe desde 5.x.
+  mobile_scanner: ^6.0.11
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   fl_chart: ^0.68.0
@@ -114,3 +117,9 @@ flutter:
           weight: 500
         - asset: assets/fonts/IBMPlexMono-SemiBold.ttf
           weight: 600
+
+# ── Dependency overrides ────────────────────────────────────────────────────
+# shared_preferences_android 2.4.x subiu minSdk para 24 (Android 7.0).
+# Travamos em 2.3.4 (minSdk 21) que é aceito por shared_preferences ^2.3.5.
+dependency_overrides:
+  shared_preferences_android: 2.3.4
