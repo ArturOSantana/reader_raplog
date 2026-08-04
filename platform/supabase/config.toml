@@ -58,6 +58,12 @@ additional_redirect_urls = [
   "https://lumen.app",
   "https://app.lumen.app",
   "https://admin.lumen.app",
+  # Deploys de preview Vercel — web
+  "https://lumen-web-smoky.vercel.app",
+  # Deploys de preview Vercel — admin
+  "https://lumen-admin-ecru.vercel.app",
+  # Deploys de preview Vercel — marketing
+  "https://lumen-marketing-alpha.vercel.app",
   "lumen://auth/callback",
 ]
 jwt_expiry = 3600
