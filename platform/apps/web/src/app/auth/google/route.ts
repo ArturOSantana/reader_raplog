@@ -1,6 +1,8 @@
 import { createServerSupabase } from '@lumen/supabase/server'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   const { origin } = new URL(request.url)
   // Usa a URL canônica da app se disponível, evitando que o origin do proxy
