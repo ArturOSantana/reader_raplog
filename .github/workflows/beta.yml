@@ -138,42 +138,37 @@ jobs:
             --no-daemon 2>&1 | grep -E "PGCHECK|PG:" || echo "NOTHING MATCHED"
 
       - name: Build APK
+        # --split-per-abi gera um APK menor por arquitetura (arm64-v8a, armeabi-v7a, x86_64)
+        # em vez de um fat APK. Cada device baixa apenas o APK compatível com sua CPU.
         run: |
-          flutter build apk --release \
+          flutter build apk --release --split-per-abi \
             --build-number=${{ steps.ver.outputs.code }} \
             --build-name=${{ steps.ver.outputs.name }}
 
-      # ── 9b. Verificar APK gerado ──────────────────────────────────────────
-      - name: Verify APK
+      # ── 9b. Verificar APKs gerados ────────────────────────────────────────
+      - name: Verify APKs
         run: |
-          APK="build/app/outputs/flutter-apk/app-release.apk"
-          echo "=== APK size ===" && ls -lh "$APK"
+          APKSIGNER="$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)/apksigner"
+          for APK in build/app/outputs/flutter-apk/app-*-release.apk; do
+            echo "=== $APK ==="
+            ls -lh "$APK"
+            echo "--- signer ---"
+            $APKSIGNER verify --print-certs "$APK" 2>&1 \
+              | grep -E "certificate DN|Verified using" || \
+            unzip -l "$APK" | grep -E "META-INF.*\.(SF|RSA|DSA|EC)" || true
+          done
 
-          echo "=== DEX files in APK ==="
-          unzip -l "$APK" | grep "\.dex"
-
-          echo "=== MainActivity in classes.dex ==="
-          unzip -p "$APK" classes.dex | strings | grep "MainActivity" || echo "NOT FOUND in classes.dex"
-
-          echo "=== All com.readlog classes in DEX ==="
-          unzip -p "$APK" classes.dex | strings | grep "com/readlog/readlog" | head -20 || echo "NO readlog classes found"
-
-          echo "=== APK manifest activity ==="
-          unzip -p "$APK" AndroidManifest.xml | strings | grep -o "com\.readlog[^;]*" | sort -u || true
-
-          echo "=== APK signer CN (debug=bad, release=good) ==="
-          $ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)/apksigner \
-            verify --print-certs "$APK" 2>&1 | grep -E "certificate DN|Verified using" || \
-          unzip -l "$APK" | grep -E "META-INF.*\.(SF|RSA|DSA|EC)" || true
-
-      # ── 10. Renomeia o artefato com a versão ──────────────────────────────
-      - name: Rename APK
+      # ── 10. Renomeia os artefatos com a versão ────────────────────────────
+      - name: Rename APKs
         run: |
-          mv build/app/outputs/flutter-apk/app-release.apk \
-             build/app/outputs/flutter-apk/lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}.apk
+          for ABI in arm64-v8a armeabi-v7a x86_64; do
+            SRC="build/app/outputs/flutter-apk/app-${ABI}-release.apk"
+            DST="build/app/outputs/flutter-apk/lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}-${ABI}.apk"
+            [ -f "$SRC" ] && mv "$SRC" "$DST" || echo "SKIP: $SRC not found"
+          done
 
-      # ── 11. Upload artefato no GitHub ──────────────────────────────────────
-      - name: Upload APK artifact
+      # ── 11. Upload artefatos no GitHub ────────────────────────────────────
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
           name: lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}
@@ -197,13 +192,24 @@ jobs:
           printf '%s' "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > "$SA_FILE"
           export GOOGLE_APPLICATION_CREDENTIALS="$SA_FILE"
 
-          firebase appdistribution:distribute \
-            "build/app/outputs/flutter-apk/lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}.apk" \
-            --app "$FIREBASE_APP_ID" \
-            --groups "beta-testers" \
-            --release-notes "Build automática · ${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}
+          NOTES="Build automática · ${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}
           Commit: ${{ github.sha }}
           Mensagem: ${{ github.event.head_commit.message }}"
+
+          # Distribui cada APK por ABI — o Firebase App Distribution aceita múltiplos
+          # uploads para o mesmo release; cada device receberá o APK compatível.
+          for ABI in arm64-v8a armeabi-v7a x86_64; do
+            APK="build/app/outputs/flutter-apk/lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}-${ABI}.apk"
+            if [ -f "$APK" ]; then
+              echo "Distributing $APK..."
+              firebase appdistribution:distribute "$APK" \
+                --app "$FIREBASE_APP_ID" \
+                --groups "beta-testers" \
+                --release-notes "$NOTES"
+            else
+              echo "SKIP: $APK not found"
+            fi
+          done
 
           # Remove o arquivo temporário do service account
           rm -f "$SA_FILE"

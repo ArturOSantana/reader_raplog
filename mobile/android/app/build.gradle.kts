@@ -41,9 +41,9 @@ android {
 
     defaultConfig {
         applicationId = "com.readlog.readlog"
-        // Fixado em 23 para cobrir o requisito mínimo real das dependências:
-        // home_widget, flutter_local_notifications e share_plus exigem API 23+.
-        // Usar flutter.minSdkVersion (21) causaria crash em Android 5.x/6.0.
+        // flutter.minSdkVersion = 24 (Android 7.0) no Flutter 3.44+.
+        // Satisfaz os requisitos de home_widget, flutter_local_notifications e
+        // share_plus (API 23+). Dispositivos < Android 7.0 não são suportados.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -60,6 +60,11 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
+            // Suffix garante que debug e release coexistam no mesmo device sem
+            // conflito de certificado — são tratados como apps distintos pelo Android.
+            applicationIdSuffix = ".debug"
         }
     }
 }
