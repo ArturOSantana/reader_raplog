@@ -113,27 +113,28 @@ jobs:
 
       # ── 9. Build APK release ───────────────────────────────────────────────
       - name: Pre-build diagnostics — proguardFiles resolvidos pelo Gradle
+        working-directory: mobile/android
         run: |
-          cat > /tmp/check_proguard.gradle << 'INITSCRIPT'
-          allprojects {
-              afterEvaluate {
-                  if (project.hasProperty("android")) {
-                      def release = project.android.buildTypes.findByName("release")
-                      if (release) {
-                          println "PROGUARD_CHECK :${project.name} release"
-                          release.proguardFiles.each { f ->
-                              println "  FILE=$f EXISTS=${f.exists()}"
-                          }
-                      }
-                  }
-              }
-          }
-          INITSCRIPT
-          cd android && ./gradlew :app:dependencies \
+          printf '%s\n' \
+            'allprojects {' \
+            '  afterEvaluate {' \
+            '    if (project.hasProperty("android")) {' \
+            '      def rel = project.android.buildTypes.findByName("release")' \
+            '      if (rel) {' \
+            '        println "PGCHECK:${project.name}"' \
+            '        rel.proguardFiles.each { f -> println "  PG:$f:${f.exists()}" }' \
+            '      }' \
+            '    }' \
+            '  }' \
+            '}' \
+            > /tmp/cpg.gradle
+          echo "--- init script written ---"
+          cat /tmp/cpg.gradle
+          echo "--- running gradlew ---"
+          ./gradlew :app:dependencies \
             --configuration releaseRuntimeClasspath \
-            --init-script /tmp/check_proguard.gradle \
-            --no-daemon \
-            2>&1 | grep -E "PROGUARD_CHECK|FILE=" || echo "NO OUTPUT FROM INIT SCRIPT"
+            --init-script /tmp/cpg.gradle \
+            --no-daemon 2>&1 | grep -E "PGCHECK|PG:" || echo "NOTHING MATCHED"
 
       - name: Build APK
         run: |
