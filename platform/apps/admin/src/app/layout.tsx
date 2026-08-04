@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://admin.lumen.app'
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://admin.lumen.app'),
+  metadataBase: new URL(appUrl),
   title: {
     default: 'Lumen Admin',
     template: '%s · Admin Lumen',
