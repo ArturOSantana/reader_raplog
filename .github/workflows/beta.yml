@@ -112,8 +112,23 @@ jobs:
           sed 's/=.*/=***/' .env
 
       # ── 9. Build APK release ───────────────────────────────────────────────
+      - name: Pre-build diagnostics
+        run: |
+          echo "=== proguard-rules.pro exists? ==="
+          ls -lh android/app/proguard-rules.pro || echo "NOT FOUND"
+          echo "=== proguard-rules.pro content ==="
+          cat android/app/proguard-rules.pro || echo "EMPTY/MISSING"
+          echo "=== build.gradle.kts buildTypes section ==="
+          grep -A10 "buildTypes" android/app/build.gradle.kts || true
+          echo "=== flutter --version ==="
+          flutter --version
+
       - name: Build APK
         run: |
+          flutter build apk --release \
+            --build-number=${{ steps.ver.outputs.code }} \
+            --build-name=${{ steps.ver.outputs.name }} \
+            --verbose 2>&1 | grep -E "proguard|R8|shrink|minify|MainActivity|keep" | head -40 || true
           flutter build apk --release \
             --build-number=${{ steps.ver.outputs.code }} \
             --build-name=${{ steps.ver.outputs.name }}
