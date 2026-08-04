@@ -95,7 +95,7 @@ class BookShareCard extends StatelessWidget {
                               style: ReadLogType.display(
                                 size: 17,
                                 weight: FontWeight.w600,
-                                color: ReadLogColors.charcoal,
+                                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal,
                               ).copyWith(height: 1.25),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,

@@ -72,7 +72,7 @@ class _ClubRankingScreenState extends ConsumerState<ClubRankingScreen>
               widget.clubName,
               style: LumenType.mono(
                 size: 10,
-                color: LumenColors.inkMuted,
+                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
               ).copyWith(letterSpacing: 0.6),
             ),
           ],
@@ -82,7 +82,7 @@ class _ClubRankingScreenState extends ConsumerState<ClubRankingScreen>
                 controller: _tabs,
                 labelStyle: LumenType.mono(size: 11, color: LumenColors.ink),
                 unselectedLabelStyle:
-                    LumenType.mono(size: 11, color: LumenColors.inkMuted),
+                    LumenType.mono(size: 11, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted),
                 labelColor: LumenColors.ink,
                 unselectedLabelColor: LumenColors.inkGhost,
                 indicatorColor: LumenColors.ink,
@@ -227,7 +227,7 @@ class _RankRow extends StatelessWidget {
             child: entry.avatarUrl == null
                 ? Text(
                     (entry.userName ?? '?').characters.first.toUpperCase(),
-                    style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
+                    style: LumenType.mono(size: 11, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted),
                   )
                 : null,
           ),

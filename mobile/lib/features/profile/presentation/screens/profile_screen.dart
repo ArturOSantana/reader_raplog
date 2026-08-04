@@ -82,9 +82,9 @@ class ProfileScreen extends ConsumerWidget {
     final email = user?.email ?? '';
 
     return Scaffold(
-      backgroundColor: LumenColors.surface,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : LumenColors.surface,
       appBar: AppBar(
-        backgroundColor: LumenColors.surface,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : LumenColors.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
@@ -195,7 +195,7 @@ class ProfileScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: LumenColors.surface,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : LumenColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(LumenRadius.modal)),
       ),
@@ -213,7 +213,7 @@ class ProfileScreen extends ConsumerWidget {
   void _showSettingsSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: LumenColors.surface,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : LumenColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(LumenRadius.modal)),
       ),
@@ -696,6 +696,11 @@ class _LinkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? LumenColors.inkInverse : LumenColors.ink;
+    final iconColor = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
+    final dividerColor = isDark ? LumenColors.dividerDark : LumenColors.divider;
+    
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -703,26 +708,26 @@ class _LinkRow extends StatelessWidget {
         decoration: BoxDecoration(
           border: isLast
               ? null
-              : Border(bottom: BorderSide(color: LumenColors.divider)),
+              : Border(bottom: BorderSide(color: dividerColor)),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 15, color: LumenColors.inkMuted),
+            Icon(icon, size: 15, color: iconColor),
             const SizedBox(width: LumenSpace.sm),
             Expanded(
               child: Text(
                 label,
-                style: LumenType.mono(size: 13, color: LumenColors.ink),
+                style: LumenType.mono(size: 13, color: textColor),
               ),
             ),
             if (value != null) ...[
               Text(
                 value!,
-                style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
+                style: LumenType.mono(size: 11, color: iconColor),
               ),
               const SizedBox(width: 5),
             ],
-            Icon(Icons.chevron_right, size: 14, color: LumenColors.inkMuted),
+            Icon(Icons.chevron_right, size: 14, color: iconColor),
           ],
         ),
       ),
@@ -904,7 +909,7 @@ class _Avatar extends StatelessWidget {
     if (url != null && url!.isNotEmpty) {
       return CircleAvatar(
         radius: 28,
-        backgroundColor: LumenColors.ink.withValues(alpha: 0.12),
+        backgroundColor: LumenColors.surfaceVariant,
         child: ClipOval(
           child: CachedNetworkImage(
             imageUrl: url!,
@@ -1222,7 +1227,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                       children: [
                         CircleAvatar(
                           radius: 44,
-                          backgroundColor: LumenColors.ink.withValues(alpha: 0.12),
+                          backgroundColor: LumenColors.surfaceVariant,
                           child: _pickedImage != null
                               ? ClipOval(child: Image.file(_pickedImage!, width: 88, height: 88, fit: BoxFit.cover))
                               : (widget.currentAvatarUrl != null && widget.currentAvatarUrl!.isNotEmpty)

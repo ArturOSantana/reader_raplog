@@ -64,14 +64,14 @@ class BookClubsScreen extends ConsumerWidget {
               showMenuButton: true,
               actions: [
                 IconButton(
-                  icon: LumenIcon('search', size: 20, color: ReadLogColors.charcoal),
+                  icon: LumenIcon('search', size: 20, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
                   onPressed: () {},
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
                 // Ação de criar/entrar — ícone + no topo, sem FAB
                 IconButton(
-                  icon: LumenIcon('add', size: 22, color: ReadLogColors.charcoal),
+                  icon: LumenIcon('add', size: 22, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
                   onPressed: () {},
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),

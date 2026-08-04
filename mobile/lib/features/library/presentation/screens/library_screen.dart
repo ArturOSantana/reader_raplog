@@ -26,7 +26,7 @@ class LibraryScreen extends ConsumerWidget {
     final books = ref.watch(_booksProvider);
 
     return Scaffold(
-      backgroundColor: ReadLogColors.paper,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? ReadLogColors.canvas : ReadLogColors.surface,
       body: Column(
         children: [
           ReadLogPageHeader(
@@ -41,21 +41,21 @@ class LibraryScreen extends ConsumerWidget {
                       ? Icons.view_list_outlined
                       : Icons.grid_view_outlined,
                   size: 20,
-                  color: ReadLogColors.charcoal,
+                  color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal,
                 ),
                 tooltip: genreView ? 'Visão em lista' : 'Visão por gênero',
                 onPressed: () =>
                     ref.read(_genreViewProvider.notifier).state = !genreView,
               ),
               IconButton(
-                icon: const Icon(Icons.qr_code_scanner_outlined,
-                    size: 20, color: ReadLogColors.charcoal),
+                icon: Icon(Icons.qr_code_scanner_outlined,
+                    size: 20, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
                 tooltip: 'Escanear ISBN',
                 onPressed: () {},
               ),
               IconButton(
-                icon: const Icon(Icons.add,
-                    size: 20, color: ReadLogColors.charcoal),
+                icon: Icon(Icons.add,
+                    size: 20, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
                 tooltip: 'Adicionar livro',
                 onPressed: () => context.push('/library/add'),
               ),
@@ -82,7 +82,7 @@ class LibraryScreen extends ConsumerWidget {
                           style: ReadLogType.mono(
                               size: 13,
                               color: ReadLogColors.charcoal
-                                  .withValues(alpha: 0.5)),
+                                  ),
                         ),
                       ],
                     ),

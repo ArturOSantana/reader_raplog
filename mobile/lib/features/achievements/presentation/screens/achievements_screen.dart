@@ -14,9 +14,10 @@ class AchievementsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final achievements = ref.watch(_achievementsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: ReadLogColors.paperAlt,
+      backgroundColor: isDark ? LumenColors.canvas : ReadLogColors.paperAlt,
       body: achievements.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: ReadLogColors.brass),
@@ -43,7 +44,7 @@ class AchievementsScreen extends ConsumerWidget {
                 '${unlocked.length} de ${list.length} carimbadas',
                 style: ReadLogType.mono(
                     size: 11,
-                    color: ReadLogColors.charcoal.withValues(alpha: 0.6)),
+                    color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted),
               ),
               const SizedBox(height: 10),
               ClipRRect(
@@ -64,7 +65,7 @@ class AchievementsScreen extends ConsumerWidget {
                 Text(
                   'Conquistadas',
                   style: ReadLogType.display(
-                      size: 17, color: ReadLogColors.charcoal),
+                      size: 17, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
                 ),
                 const SizedBox(height: 14),
                 _AchievementsGrid(items: unlocked, unlocked: true),
@@ -78,7 +79,7 @@ class AchievementsScreen extends ConsumerWidget {
                   style: ReadLogType.display(
                       size: 17,
                       color:
-                          ReadLogColors.charcoal.withValues(alpha: 0.5)),
+                          LumenColors.inkMuted),
                 ),
                 const SizedBox(height: 14),
                 _AchievementsGrid(items: locked, unlocked: false),
@@ -127,6 +128,10 @@ class _AchievementSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? LumenColors.inkInverse : ReadLogColors.charcoal;
+    final lockedColor = isDark ? LumenColors.hairlineDark : ReadLogColors.charcoal.withValues(alpha: 0.25);
+    
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -136,7 +141,7 @@ class _AchievementSlot extends StatelessWidget {
           label: 'xp',
           color: unlocked
               ? ReadLogColors.stamp
-              : ReadLogColors.charcoal.withValues(alpha: 0.25),
+              : lockedColor,
           size: 64,
           rotationDeg: unlocked ? -6 : 0,
         ),
@@ -149,8 +154,8 @@ class _AchievementSlot extends StatelessWidget {
           style: ReadLogType.mono(
             size: 9,
             color: unlocked
-                ? ReadLogColors.charcoal
-                : ReadLogColors.charcoal.withValues(alpha: 0.4),
+                ? textColor
+                : LumenColors.inkSecondary,
           ).copyWith(letterSpacing: 0.3),
         ),
       ],

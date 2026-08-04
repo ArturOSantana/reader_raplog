@@ -114,7 +114,7 @@ class _GoalTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.forestGreen.withValues(alpha: 0.1),
+              color: LumenColors.readSubtle,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.flag_rounded,

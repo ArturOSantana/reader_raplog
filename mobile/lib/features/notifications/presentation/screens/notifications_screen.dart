@@ -30,14 +30,14 @@ class NotificationsScreen extends ConsumerWidget {
     final groups = _groupByDate(items);
 
     return Scaffold(
-      backgroundColor: ReadLogColors.paper,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : ReadLogColors.surface,
       appBar: AppBar(
-        backgroundColor: ReadLogColors.paper,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : ReadLogColors.surface,
         foregroundColor: ReadLogColors.charcoal,
         automaticallyImplyLeading: false,
         title: Text(
           'Notificações',
-          style: ReadLogType.display(size: 19, color: ReadLogColors.charcoal),
+          style: ReadLogType.display(size: 19, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
         ),
         actions: [
           if (inboxState.unreadCount > 0)
@@ -188,7 +188,7 @@ class _FilterChip extends StatelessWidget {
           border: Border.all(
             color: selected
                 ? ReadLogColors.charcoal
-                : ReadLogColors.charcoal.withValues(alpha: 0.4),
+                : LumenColors.inkSecondary,
           ),
         ),
         child: Row(
@@ -231,7 +231,7 @@ class _DateGroup extends StatelessWidget {
             label.toUpperCase(),
             style: ReadLogType.mono(
               size: 9.5,
-              color: ReadLogColors.charcoal.withValues(alpha: 0.5),
+              color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
             ).copyWith(letterSpacing: 0.8),
           ),
         ),
@@ -317,7 +317,7 @@ class _EmptyView extends StatelessWidget {
             Icon(
               Icons.notifications_none_outlined,
               size: 56,
-              color: ReadLogColors.charcoal.withValues(alpha: 0.3),
+              color: LumenColors.hairline,
             ),
             const SizedBox(height: 16),
             Text(
@@ -326,7 +326,7 @@ class _EmptyView extends StatelessWidget {
                   : 'Nenhuma notificação ainda',
               style: ReadLogType.mono(
                 size: 13,
-                color: ReadLogColors.charcoal.withValues(alpha: 0.5),
+                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
               ),
               textAlign: TextAlign.center,
             ),
@@ -352,7 +352,7 @@ class _ErrorView extends StatelessWidget {
             'Erro ao carregar notificações',
             style: ReadLogType.mono(
               size: 13,
-              color: ReadLogColors.charcoal.withValues(alpha: 0.6),
+              color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
             ),
           ),
           const SizedBox(height: 12),

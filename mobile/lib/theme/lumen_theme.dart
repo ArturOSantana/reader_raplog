@@ -69,9 +69,9 @@ abstract final class LumenColors {
   static const ink             = Color(0xFF1A1918); // texto principal light
   static const inkInverse      = Color(0xFFF5F4F2); // texto principal dark
   static const inkMuted        = Color(0xFF6B6863); // metadados light
-  static const inkMutedInverse = Color(0xFF8A8884); // metadados dark
+  static const inkMutedInverse = Color(0xFFA8A5A0); // metadados dark — mais claro para visibilidade
   static const inkGhost        = Color(0xFFB0AEA9); // placeholder light
-  static const inkGhostInverse = Color(0xFF5A5856); // placeholder dark
+  static const inkGhostInverse = Color(0xFF8A8884); // placeholder dark — mais claro que antes
 
   // ── Acento editorial ──────────────────────────────────────────────────────
   /// Acento primário — mesmo tom do texto. Usado com parcimônia extrema.
@@ -96,6 +96,12 @@ abstract final class LumenColors {
   /// Separador visível — 14% ink
   static const divider         = Color(0x241A1918);
   static const dividerDark     = Color(0x24F5F4F2);
+
+  // ── Texto secundário (ícones, labels, disable state) ─────────────────────
+  /// Texto desabilitado/secundário light — mantém contraste mínimo
+  static const inkSecondary         = Color(0xFF8A8884);
+  /// Texto desabilitado/secundário dark — mantém contraste mínimo (mais claro para visibilidade)
+  static const inkSecondaryInverse  = Color(0xFF9B9892);
 
   // ── Presença ──────────────────────────────────────────────────────────────
   static const online          = read;
@@ -141,6 +147,50 @@ abstract final class LumenColors {
   @Deprecated('Use LumenColors.canvas') static const ink_           = canvas;
   /// @deprecated Use [warning]
   @Deprecated('Use LumenColors.warning') static const warning_      = warning;
+}
+
+/// Extension para facilitar uso de cores secundárias com visibilidade garantida.
+/// Evita .withValues(alpha: ...) que fica invisível em fundo contrário.
+extension LumenColorsExt on BuildContext {
+  Color get inkSecondary {
+    final isDark = Theme.of(this).brightness == Brightness.dark;
+    return isDark ? LumenColors.inkSecondaryInverse : LumenColors.inkSecondary;
+  }
+  
+  Color get hairlineColor {
+    final isDark = Theme.of(this).brightness == Brightness.dark;
+    return isDark ? LumenColors.hairlineDark : LumenColors.hairline;
+  }
+  
+  Color get surfaceBg {
+    final isDark = Theme.of(this).brightness == Brightness.dark;
+    return isDark ? LumenColors.canvasVariant : LumenColors.surfaceVariant;
+  }
+}
+
+/// Helper para converter cores genéricas (legacy) com segurança de tema.
+/// Usa mapeamento inteligente: se opacidade >= 0.5, retorna a cor em si;
+/// se menor, retorna versão mais fraca da paleta.
+extension LumenSafeColor on Color {
+  /// Aplica opacidade de forma segura — retorna cor apropriada da paleta
+  /// em vez de apenas reduzir opacidade (que fica invisível em dark mode).
+  Color withSafeOpacity(double opacity) {
+    // Se opacidade é alta (>= 50%), use a cor diretamente
+    if (opacity >= 0.5) {
+      return this;
+    }
+    
+    // Se é cor clara (texto light mode), use versão mais fraca
+    if (this == LumenColors.ink) {
+      return LumenColors.inkMuted;
+    }
+    if (this == LumenColors.inkInverse) {
+      return LumenColors.inkMutedInverse;
+    }
+    
+    // Fallback: retorna cor com opacidade reduzida (não ideal, mas segura)
+    return withValues(alpha: opacity);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -246,7 +296,7 @@ abstract final class LumenType {
           fontSize: 12,
           fontWeight: FontWeight.w400,
           height: 1.5,
-          color: onSurface.withValues(alpha: 0.65),
+          color: onSurface,
         ),
         labelLarge: TextStyle(
           fontFamily: 'Inter',

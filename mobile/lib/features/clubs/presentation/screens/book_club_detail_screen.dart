@@ -769,7 +769,7 @@ class _InviteCodeCard extends StatelessWidget {
             child: Icon(
               Icons.copy_outlined,
               size: 16,
-              color: ReadLogColors.ink.withValues(alpha: 0.5),
+              color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
             ),
           ),
           const SizedBox(width: 16),
@@ -788,7 +788,7 @@ class _InviteCodeCard extends StatelessWidget {
             child: Icon(
               Icons.share_outlined,
               size: 16,
-              color: ReadLogColors.ink.withValues(alpha: 0.5),
+              color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
             ),
           ),
         ],
@@ -830,7 +830,7 @@ class _ClubHeroHeader extends ConsumerWidget {
       child: Stack(
         children: [
           // Overlay escuro
-          Container(color: ReadLogColors.ink.withValues(alpha: 0.85)),
+          Container(color: LumenColors.ink),
 
           // Conteúdo
           SafeArea(
@@ -890,7 +890,7 @@ class _ClubHeroHeader extends ConsumerWidget {
                     ].join(' · '),
                     style: ReadLogType.mono(
                       size: 10,
-                      color: ReadLogColors.inkInverse.withValues(alpha: 0.55),
+                      color: LumenColors.inkInverse,
                     ).copyWith(letterSpacing: 0.8),
                   ),
                 ],
@@ -991,7 +991,7 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
             'Nenhum livro definido.',
             style: ReadLogType.bookTitle(
               size: 22,
-              color: ReadLogColors.ink.withValues(alpha: 0.35),
+              color: LumenColors.inkSecondary,
               italic: true,
             ),
           )
@@ -1159,7 +1159,7 @@ class _MemberTile extends ConsumerWidget {
           if (canActOnMember && !club.isClosed)
             PopupMenuButton<String>(
               icon: Icon(Icons.more_horiz,
-                  size: 18, color: ReadLogColors.ink.withValues(alpha: 0.4)),
+                  size: 18, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted),
               onSelected: (v) => _onMemberAction(context, ref, v),
               itemBuilder: (_) => _memberMenuItems(),
             ),
@@ -1459,7 +1459,7 @@ class _BookHistoryList extends ConsumerWidget {
               'Nenhum livro no histórico ainda.',
               style: ReadLogType.mono(
                 size: 12,
-                color: ReadLogColors.ink.withValues(alpha: 0.45),
+                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
               ),
             ),
           );
@@ -2110,7 +2110,7 @@ class _PollCardState extends ConsumerState<_PollCard> {
                         poll.description!,
                         style: ReadLogType.mono(
                           size: 10,
-                          color: ReadLogColors.ink.withValues(alpha: 0.45),
+                          color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
                         ),
                       ),
                     ],
@@ -2121,14 +2121,14 @@ class _PollCardState extends ConsumerState<_PollCard> {
                 poll.isOpen ? 'aberta' : 'encerrada',
                 style: ReadLogType.mono(
                   size: 10,
-                  color: poll.isOpen ? ReadLogColors.sage : ReadLogColors.ink.withValues(alpha: 0.35),
+                  color: poll.isOpen ? ReadLogColors.sage : LumenColors.inkSecondary,
                 ),
               ),
               if (widget.club.canManage)
                 PopupMenuButton<String>(
                   onSelected: (v) => _onPollAction(context, v),
                   icon: Icon(Icons.more_horiz,
-                      size: 16, color: ReadLogColors.ink.withValues(alpha: 0.4)),
+                      size: 16, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted),
                   itemBuilder: (_) => [
                     if (poll.isOpen)
                       const PopupMenuItem(
@@ -2174,7 +2174,7 @@ class _PollCardState extends ConsumerState<_PollCard> {
                             size: 12,
                             color: isMyVote
                                 ? ReadLogColors.ink
-                                : ReadLogColors.ink.withValues(alpha: 0.7),
+                                : LumenColors.ink,
                             weight: isMyVote ? FontWeight.w600 : FontWeight.w400,
                           ),
                         ),
@@ -2183,7 +2183,7 @@ class _PollCardState extends ConsumerState<_PollCard> {
                             opt.bookAuthor!,
                             style: ReadLogType.mono(
                               size: 10,
-                              color: ReadLogColors.ink.withValues(alpha: 0.45),
+                              color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
                             ),
                           ),
                       ],
@@ -2195,7 +2195,7 @@ class _PollCardState extends ConsumerState<_PollCard> {
                       size: 10,
                       color: isMyVote
                           ? ReadLogColors.ink
-                          : ReadLogColors.ink.withValues(alpha: 0.45),
+                          : LumenColors.inkMuted,
                     ),
                   ),
                 ],
@@ -2211,7 +2211,7 @@ class _PollCardState extends ConsumerState<_PollCard> {
             '${poll.isOpen ? ' · toque para votar' : ''}',
             style: ReadLogType.mono(
               size: 10,
-              color: ReadLogColors.ink.withValues(alpha: 0.35),
+              color: LumenColors.inkSecondary,
             ),
           ),
         ),
@@ -2948,7 +2948,7 @@ class _SetBookSheetState extends ConsumerState<_SetBookSheet> {
               value: _archivePrevious,
               onChanged: (v) => setState(() => _archivePrevious = v),
               activeThumbColor: AppColors.forestGreen,
-              activeTrackColor: AppColors.forestGreen.withValues(alpha: 0.4),
+              activeTrackColor: LumenColors.readSubtle,
             ),
           ],
           const SizedBox(height: 16),
@@ -3180,7 +3180,7 @@ class _ChallengesSection extends ConsumerWidget {
                       : 'Nenhum desafio criado ainda.',
                   style: ReadLogType.mono(
                     size: 12,
-                    color: ReadLogColors.ink.withValues(alpha: 0.45),
+                    color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
                   ),
                 ),
               );
@@ -3440,7 +3440,7 @@ class _CreateChallengesheetState extends ConsumerState<_CreateChallengeSheet> {
                   label: Text(t.label),
                   selected: selected,
                   onSelected: (_) => setState(() => _goalType = t),
-                  selectedColor: AppColors.warmGold.withValues(alpha: 0.2),
+                  selectedColor: LumenColors.warning,
                 );
               }).toList(),
             ),
@@ -3580,7 +3580,7 @@ class _OpenPollCardState extends ConsumerState<_OpenPollCard> {
                 isOpen ? 'aberta' : 'encerrada',
                 style: ReadLogType.mono(
                   size: 10,
-                  color: isOpen ? ReadLogColors.sage : ReadLogColors.ink.withValues(alpha: 0.35),
+                  color: isOpen ? ReadLogColors.sage : LumenColors.inkSecondary,
                 ),
               ),
             ],
@@ -3603,7 +3603,7 @@ class _OpenPollCardState extends ConsumerState<_OpenPollCard> {
                             size: 12,
                             color: r.votedByMe
                                 ? ReadLogColors.ink
-                                : ReadLogColors.ink.withValues(alpha: 0.7),
+                                : LumenColors.ink,
                             weight: r.votedByMe ? FontWeight.w600 : FontWeight.w400,
                           ),
                         ),
@@ -3614,7 +3614,7 @@ class _OpenPollCardState extends ConsumerState<_OpenPollCard> {
                           size: 10,
                           color: r.votedByMe
                               ? ReadLogColors.ink
-                              : ReadLogColors.ink.withValues(alpha: 0.45),
+                              : LumenColors.inkMuted,
                         ),
                       ),
                     ],
@@ -3900,7 +3900,7 @@ class _TimelineButton extends StatelessWidget {
               ),
             ),
             Icon(Icons.chevron_right, size: 14,
-                color: ReadLogColors.ink.withValues(alpha: 0.4)),
+                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted),
           ],
         ),
       ),
@@ -3932,7 +3932,7 @@ class _StatsButton extends StatelessWidget {
               ),
             ),
             Icon(Icons.chevron_right, size: 14,
-                color: ReadLogColors.ink.withValues(alpha: 0.4)),
+                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted),
           ],
         ),
       ),

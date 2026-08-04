@@ -67,6 +67,12 @@ class SocialFeedRepository {
   }
 
   // ── Publicar eventos ──────────────────────────────────────────────────────
+  // Inserts diretos foram bloqueados pela migração sec_fix_restrict_grants.
+  // Toda escrita ocorre via RPC insert_feed_event (SECURITY DEFINER).
+
+  Future<void> _insertFeedEvent(Map<String, dynamic> params) async {
+    await _client.rpc('insert_feed_event', params: params);
+  }
 
   Future<void> publishFinishedBook({
     required String bookTitle,
@@ -75,14 +81,14 @@ class SocialFeedRepository {
     String? review,
     int? readingTimeMinutes,
   }) async {
-    await _client.from('social_feed').insert({
-      'user_id': _userId,
-      'event_type': 'finished_book',
-      'book_title': bookTitle,
-      'book_author': bookAuthor,
-      'rating': rating,
-      if (review != null && review.isNotEmpty) 'review': review,
-      if (readingTimeMinutes != null) 'reading_time_minutes': readingTimeMinutes,
+    await _insertFeedEvent({
+      'p_event_type': 'finished_book',
+      'p_book_title': bookTitle,
+      if (bookAuthor != null) 'p_book_author': bookAuthor,
+      if (rating != null) 'p_rating': rating,
+      if (review != null && review.isNotEmpty) 'p_review': review,
+      if (readingTimeMinutes != null)
+        'p_reading_time_minutes': readingTimeMinutes,
     });
   }
 
@@ -90,35 +96,31 @@ class SocialFeedRepository {
     required String bookTitle,
     String? bookAuthor,
   }) async {
-    await _client.from('social_feed').insert({
-      'user_id': _userId,
-      'event_type': 'started_book',
-      'book_title': bookTitle,
-      'book_author': bookAuthor,
+    await _insertFeedEvent({
+      'p_event_type': 'started_book',
+      'p_book_title': bookTitle,
+      if (bookAuthor != null) 'p_book_author': bookAuthor,
     });
   }
 
   Future<void> publishStreak(int days) async {
-    await _client.from('social_feed').insert({
-      'user_id': _userId,
-      'event_type': 'streak',
-      'streak_days': days,
+    await _insertFeedEvent({
+      'p_event_type': 'streak',
+      'p_streak_days': days,
     });
   }
 
   Future<void> publishAchievement(String achievementName) async {
-    await _client.from('social_feed').insert({
-      'user_id': _userId,
-      'event_type': 'achievement',
-      'achievement_name': achievementName,
+    await _insertFeedEvent({
+      'p_event_type': 'achievement',
+      'p_achievement_name': achievementName,
     });
   }
 
   Future<void> publishGoalCompleted(String goalDescription) async {
-    await _client.from('social_feed').insert({
-      'user_id': _userId,
-      'event_type': 'goal_completed',
-      'goal_description': goalDescription,
+    await _insertFeedEvent({
+      'p_event_type': 'goal_completed',
+      'p_goal_description': goalDescription,
     });
   }
 
@@ -134,15 +136,14 @@ class SocialFeedRepository {
     int? sessionMinutes,
     int? streakDays,
   }) async {
-    await _client.from('social_feed').insert({
-      'user_id': _userId,
-      'event_type': 'reading_session',
-      'club_id': clubId,
-      'book_title': bookTitle,
-      if (pagesRead != null) 'pages_read': pagesRead,
-      if (currentPage != null) 'current_page': currentPage,
-      if (sessionMinutes != null) 'session_minutes': sessionMinutes,
-      if (streakDays != null) 'streak_days': streakDays,
+    await _insertFeedEvent({
+      'p_event_type': 'reading_session',
+      'p_club_id': clubId,
+      'p_book_title': bookTitle,
+      if (pagesRead != null) 'p_pages_read': pagesRead,
+      if (currentPage != null) 'p_current_page': currentPage,
+      if (sessionMinutes != null) 'p_session_minutes': sessionMinutes,
+      if (streakDays != null) 'p_streak_days': streakDays,
     });
   }
 

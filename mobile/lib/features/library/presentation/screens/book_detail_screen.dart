@@ -179,7 +179,7 @@ class _BookDetailBody extends ConsumerWidget {
               width: 80,
               height: 110,
               decoration: BoxDecoration(
-                color: AppColors.forestGreen.withValues(alpha: 0.1),
+                color: LumenColors.readSubtle,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: book.coverUrl != null && book.coverUrl!.isNotEmpty
@@ -556,7 +556,7 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.forestGreen.withValues(alpha: 0.1),
+        color: LumenColors.readSubtle,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(status.label, style: AppTextStyles.labelMedium),

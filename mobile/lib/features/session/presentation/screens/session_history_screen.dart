@@ -170,7 +170,7 @@ class _SessionTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.forestGreen.withValues(alpha: 0.08),
+              color: LumenColors.readSubtle,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.timer_outlined,

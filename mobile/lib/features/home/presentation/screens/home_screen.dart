@@ -12,6 +12,7 @@ import '../../../../shared/providers/providers.dart';
 import '../../../../shared/widgets/skel_shimmer.dart';
 import '../../../../core/widgets/widget_manager.dart';
 import '../../../../core/shell/main_shell.dart' show openAppDrawer;
+import '../../../session/presentation/notifiers/session_notifier.dart';
 
 // ── Provider principal da home ────────────────────────────────────────────────
 
@@ -181,6 +182,9 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
+                // ── Sessão ativa ───────────────────────────────────────
+                const SliverToBoxAdapter(child: _ActiveSessionBanner()),
+
                 // ── Progresso do dia ───────────────────────────────────
                 if (streak > 0 || todayMinutes > 0 || todayPages > 0)
                   SliverToBoxAdapter(
@@ -266,6 +270,8 @@ class _HomeHeader extends ConsumerWidget {
     final bg     = isDark ? ReadLogColors.canvas      : ReadLogColors.surface;
     final fg     = isDark ? ReadLogColors.inkInverse  : ReadLogColors.ink;
     final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
+    final fgSec  = isDark ? ReadLogColors.inkSecondaryInverse : ReadLogColors.inkSecondary;
+    final divColor = isDark ? ReadLogColors.hairlineDark : ReadLogColors.hairline;
 
     return Container(
       color: bg,
@@ -279,7 +285,7 @@ class _HomeHeader extends ConsumerWidget {
             children: [
               GestureDetector(
                 onTap: openAppDrawer,
-                child: Icon(Icons.menu, size: 22, color: fg.withValues(alpha: 0.6)),
+                child: Icon(Icons.menu, size: 22, color: fgSec),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -294,7 +300,7 @@ class _HomeHeader extends ConsumerWidget {
               ),
               IconButton(
                 icon: Icon(Icons.notifications_outlined,
-                    size: 20, color: fg.withValues(alpha: 0.6)),
+                    size: 20, color: fgSec),
                 onPressed: () => context.push('/notifications'),
                 tooltip: 'Notificações',
                 padding: EdgeInsets.zero,
@@ -324,7 +330,7 @@ class _HomeHeader extends ConsumerWidget {
           ),
 
           const SizedBox(height: 24),
-          Divider(height: 1, thickness: 1, color: fg.withValues(alpha: 0.07)),
+          Divider(height: 1, thickness: 1, color: divColor),
         ],
       ),
     );
@@ -338,7 +344,9 @@ class _UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg     = isDark ? ReadLogColors.inkInverse : ReadLogColors.ink;
+    final fgBg = isDark ? ReadLogColors.canvasVariant : ReadLogColors.surfaceVariant;
+    final fgBorder = isDark ? ReadLogColors.hairlineDark : ReadLogColors.hairline;
+    final fg = isDark ? ReadLogColors.ink : ReadLogColors.inkInverse;
 
     final user     = ref.watch(currentUserProvider);
     final fullName = user?.userMetadata?['full_name'] as String?;
@@ -359,9 +367,9 @@ class _UserAvatar extends StatelessWidget {
         height: 34,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: fg.withValues(alpha: 0.08),
+          color: fgBg,
           shape: BoxShape.circle,
-          border: Border.all(color: fg.withValues(alpha: 0.12), width: 1),
+          border: Border.all(color: fgBorder, width: 1),
         ),
         child: Text(
           initials.isEmpty ? '?' : initials,
@@ -369,7 +377,7 @@ class _UserAvatar extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: fg.withValues(alpha: 0.7),
+            color: fg,
           ),
         ),
       ),
@@ -395,8 +403,9 @@ class _DailyProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg     = isDark ? ReadLogColors.inkInverse  : ReadLogColors.ink;
     final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
+    final bgProgress = isDark ? ReadLogColors.canvasVariant : ReadLogColors.surfaceVariant;
+    final divColor = isDark ? ReadLogColors.hairlineDark : ReadLogColors.hairline;
 
     // Métricas do dia
     final hours = todayMinutes ~/ 60;
@@ -456,7 +465,7 @@ class _DailyProgress extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: missionProgress,
                       minHeight: 2,
-                      backgroundColor: fg.withValues(alpha: 0.08),
+                      backgroundColor: bgProgress,
                       color: missionDone
                           ? ReadLogColors.success
                           : (isDark ? ReadLogColors.progressLight : ReadLogColors.progress),
@@ -479,7 +488,7 @@ class _DailyProgress extends StatelessWidget {
           ],
 
           const SizedBox(height: 24),
-          Divider(height: 1, thickness: 1, color: fg.withValues(alpha: 0.07)),
+          Divider(height: 1, thickness: 1, color: divColor),
         ],
       ),
     );
@@ -573,7 +582,7 @@ class _HomeFriendsPresence extends ConsumerWidget {
         if (all.isEmpty) return const SizedBox.shrink();
 
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final fg     = isDark ? ReadLogColors.inkInverse  : ReadLogColors.ink;
+        final divColor = isDark ? ReadLogColors.hairlineDark : ReadLogColors.hairline;
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -586,7 +595,7 @@ class _HomeFriendsPresence extends ConsumerWidget {
                     member: e.member,
                     clubName: e.clubName,
                   )),
-              Divider(height: 1, thickness: 1, color: fg.withValues(alpha: 0.07)),
+              Divider(height: 1, thickness: 1, color: divColor),
             ],
           ),
         );
@@ -604,8 +613,10 @@ class _FriendRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg     = isDark ? ReadLogColors.inkInverse  : ReadLogColors.ink;
+    final fg = isDark ? ReadLogColors.inkInverse : ReadLogColors.ink;
     final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
+    final bgAvatar = isDark ? ReadLogColors.canvasVariant : ReadLogColors.surfaceVariant;
+    final fgAvatar = isDark ? ReadLogColors.inkSecondaryInverse : ReadLogColors.inkSecondary;
     final dotColor = member.isActive
         ? ReadLogColors.progress
         : ReadLogColors.idle;
@@ -630,7 +641,7 @@ class _FriendRow extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: fg.withValues(alpha: 0.06),
+              color: bgAvatar,
               shape: BoxShape.circle,
             ),
             child: member.avatarUrl != null
@@ -647,7 +658,7 @@ class _FriendRow extends StatelessWidget {
                         fontFamily: 'Inter',
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: fg.withValues(alpha: 0.5),
+                        color: fgAvatar,
                       ),
                     ),
                   ),
@@ -696,6 +707,178 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       label,
       style: ReadLogType.kicker(size: 10, color: fgMut),
+    );
+  }
+}
+
+// ── Banner de sessão ativa ────────────────────────────────────────────────────
+
+/// Aparece na home SOMENTE quando há uma sessão de leitura em andamento.
+/// Pulsa enquanto a sessão está rodando; exibe "pausada" quando pausada.
+class _ActiveSessionBanner extends ConsumerWidget {
+  const _ActiveSessionBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(sessionNotifierProvider);
+    if (!session.hasActiveSession) return const SizedBox.shrink();
+
+    final isDark      = Theme.of(context).brightness == Brightness.dark;
+    final bg          = isDark ? ReadLogColors.canvasVariant : ReadLogColors.surfaceVariant;
+    final dotColor    = session.isPaused ? ReadLogColors.idle : ReadLogColors.read;
+    final dotColorLight = session.isPaused ? ReadLogColors.idle : ReadLogColors.readLight;
+
+    final elapsed     = session.elapsedSeconds;
+    final h = elapsed ~/ 3600;
+    final m = (elapsed % 3600) ~/ 60;
+    final s = elapsed % 60;
+    final timeStr = h > 0
+        ? '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}'
+        : '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+
+    final statusLabel = session.isPaused ? 'pausada' : 'em leitura';
+    final fg     = isDark ? ReadLogColors.inkInverse  : ReadLogColors.ink;
+    final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      child: GestureDetector(
+        onTap: () {
+          final bookId = session.session?.bookId;
+          if (bookId != null) {
+            context.push('/session?bookId=$bookId');
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: session.isPaused
+                  ? ReadLogColors.idle
+                  : ReadLogColors.read,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Dot pulsante (usa AnimatedContainer para brilhar)
+              _PresenceDot(isActive: !session.isPaused, color: dotColor, activeColor: dotColorLight),
+
+              const SizedBox(width: 12),
+
+              // Título e status
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      session.bookTitle.isNotEmpty ? session.bookTitle : 'Leitura',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: fg,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      statusLabel,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 11,
+                        color: session.isPaused ? ReadLogColors.idle : (isDark ? ReadLogColors.readLight : ReadLogColors.read),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Timer
+              Text(
+                timeStr,
+                style: ReadLogType.mono(
+                  size: 15,
+                  weight: FontWeight.w500,
+                  color: session.isPaused ? fgMut : (isDark ? ReadLogColors.readLight : ReadLogColors.read),
+                ),
+              ),
+
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right,
+                size: 16,
+                color: fgMut,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Ponto de presença: pulsa quando ativo (simula um LED aceso).
+class _PresenceDot extends StatefulWidget {
+  final bool isActive;
+  final Color color;
+  final Color activeColor;
+  const _PresenceDot({required this.isActive, required this.color, required this.activeColor});
+
+  @override
+  State<_PresenceDot> createState() => _PresenceDotState();
+}
+
+class _PresenceDotState extends State<_PresenceDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _anim = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+    if (widget.isActive) _ctrl.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_PresenceDot old) {
+    super.didUpdateWidget(old);
+    if (widget.isActive && !_ctrl.isAnimating) {
+      _ctrl.repeat(reverse: true);
+    } else if (!widget.isActive && _ctrl.isAnimating) {
+      _ctrl.stop();
+      _ctrl.value = 0.5;
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: widget.isActive
+              ? Color.lerp(widget.color, widget.activeColor, _anim.value)
+              : widget.color,
+        ),
+      ),
     );
   }
 }

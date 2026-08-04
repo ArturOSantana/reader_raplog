@@ -51,7 +51,7 @@ class DashboardScreen extends ConsumerWidget {
     final data = ref.watch(_dashboardDataProvider);
 
     return Scaffold(
-      backgroundColor: ReadLogColors.paper,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : ReadLogColors.surface,
       body: data.when(
         loading: () => const SkelScreenList(count: 8),
         error: (e, _) => Center(child: Text('Erro: $e')),
@@ -89,8 +89,9 @@ class DashboardScreen extends ConsumerWidget {
                     title: 'Estatísticas',
                     actions: [
                       IconButton(
-                        icon: const Icon(Icons.share_rounded,
-                            size: 20, color: ReadLogColors.charcoal),
+                        icon: Icon(Icons.share_rounded,
+                            size: 20,
+                    color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
                         tooltip: 'Compartilhar estatísticas',
                         onPressed: () {
                           final user = ref.read(currentUserProvider);
@@ -213,12 +214,14 @@ class _SectionLabel extends StatelessWidget {
       children: [
         Text(label,
             style: ReadLogType.display(
-                size: 17, color: ReadLogColors.charcoal)),
+                size: 17, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal)),
         const SizedBox(width: 8),
         Expanded(
           child: Container(
             height: 1,
-            color: ReadLogColors.paperDeep,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? LumenColors.hairlineDark
+                : LumenColors.hairline,
           ),
         ),
       ],
@@ -302,14 +305,15 @@ class _GridTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: ReadLogColors.cream,
+        color: isDark ? LumenColors.canvasElevated : LumenColors.surface,
         borderRadius: BorderRadius.circular(3),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
+            color: isDark ? LumenColors.hairlineDark : LumenColors.hairline,
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -335,12 +339,12 @@ class _GridTile extends StatelessWidget {
                   style: ReadLogType.mono(
                       size: 20,
                       weight: FontWeight.w600,
-                      color: ReadLogColors.charcoal)),
+                      color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal)),
               Text(
                 '$label · $unit',
                 style: ReadLogType.mono(
                     size: 9,
-                    color: ReadLogColors.charcoal.withValues(alpha: 0.5)),
+                    color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted),
               ),
             ],
           ),
@@ -382,6 +386,7 @@ class _GoalProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: goals.map((goal) {
         final current = _current(goal);
@@ -393,11 +398,11 @@ class _GoalProgressCard extends StatelessWidget {
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: ReadLogColors.cream,
+            color: isDark ? LumenColors.canvasElevated : LumenColors.surface,
             borderRadius: BorderRadius.circular(3),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.07),
+                color: isDark ? LumenColors.hairlineDark : LumenColors.hairline,
                 blurRadius: 6,
                 offset: const Offset(0, 3),
               ),
@@ -427,7 +432,7 @@ class _GoalProgressCard extends StatelessWidget {
                             child: Text(
                               goal.type.label,
                               style: ReadLogType.display(
-                                  size: 13, color: ReadLogColors.charcoal),
+                                  size: 13, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
                             ),
                           ),
                           if (done)
@@ -438,8 +443,10 @@ class _GoalProgressCard extends StatelessWidget {
                               '$current / $target ${goal.type.unit}',
                               style: ReadLogType.mono(
                                   size: 10,
-                                  color: ReadLogColors.charcoal
-                                      .withValues(alpha: 0.55)),
+                                  color: isDark
+                                      ? LumenColors.inkMutedInverse
+                                      : ReadLogColors.charcoal
+                                          .withValues(alpha: 0.55)),
                             ),
                         ],
                       ),
@@ -449,7 +456,9 @@ class _GoalProgressCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: progress,
                           minHeight: 5,
-                          backgroundColor: ReadLogColors.paperDeep,
+                          backgroundColor: isDark
+                              ? LumenColors.canvasVariant
+                              : LumenColors.surfaceSubtle,
                           color: done
                               ? ReadLogColors.stamp
                               : ReadLogColors.brass,
@@ -475,8 +484,10 @@ class _GoalProgressCard extends StatelessWidget {
                               'Faltam ${target - current} ${goal.type.unit}',
                               style: ReadLogType.mono(
                                   size: 9,
-                                  color: ReadLogColors.charcoal
-                                      .withValues(alpha: 0.4)),
+                                  color: isDark
+                                      ? LumenColors.inkGhostInverse
+                                      : ReadLogColors.charcoal
+                                          .withValues(alpha: 0.4)),
                             ),
                         ],
                       ),
@@ -508,7 +519,7 @@ class _ShareGoalButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: ReadLogColors.stamp.withValues(alpha: 0.1),
+          color: LumenColors.danger.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(2),
           border: Border.all(
               color: ReadLogColors.stamp.withValues(alpha: 0.4)),
@@ -762,14 +773,15 @@ class _StreakCalendarWidget extends ConsumerWidget {
     final readDaysThisMonth =
         activeDays.where((d) => d.startsWith(monthStr)).length;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: ReadLogColors.cream,
+        color: isDark ? LumenColors.canvasElevated : LumenColors.surface,
         borderRadius: BorderRadius.circular(3),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
+            color: isDark ? LumenColors.hairlineDark : LumenColors.hairline,
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -784,7 +796,7 @@ class _StreakCalendarWidget extends ConsumerWidget {
                 icon: const Icon(Icons.chevron_left, size: 20),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                color: ReadLogColors.charcoal.withValues(alpha: 0.6),
+                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
                 onPressed: () {
                   ref.read(_calendarMonthProvider.notifier).state =
                       DateTime(month.year, month.month - 1);
@@ -795,7 +807,7 @@ class _StreakCalendarWidget extends ConsumerWidget {
                   monthLabel,
                   textAlign: TextAlign.center,
                   style: ReadLogType.display(
-                      size: 14, color: ReadLogColors.charcoal),
+                      size: 14, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
                 ),
               ),
               IconButton(
@@ -804,8 +816,8 @@ class _StreakCalendarWidget extends ConsumerWidget {
                 constraints: const BoxConstraints(),
                 color: (month.year == today.year &&
                         month.month == today.month)
-                    ? ReadLogColors.charcoal.withValues(alpha: 0.2)
-                    : ReadLogColors.charcoal.withValues(alpha: 0.6),
+                    ? LumenColors.hairline
+                    : LumenColors.inkMuted,
                 onPressed: month.year == today.year &&
                         month.month == today.month
                     ? null
@@ -827,8 +839,9 @@ class _StreakCalendarWidget extends ConsumerWidget {
                           style: ReadLogType.mono(
                               size: 10,
                               weight: FontWeight.w600,
-                              color: ReadLogColors.charcoal
-                                  .withValues(alpha: 0.4)),
+                              color: isDark
+                                  ? LumenColors.inkMutedInverse
+                                  : LumenColors.ink.withValues(alpha: 0.4)),
                         ),
                       ),
                     ))
@@ -866,7 +879,9 @@ class _StreakCalendarWidget extends ConsumerWidget {
                       ? ReadLogColors.stamp
                       : isFuture
                           ? Colors.transparent
-                          : ReadLogColors.paperAlt,
+                          : isDark
+                              ? LumenColors.canvasVariant
+                              : LumenColors.surfaceVariant,
                   shape: BoxShape.circle,
                   border: isToday
                       ? Border.all(color: ReadLogColors.brass, width: 2)
@@ -879,10 +894,14 @@ class _StreakCalendarWidget extends ConsumerWidget {
                       size: 11,
                       weight: isToday ? FontWeight.w700 : FontWeight.w400,
                       color: isActive
-                          ? ReadLogColors.cream
+                          ? LumenColors.inkInverse
                           : isFuture
-                              ? ReadLogColors.charcoal.withValues(alpha: 0.2)
-                              : ReadLogColors.charcoal.withValues(alpha: 0.7),
+                              ? isDark
+                                  ? LumenColors.hairlineDark
+                                  : LumenColors.hairline
+                              : isDark
+                                  ? LumenColors.inkMutedInverse
+                                  : LumenColors.ink.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -931,7 +950,11 @@ class _CalendarChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = highlight ? ReadLogColors.stamp : ReadLogColors.charcoal.withValues(alpha: 0.5);
+    final color = highlight
+        ? ReadLogColors.stamp
+        : Theme.of(context).brightness == Brightness.dark
+            ? LumenColors.inkMutedInverse
+            : LumenColors.inkMuted;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -985,13 +1008,14 @@ class _HighlightsWidget extends StatelessWidget {
         ? '${avgHours}h ${avgMinsRem}min'
         : '${avgMinsRem}min';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: ReadLogColors.cream,
+        color: isDark ? LumenColors.canvasElevated : LumenColors.surface,
         borderRadius: BorderRadius.circular(3),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
+            color: isDark ? LumenColors.hairlineDark : LumenColors.hairline,
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -1054,14 +1078,15 @@ class _HighlightRow extends StatelessWidget {
                 child: Text(label,
                     style: ReadLogType.mono(
                         size: 12,
-                        color: ReadLogColors.charcoal
-                            .withValues(alpha: 0.7))),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? LumenColors.inkMutedInverse
+                            : LumenColors.ink.withValues(alpha: 0.7))),
               ),
               Text(value,
                   style: ReadLogType.mono(
                       size: 13,
                       weight: FontWeight.w600,
-                      color: ReadLogColors.charcoal)),
+                      color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal)),
             ],
           ),
         ),
@@ -1069,7 +1094,9 @@ class _HighlightRow extends StatelessWidget {
           Divider(
               height: 1,
               thickness: 1,
-              color: ReadLogColors.paperDeep.withValues(alpha: 0.8),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? LumenColors.hairlineDark
+                  : LumenColors.hairline,
               indent: 16,
               endIndent: 16),
       ],

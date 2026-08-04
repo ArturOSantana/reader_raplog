@@ -808,7 +808,7 @@ class _TheoryTileState extends ConsumerState<_TheoryTile> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.10),
+                        color: statusColor,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(

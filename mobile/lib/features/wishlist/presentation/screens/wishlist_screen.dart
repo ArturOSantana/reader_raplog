@@ -116,7 +116,7 @@ class _WishlistTile extends StatelessWidget {
             : AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: item.acquired ? AppColors.forestGreen.withValues(alpha: 0.3) : AppColors.border,
+          color: item.acquired ? LumenColors.readSubtle : AppColors.border,
         ),
       ),
       child: Row(
@@ -199,7 +199,7 @@ class _PlaceholderCover extends StatelessWidget {
       width: 44,
       height: 60,
       decoration: BoxDecoration(
-        color: AppColors.forestGreen.withValues(alpha: 0.1),
+        color: LumenColors.readSubtle,
         borderRadius: BorderRadius.circular(6),
       ),
       child: const Icon(Icons.menu_book_outlined,

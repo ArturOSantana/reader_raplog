@@ -26,20 +26,65 @@ export default async function WebDashboardPage() {
     { data: streak },
     { data: reading },
     { data: recentSessions },
+    { data: activeSession },
   ] = await Promise.all([
     supabase.from('books').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'read'),
     supabase.from('reading_sessions').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.rpc('calculate_streak', { p_user_id: user.id }),
     supabase.from('books').select('title, author, cover_url, current_page, total_pages').eq('user_id', user.id).eq('status', 'reading').limit(3),
     supabase.from('reading_sessions').select('duration_minutes, pages_read, started_at').eq('user_id', user.id).order('started_at', { ascending: false }).limit(5),
+    supabase.from('reading_sessions')
+      .select('id, started_at, books(title)')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .order('started_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   const name = profile?.full_name ?? profile?.username ?? 'Leitor'
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
 
+  // Calcula tempo decorrido da sessão ativa (server-side, sem timer)
+  const activeSessionElapsed = activeSession
+    ? Math.max(0, Math.floor((Date.now() - new Date(activeSession.started_at).getTime()) / 1000))
+    : null
+  const activeBookTitle = activeSession
+    ? (Array.isArray(activeSession.books)
+        ? ((activeSession.books as { title: string }[])[0]?.title ?? 'Leitura')
+        : ((activeSession.books as unknown as { title: string } | null)?.title ?? 'Leitura'))
+    : null
+
   return (
     <div className="p-6 max-w-5xl mx-auto">
+      {/* Banner de sessão ativa */}
+      {activeSession && (
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-lg border border-[#3D6B5A]/20 bg-[#F2F1EF]">
+          {/* Dot de presença */}
+          <span
+            className="inline-block w-2 h-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: '#3D6B5A' }}
+            aria-hidden
+          />
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-[#1A1918] truncate">
+              {activeBookTitle}
+            </p>
+            <p className="text-xs font-[IBM_Plex_Mono] text-[#3D6B5A]">em leitura</p>
+          </div>
+          {/* Tempo decorrido (snapshot no momento do render) */}
+          {activeSessionElapsed !== null && (
+            <span className="text-sm font-[IBM_Plex_Mono] text-[#3D6B5A] flex-shrink-0">
+              {activeSessionElapsed >= 3600
+                ? `${String(Math.floor(activeSessionElapsed / 3600)).padStart(2, '0')}:${String(Math.floor((activeSessionElapsed % 3600) / 60)).padStart(2, '0')}:${String(activeSessionElapsed % 60).padStart(2, '0')}`
+                : `${String(Math.floor(activeSessionElapsed / 60)).padStart(2, '0')}:${String(activeSessionElapsed % 60).padStart(2, '0')}`}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Saudação */}
       <div className="mb-8">
         <div className="flex items-center gap-2 text-[#6B6863] mb-2">

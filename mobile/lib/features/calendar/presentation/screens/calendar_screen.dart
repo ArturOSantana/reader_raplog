@@ -373,7 +373,7 @@ class _DayCell extends StatelessWidget {
   });
 
   Color _bgColor() {
-    if (hasMeeting) return AppColors.warmGold.withValues(alpha: 0.2);
+    if (hasMeeting) return LumenColors.warning;
     if (minutes >= 60) return AppColors.forestGreen.withValues(alpha: 0.8);
     if (minutes >= 20) return AppColors.forestGreen.withValues(alpha: 0.45);
     if (minutes > 0) return AppColors.forestGreen.withValues(alpha: 0.18);

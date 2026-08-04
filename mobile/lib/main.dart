@@ -20,8 +20,6 @@ import 'theme/lumen_theme.dart';
 // Para alterar os tokens de cor ou tipografia, edite lib/theme/lumen_theme.dart.
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
   // Configura hooks de erro do Flutter → ObservabilityService.
   // Em Fase 3, este serviço encaminhará para Sentry.
   setupObservabilityHooks();
@@ -39,6 +37,9 @@ Future<void> main() async {
 }
 
 Future<void> _bootAndRun() async {
+  // Inicializa bindings na mesma zona onde runApp será chamado
+  WidgetsFlutterBinding.ensureInitialized();
+
   // Bloqueia orientação em portrait (padrão para apps de leitura)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

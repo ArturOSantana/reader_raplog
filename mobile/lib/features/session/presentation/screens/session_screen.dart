@@ -525,7 +525,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 'COMO ESTÁ SE SENTINDO?',
                 style: ReadLogType.mono(
                   size: 10,
-                  color: ReadLogColors.cream.withValues(alpha: 0.5),
+                  color: LumenColors.surfaceVariant,
                 ).copyWith(letterSpacing: 1.5),
               ),
               const SizedBox(height: 16),
@@ -552,7 +552,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                           m.label,
                           style: ReadLogType.mono(
                             size: 9,
-                            color: ReadLogColors.cream.withValues(alpha: 0.6),
+                            color: LumenColors.surfaceVariant,
                           ),
                         ),
                       ],
@@ -582,14 +582,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final isPaused = sessionState.isPaused;
     final elapsed = sessionState.elapsedSeconds;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor:
-          isRunning ? ReadLogColors.ink : ReadLogColors.paper,
+      backgroundColor: isRunning
+        ? ReadLogColors.ink
+        : (isDark ? ReadLogColors.canvas : ReadLogColors.surface),
       appBar: AppBar(
-        backgroundColor:
-            isRunning ? ReadLogColors.ink : ReadLogColors.paper,
+        backgroundColor: isRunning
+            ? ReadLogColors.ink
+            : (isDark ? ReadLogColors.canvas : ReadLogColors.surface),
         foregroundColor:
-            isRunning ? ReadLogColors.cream : ReadLogColors.charcoal,
+            isRunning ? ReadLogColors.cream : (isDark ? ReadLogColors.inkInverse : ReadLogColors.charcoal),
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.menu, size: 22),
@@ -676,12 +679,12 @@ class _StartSessionView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Livro',
-              style: ReadLogType.display(size: 15, color: ReadLogColors.charcoal)),
+              style: ReadLogType.display(size: 15, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal)),
           const SizedBox(height: 8),
           if (readingBooks.isEmpty)
             Text(
               'Nenhum livro em leitura. Adicione um na biblioteca.',
-              style: ReadLogType.mono(size: 12, color: ReadLogColors.charcoal.withValues(alpha: 0.6)),
+              style: ReadLogType.mono(size: 12, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted),
             )
           else
             DropdownButtonFormField<Book>(
@@ -706,7 +709,7 @@ class _StartSessionView extends StatelessWidget {
 
           const SizedBox(height: 24),
           Text('Objetivo da sessão',
-              style: ReadLogType.display(size: 15, color: ReadLogColors.charcoal)),
+              style: ReadLogType.display(size: 15, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal)),
           const SizedBox(height: 12),
           _GoalPicker(
             selected: selectedGoal,
@@ -899,7 +902,7 @@ class _ActiveSessionView extends StatelessWidget {
                     child: Icon(
                       Icons.menu_book_outlined,
                       size: 32,
-                      color: ReadLogColors.cream.withValues(alpha: 0.25),
+                      color: LumenColors.hairline,
                     ),
                   ),
                 ),
@@ -922,7 +925,7 @@ class _ActiveSessionView extends StatelessWidget {
                   'SESSÃO · ${_formatTime(elapsed)}',
                   style: ReadLogType.mono(
                     size: 10,
-                    color: ReadLogColors.cream.withValues(alpha: 0.4),
+                    color: LumenColors.surfaceVariant,
                   ).copyWith(letterSpacing: 1.5),
                 ),
 
@@ -944,7 +947,7 @@ class _ActiveSessionView extends StatelessWidget {
                   isPaused ? 'PAUSADO' : 'EM ANDAMENTO',
                   style: ReadLogType.mono(
                     size: 9,
-                    color: ReadLogColors.cream.withValues(alpha: 0.35),
+                    color: LumenColors.surfaceVariant,
                   ).copyWith(letterSpacing: 1.5),
                 ),
 
@@ -954,7 +957,7 @@ class _ActiveSessionView extends StatelessWidget {
                     'desde a página ${sessionState.session!.startPage}',
                     style: ReadLogType.mono(
                       size: 10,
-                      color: ReadLogColors.cream.withValues(alpha: 0.5),
+                      color: LumenColors.surfaceVariant,
                     ),
                   ),
                 ],
@@ -1080,13 +1083,13 @@ class _MiniAction extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: ReadLogColors.cream.withValues(alpha: 0.65)),
+            Icon(icon, size: 16, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted),
             const SizedBox(height: 3),
             Text(
               label,
               style: ReadLogType.mono(
                 size: 9,
-                color: ReadLogColors.cream.withValues(alpha: 0.65),
+                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
                 weight: FontWeight.w500,
               ).copyWith(letterSpacing: 0.8),
             ),
@@ -1190,11 +1193,11 @@ class _GoalProgressBar extends StatelessWidget {
             Text('Objetivo',
                 style: ReadLogType.mono(
                     size: 11,
-                    color: ReadLogColors.charcoal.withValues(alpha: 0.6))),
+                    color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted)),
             Text(label,
                 style: ReadLogType.mono(
                     size: 11,
-                    color: ReadLogColors.charcoal.withValues(alpha: 0.6))),
+                    color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted)),
           ],
         ),
         if (progress != null) ...[
@@ -1339,7 +1342,7 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
             'PÁGINA FINAL',
             style: ReadLogType.mono(
               size: 10,
-              color: ReadLogColors.charcoal.withValues(alpha: 0.55),
+              color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
             ).copyWith(letterSpacing: 1.5),
           ),
           const SizedBox(height: 6),
@@ -1351,10 +1354,10 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
               hintText: 'Ex: ${startPage + 20}',
               hintStyle: ReadLogType.mono(
                 size: 13,
-                color: ReadLogColors.charcoal.withValues(alpha: 0.35),
+                color: LumenColors.inkSecondary,
               ),
             ),
-            style: ReadLogType.mono(size: 15, color: ReadLogColors.charcoal),
+            style: ReadLogType.mono(size: 15, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
             onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 16),
@@ -1364,7 +1367,7 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
             'IMPRESSÃO RÁPIDA',
             style: ReadLogType.mono(
               size: 10,
-              color: ReadLogColors.charcoal.withValues(alpha: 0.55),
+              color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
             ).copyWith(letterSpacing: 1.5),
           ),
           const SizedBox(height: 6),
@@ -1375,18 +1378,18 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
             style: ReadLogType.display(
               size: 14,
               italic: true,
-              color: ReadLogColors.charcoal,
+              color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal,
             ),
             decoration: InputDecoration(
               hintText: '"Uma linha sobre o que você leu…"',
               hintStyle: ReadLogType.display(
                 size: 14,
                 italic: true,
-                color: ReadLogColors.charcoal.withValues(alpha: 0.35),
+                color: LumenColors.inkSecondary,
               ),
               counterStyle: ReadLogType.mono(
                 size: 9,
-                color: ReadLogColors.charcoal.withValues(alpha: 0.4),
+                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
               ),
             ),
           ),
@@ -1397,7 +1400,7 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
             'HUMOR',
             style: ReadLogType.mono(
               size: 10,
-              color: ReadLogColors.charcoal.withValues(alpha: 0.55),
+              color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
             ).copyWith(letterSpacing: 1.5),
           ),
           const SizedBox(height: 10),
@@ -1414,7 +1417,7 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
                     height: 58,
                     decoration: BoxDecoration(
                       color: selected
-                          ? ReadLogColors.brass.withValues(alpha: 0.15)
+                          ? LumenColors.readSubtle
                           : ReadLogColors.cream,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
@@ -1445,12 +1448,12 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
           TextFormField(
             controller: _notesController,
             maxLines: 2,
-            style: ReadLogType.mono(size: 13, color: ReadLogColors.charcoal),
+            style: ReadLogType.mono(size: 13, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
             decoration: InputDecoration(
               labelText: 'NOTAS INTERNAS',
               labelStyle: ReadLogType.mono(
                 size: 10,
-                color: ReadLogColors.charcoal.withValues(alpha: 0.5),
+                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
               ).copyWith(letterSpacing: 1.2),
             ),
           ),
@@ -1593,7 +1596,7 @@ class _ShareCompletionSheetState extends State<_ShareCompletionSheet> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: ReadLogColors.brassLight.withValues(alpha: 0.3),
+                color: LumenColors.readLight,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1605,7 +1608,7 @@ class _ShareCompletionSheetState extends State<_ShareCompletionSheet> {
           Text(widget.book.title,
               style: ReadLogType.mono(
                   size: 12,
-                  color: ReadLogColors.cream.withValues(alpha: 0.6))),
+                  color: LumenColors.surfaceVariant)),
           const SizedBox(height: 20),
 
           // Card preview
@@ -1630,7 +1633,7 @@ class _ShareCompletionSheetState extends State<_ShareCompletionSheet> {
               hintText: 'Adicione uma resenha (opcional)...',
               hintStyle: ReadLogType.mono(
                   size: 12,
-                  color: ReadLogColors.cream.withValues(alpha: 0.4)),
+                  color: LumenColors.surfaceVariant),
               filled: true,
               fillColor: ReadLogColors.inkAlt,
               border: OutlineInputBorder(
@@ -1727,7 +1730,7 @@ class _QuickInputSheetState extends State<_QuickInputSheet> {
             widget.title.toUpperCase(),
             style: ReadLogType.mono(
               size: 10,
-              color: ReadLogColors.cream.withValues(alpha: 0.5),
+              color: LumenColors.surfaceVariant,
             ).copyWith(letterSpacing: 1.5),
           ),
           const SizedBox(height: 12),
@@ -1751,12 +1754,12 @@ class _QuickInputSheetState extends State<_QuickInputSheet> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(3),
                 borderSide: BorderSide(
-                    color: ReadLogColors.cream.withValues(alpha: 0.15)),
+                    color: LumenColors.hairline),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(3),
                 borderSide: BorderSide(
-                    color: ReadLogColors.cream.withValues(alpha: 0.15)),
+                    color: LumenColors.hairline),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(3),
