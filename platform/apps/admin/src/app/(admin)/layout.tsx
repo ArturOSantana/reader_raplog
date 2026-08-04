@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { createServerSupabase } from '@lumen/supabase/server'
 import { isAdminRole } from '@lumen/types'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Layout do Admin Console (admin.lumen.app).
  *
