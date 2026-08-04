@@ -15,6 +15,12 @@ dependencies:
   # Supabase
   supabase_flutter: ^2.8.4
 
+  # Compatibilidade Android: fixa versões que aceitam minSdk 21 (Android 5.0).
+  # app_links 7.x subiu para minSdk 24; supabase_flutter aceita >=6.2.0 <8.0.0.
+  # image_picker_android 0.8.13 subiu para minSdk 24; image_picker ^1.1.2 aceita ^0.8.7.
+  app_links: ^6.4.1
+  image_picker_android: 0.8.12+25
+
   # Google Sign-In
   google_sign_in: ^6.3.0
 
@@ -43,6 +49,7 @@ dependencies:
   # UI
   flutter_svg: ^2.1.0
   image_picker: ^1.1.2
+  mobile_scanner: ^7.4.0
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   fl_chart: ^0.68.0

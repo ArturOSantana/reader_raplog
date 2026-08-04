@@ -41,9 +41,11 @@ android {
 
     defaultConfig {
         applicationId = "com.readlog.readlog"
-        // flutter.minSdkVersion = 24 (Android 7.0) no Flutter 3.44+.
-        // Satisfaz os requisitos de home_widget, flutter_local_notifications e
-        // share_plus (API 23+). Dispositivos < Android 7.0 não são suportados.
+        // minSdk fixado em 21 (Android 5.0, Lollipop) para máxima compatibilidade.
+        // O piso real é limitado pelos plugins:
+        //   - jni, share_plus, google_sign_in: minSdk 21
+        //   - app_links ^6.4.1 e image_picker_android 0.8.12+25: minSdk 21
+        // flutter.minSdkVersion no Flutter 3.44+ retorna 24, por isso sobrescrevemos.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

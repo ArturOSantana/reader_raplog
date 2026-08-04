@@ -132,8 +132,9 @@ class _CategoryFilterBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: ReadLogColors.paperAlt,
+      color: isDark ? LumenColors.canvas : ReadLogColors.paperAlt,
       child: SizedBox(
         height: 46,
         child: ListView(
@@ -176,6 +177,10 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inkColor    = isDark ? LumenColors.inkInverse : LumenColors.ink;
+    final paperColor  = isDark ? LumenColors.canvas     : LumenColors.surface;
+    final borderColor = isDark ? LumenColors.dividerDark : LumenColors.inkSecondary;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -183,26 +188,24 @@ class _FilterChip extends StatelessWidget {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: selected ? ReadLogColors.charcoal : Colors.transparent,
+          color: selected ? inkColor : Colors.transparent,
           borderRadius: BorderRadius.circular(2),
           border: Border.all(
-            color: selected
-                ? ReadLogColors.charcoal
-                : LumenColors.inkSecondary,
+            color: selected ? inkColor : borderColor,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 12),
+            Icon(icon, size: 12, color: selected ? paperColor : inkColor.withValues(alpha: 0.65)),
             const SizedBox(width: 4),
             Text(
               label.toUpperCase(),
               style: ReadLogType.mono(
                 size: 10,
                 color: selected
-                    ? ReadLogColors.paper
-                    : ReadLogColors.charcoal.withValues(alpha: 0.65),
+                    ? paperColor
+                    : inkColor.withValues(alpha: 0.65),
               ).copyWith(letterSpacing: 0.5),
             ),
           ],

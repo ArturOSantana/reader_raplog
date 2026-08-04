@@ -102,14 +102,6 @@ class HomeScreen extends ConsumerWidget {
     final hour = DateTime.now().hour;
     final greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
 
-    final now  = DateTime.now();
-    final weekdays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-    final months   = [
-      'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-      'jul', 'ago', 'set', 'out', 'nov', 'dez'
-    ];
-    final dateLabel = '${weekdays[now.weekday - 1]}, ${now.day} de ${months[now.month - 1]}';
-
     final currentUser = ref.watch(currentUserProvider);
     final fullName    = currentUser?.userMetadata?['full_name'] as String?;
     final userName    = (fullName?.trim().split(' ').first) ??
@@ -138,30 +130,23 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
         data: (d) {
-          final daily      = d['daily'] as Map<String, dynamic>;
-          final streak     = d['streak'] as int;
-          final reading    = d['reading'] as List<Book>;
-          final goals      = d['goals'] as List<Goal>;
+          final daily   = d['daily'] as Map<String, dynamic>;
+          final streak  = d['streak'] as int;
+          final reading = d['reading'] as List<Book>;
+          final goals   = d['goals'] as List<Goal>;
 
-          final todayMinutes = (daily['total_minutes'] as num?)?.toInt() ?? 0;
-          final todayPages   = (daily['total_pages']   as num?)?.toInt() ?? 0;
+          final todayPages = (daily['total_pages'] as num?)?.toInt() ?? 0;
 
-          final dailyGoals = goals
-              .where((g) =>
-                  g.type == GoalType.dailyMinutes ||
-                  g.type == GoalType.dailyPages)
-              .toList();
+          final dailyMission = goals.cast<Goal?>().firstWhere(
+            (g) => g!.type == GoalType.dailyPages || g.type == GoalType.dailyMinutes,
+            orElse: () => null,
+          );
 
-          final dailyMission = dailyGoals.cast<Goal?>().firstWhere(
-                (g) => g!.type == GoalType.dailyMinutes,
-                orElse: () => dailyGoals.cast<Goal?>().firstWhere(
-                      (g) => g!.type == GoalType.dailyPages,
-                      orElse: () => null,
-                    ),
-              );
+          final currentBook   = reading.isNotEmpty ? reading.first : null;
+          final otherBooks    = reading.length > 1 ? reading.sublist(1, reading.length > 4 ? 4 : reading.length) : <Book>[];
 
           return RefreshIndicator(
-            color: isDark ? ReadLogColors.progressLight : ReadLogColors.progress,
+            color: isDark ? ReadLogColors.readLight : ReadLogColors.read,
             backgroundColor: bg,
             onRefresh: () async {
               ref.invalidate(_homeDataProvider);
@@ -170,73 +155,68 @@ class HomeScreen extends ConsumerWidget {
             },
             child: CustomScrollView(
               slivers: [
-                // ── Header ────────────────────────────────────────────
+                // ── Header com saudação ────────────────────────────────
                 SliverToBoxAdapter(
                   child: SafeArea(
                     bottom: false,
                     child: _HomeHeader(
-                      dateLabel: dateLabel,
                       greeting: greeting,
                       userName: userName,
+                      streak: streak,
+                      ref: ref,
                     ),
                   ),
                 ),
 
-                // ── Sessão ativa ───────────────────────────────────────
+                // ── Banner de sessão ativa ─────────────────────────────
                 const SliverToBoxAdapter(child: _ActiveSessionBanner()),
 
-                // ── Progresso do dia ───────────────────────────────────
-                if (streak > 0 || todayMinutes > 0 || todayPages > 0)
+                // ── Hero: livro principal ──────────────────────────────
+                if (currentBook != null)
                   SliverToBoxAdapter(
-                    child: _DailyProgress(
-                      streak: streak,
-                      todayMinutes: todayMinutes,
+                    child: _CurrentBookHero(
+                      book: currentBook,
                       todayPages: todayPages,
                       mission: dailyMission,
                     ),
-                  ),
-
-                // ── Amigos lendo agora ─────────────────────────────────
-                SliverToBoxAdapter(child: _HomeFriendsPresence()),
-
-                // ── Lendo agora ────────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 12),
-                    child: _SectionLabel(
-                      label: reading.isEmpty ? 'BIBLIOTECA' : 'LENDO AGORA',
-                    ),
-                  ),
-                ),
-
-                if (reading.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
-                      child: _EmptyState(),
-                    ),
                   )
                 else
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+                      child: _EmptyState(),
+                    ),
+                  ),
+
+                // ── Clube: presença condicional ────────────────────────
+                const SliverToBoxAdapter(child: _ClubPresenceRow()),
+
+                // ── 1 linha de atividade social ───────────────────────
+                const SliverToBoxAdapter(child: _SocialActivityRow()),
+
+                // ── Outros livros na estante ───────────────────────────
+                if (otherBooks.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+                      child: _SectionLabel(label: 'Também na estante'),
+                    ),
+                  ),
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (ctx, i) => Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: ReadLogCatalogCard(
-                          title: reading[i].title,
-                          author: reading[i].author ?? '',
-                          progress: _progress(reading[i]),
-                          currentPage: reading[i].currentPage,
-                          totalPages: reading[i].totalPages,
-                          coverUrl: reading[i].coverUrl,
-                          onTap: () =>
-                              context.push('/library/book/${reading[i].id}'),
+                        child: _ShelfRow(
+                          book: otherBooks[i],
+                          onTap: () => context.push('/library/book/${otherBooks[i].id}'),
                         ),
                       ),
-                      childCount: reading.length > 3 ? 3 : reading.length,
+                      childCount: otherBooks.length,
                     ),
                   ),
+                ],
 
-                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                const SliverToBoxAdapter(child: SizedBox(height: 40)),
               ],
             ),
           );
@@ -245,41 +225,36 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  static double _progress(Book b) {
-    if (b.totalPages == null || b.totalPages == 0) return 0;
-    return ((b.currentPage ?? 0) / b.totalPages!).clamp(0.0, 1.0);
-  }
 }
 
 // ── Header ────────────────────────────────────────────────────────────────────
 
-class _HomeHeader extends ConsumerWidget {
-  final String dateLabel;
+class _HomeHeader extends StatelessWidget {
   final String greeting;
   final String userName;
+  final int streak;
+  final WidgetRef ref;
 
   const _HomeHeader({
-    required this.dateLabel,
     required this.greeting,
     required this.userName,
+    required this.streak,
+    required this.ref,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg     = isDark ? ReadLogColors.canvas      : ReadLogColors.surface;
-    final fg     = isDark ? ReadLogColors.inkInverse  : ReadLogColors.ink;
-    final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
-    final fgSec  = isDark ? ReadLogColors.inkSecondaryInverse : ReadLogColors.inkSecondary;
-    final divColor = isDark ? ReadLogColors.hairlineDark : ReadLogColors.hairline;
+  Widget build(BuildContext context) {
+    final isDark  = Theme.of(context).brightness == Brightness.dark;
+    final fg      = isDark ? ReadLogColors.inkInverse       : ReadLogColors.ink;
+    final fgMut   = isDark ? ReadLogColors.inkMutedInverse  : ReadLogColors.inkMuted;
+    final fgSec   = isDark ? ReadLogColors.inkSecondaryInverse : ReadLogColors.inkSecondary;
 
-    return Container(
-      color: bg,
+    return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Barra de topo: menu / data / notificações / avatar
+          // Barra de topo
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -287,20 +262,9 @@ class _HomeHeader extends ConsumerWidget {
                 onTap: openAppDrawer,
                 child: Icon(Icons.menu, size: 22, color: fgSec),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  dateLabel,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    color: fgMut,
-                  ),
-                ),
-              ),
+              const Spacer(),
               IconButton(
-                icon: Icon(Icons.notifications_outlined,
-                    size: 20, color: fgSec),
+                icon: Icon(Icons.notifications_outlined, size: 20, color: fgSec),
                 onPressed: () => context.push('/notifications'),
                 tooltip: 'Notificações',
                 padding: EdgeInsets.zero,
@@ -312,9 +276,9 @@ class _HomeHeader extends ConsumerWidget {
             ],
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
 
-          // Saudação — tipografia protagonista
+          // Saudação compacta
           Text(
             greeting,
             style: TextStyle(
@@ -324,13 +288,31 @@ class _HomeHeader extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            userName,
-            style: ReadLogType.bookTitle(size: 32, color: fg, weight: FontWeight.w500),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                userName,
+                style: ReadLogType.bookTitle(
+                  size: 30,
+                  color: fg,
+                  weight: FontWeight.w500,
+                ),
+              ),
+              if (streak > 0) ...[
+                const SizedBox(width: 10),
+                Text(
+                  'Sequência de $streak ${streak == 1 ? 'dia' : 'dias'}',
+                  style: TextStyle(
+                    fontFamily: 'IBM Plex Mono',
+                    fontSize: 11,
+                    color: fgMut,
+                  ),
+                ),
+              ],
+            ],
           ),
-
-          const SizedBox(height: 24),
-          Divider(height: 1, thickness: 1, color: divColor),
         ],
       ),
     );
@@ -343,10 +325,10 @@ class _UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fgBg = isDark ? ReadLogColors.canvasVariant : ReadLogColors.surfaceVariant;
-    final fgBorder = isDark ? ReadLogColors.hairlineDark : ReadLogColors.hairline;
-    final fg = isDark ? ReadLogColors.ink : ReadLogColors.inkInverse;
+    final isDark   = Theme.of(context).brightness == Brightness.dark;
+    final fgBg     = isDark ? ReadLogColors.canvasVariant   : ReadLogColors.surfaceVariant;
+    final fgBorder = isDark ? ReadLogColors.hairlineDark    : ReadLogColors.hairline;
+    final fg       = isDark ? ReadLogColors.ink             : ReadLogColors.inkInverse;
 
     final user     = ref.watch(currentUserProvider);
     final fullName = user?.userMetadata?['full_name'] as String?;
@@ -385,182 +367,290 @@ class _UserAvatar extends StatelessWidget {
   }
 }
 
-// ── Progresso diário ──────────────────────────────────────────────────────────
+// ── Hero do livro atual ────────────────────────────────────────────────────────
 
-class _DailyProgress extends StatelessWidget {
-  final int streak;
-  final int todayMinutes;
+class _CurrentBookHero extends StatelessWidget {
+  final Book book;
   final int todayPages;
   final Goal? mission;
 
-  const _DailyProgress({
-    required this.streak,
-    required this.todayMinutes,
+  const _CurrentBookHero({
+    required this.book,
     required this.todayPages,
     required this.mission,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
-    final bgProgress = isDark ? ReadLogColors.canvasVariant : ReadLogColors.surfaceVariant;
-    final divColor = isDark ? ReadLogColors.hairlineDark : ReadLogColors.hairline;
+    final isDark   = Theme.of(context).brightness == Brightness.dark;
+    final fg       = isDark ? ReadLogColors.inkInverse      : ReadLogColors.ink;
+    final fgMut    = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
+    final divColor = isDark ? ReadLogColors.hairlineDark    : ReadLogColors.hairline;
+    final trackBg  = isDark ? ReadLogColors.canvasVariant   : ReadLogColors.surfaceSubtle;
 
-    // Métricas do dia
-    final hours = todayMinutes ~/ 60;
-    final mins  = todayMinutes % 60;
-    final timeLabel = hours > 0 ? '${hours}h ${mins}min' : '${mins}min';
+    final progress = (book.totalPages != null && book.totalPages! > 0)
+        ? ((book.currentPage ?? 0) / book.totalPages!).clamp(0.0, 1.0)
+        : 0.0;
 
-    // Progresso da meta (se tiver)
+    final pct       = (progress * 100).round();
+    final pageLabel = (book.currentPage != null && book.totalPages != null)
+        ? 'pág. ${book.currentPage} de ${book.totalPages}'
+        : '$pct%';
+
+    // meta de hoje
     double? missionProgress;
+    String? missionLabel;
     bool missionDone = false;
     if (mission != null) {
-      final current = mission!.type == GoalType.dailyMinutes
-          ? todayMinutes
-          : todayPages;
-      missionProgress = (current / mission!.targetValue).clamp(0.0, 1.0);
-      missionDone = current >= mission!.targetValue;
+      final target  = mission!.targetValue.toInt();
+      final current = mission!.type == GoalType.dailyPages ? todayPages : 0;
+      missionProgress = (current / target).clamp(0.0, 1.0);
+      missionDone     = current >= target;
+      missionLabel    = missionDone
+          ? 'Meta atingida'
+          : '$current de $target ${mission!.type == GoalType.dailyPages ? 'páginas' : 'min'}';
     }
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Linha de métricas
-          Row(
-            children: [
-              _MetricItem(
-                value: streak > 0 ? '$streak' : '–',
-                unit: streak == 1 ? 'dia' : 'dias',
-                label: 'Sequência',
-                accent: streak > 0
-                    ? (isDark ? ReadLogColors.progressLight : ReadLogColors.progress)
-                    : null,
-              ),
-              const SizedBox(width: 32),
-              _MetricItem(
-                value: timeLabel,
-                unit: '',
-                label: 'Hoje',
-              ),
-              const SizedBox(width: 32),
-              _MetricItem(
-                value: '$todayPages',
-                unit: 'pág.',
-                label: 'Páginas',
-              ),
-            ],
-          ),
+    return GestureDetector(
+      onTap: () => context.push('/library/book/${book.id}'),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Capa hero + info
+            _BookHeroBanner(book: book),
 
-          // Meta do dia
-          if (missionProgress != null) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
+
+            // Barra de progresso do livro (preta)
+            _ProgressTrack(
+              value: progress,
+              color: fg,
+              trackColor: trackBg,
+            ),
+            const SizedBox(height: 7),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
-                      value: missionProgress,
-                      minHeight: 2,
-                      backgroundColor: bgProgress,
-                      color: missionDone
-                          ? ReadLogColors.success
-                          : (isDark ? ReadLogColors.progressLight : ReadLogColors.progress),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  missionDone ? 'Meta atingida' : '${(missionProgress * 100).round()}%',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 11,
-                    color: missionDone
-                        ? ReadLogColors.success
-                        : fgMut,
-                  ),
-                ),
+                Text(pageLabel,
+                    style: ReadLogType.mono(size: 10.5, color: fgMut)),
+                Text('$pct%',
+                    style: ReadLogType.mono(size: 10.5, color: fgMut)),
               ],
             ),
-          ],
 
-          const SizedBox(height: 24),
-          Divider(height: 1, thickness: 1, color: divColor),
+            // Meta do dia (verde) — só aparece se houver meta configurada
+            if (missionProgress != null) ...[
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Meta de hoje',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      color: fgMut,
+                    ),
+                  ),
+                  Text(
+                    missionLabel ?? '',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: missionDone ? ReadLogColors.read : fg,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _ProgressTrack(
+                value: missionProgress,
+                color: ReadLogColors.read,
+                trackColor: trackBg,
+              ),
+            ],
+
+            const SizedBox(height: 20),
+
+            // CTA "Continuar leitura"
+            _ReadCTA(bookId: book.id),
+
+            const SizedBox(height: 24),
+            Divider(height: 1, thickness: 1, color: divColor),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BookHeroBanner extends StatelessWidget {
+  final Book book;
+  const _BookHeroBanner({required this.book});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark  = Theme.of(context).brightness == Brightness.dark;
+    final bgHero  = isDark ? ReadLogColors.canvasElevated : const Color(0xFF3A322C);
+
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(LumenRadius.card),
+        color: bgHero,
+        image: book.coverUrl != null
+            ? DecorationImage(
+                image: NetworkImage(book.coverUrl!),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withValues(alpha: 0.45),
+                  BlendMode.darken,
+                ),
+              )
+            : null,
+      ),
+      alignment: Alignment.bottomLeft,
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            book.title,
+            style: ReadLogType.bookTitle(
+              size: 20,
+              color: const Color(0xFFFAF8F4),
+              weight: FontWeight.w500,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (book.author != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              book.author!,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                color: const Color(0xFFFAF8F4).withValues(alpha: 0.72),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _MetricItem extends StatelessWidget {
-  final String value;
-  final String unit;
-  final String label;
-  final Color? accent;
+class _ProgressTrack extends StatelessWidget {
+  final double value;
+  final Color color;
+  final Color trackColor;
 
-  const _MetricItem({
+  const _ProgressTrack({
     required this.value,
-    required this.unit,
-    required this.label,
-    this.accent,
+    required this.color,
+    required this.trackColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg     = isDark ? ReadLogColors.inkInverse  : ReadLogColors.ink;
-    final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
-    final valueColor = accent ?? fg;
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final w   = constraints.maxWidth;
+        final dot = 6.0;
+        final pos = (w * value).clamp(dot / 2, w - dot / 2);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              value,
-              style: ReadLogType.mono(
-                size: 20,
-                weight: FontWeight.w600,
-                color: valueColor,
+        return SizedBox(
+          height: 12,
+          child: Stack(
+            alignment: Alignment.centerLeft,
+            children: [
+              // trilho
+              Positioned.fill(
+                top: 5,
+                bottom: 5,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: trackColor,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
               ),
-            ),
-            if (unit.isNotEmpty) ...[
-              const SizedBox(width: 3),
-              Text(
-                unit,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 11,
-                  color: fgMut,
+              // preenchimento
+              Positioned(
+                left: 0,
+                top: 5,
+                bottom: 5,
+                width: pos,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+              ),
+              // ponto indicador
+              Positioned(
+                left: pos - dot / 2,
+                child: Container(
+                  width: dot,
+                  height: dot,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ],
-          ],
-        ),
-        const SizedBox(height: 1),
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 11,
-            color: fgMut,
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
 
-// ── Presença de amigos ────────────────────────────────────────────────────────
+class _ReadCTA extends StatelessWidget {
+  final String bookId;
+  const _ReadCTA({required this.bookId});
 
-class _HomeFriendsPresence extends ConsumerWidget {
-  const _HomeFriendsPresence();
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg     = isDark ? ReadLogColors.inkInverse : ReadLogColors.ink;
+    final fg     = isDark ? ReadLogColors.ink        : ReadLogColors.inkInverse;
+
+    return GestureDetector(
+      onTap: () => context.push('/session?bookId=$bookId'),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(LumenRadius.pill),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          'Continuar leitura',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: fg,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Presença do clube (condicional — só aparece se houver alguém lendo) ────────
+
+class _ClubPresenceRow extends ConsumerWidget {
+  const _ClubPresenceRow();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -570,31 +660,98 @@ class _HomeFriendsPresence extends ConsumerWidget {
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
       data: (clubPresences) {
-        final seen = <String>{};
-        final all  = <({ClubPresenceMember member, String clubName})>[];
-        for (final cp in clubPresences) {
-          for (final m in cp.members) {
-            if (seen.add(m.userId)) {
-              all.add((member: m, clubName: cp.club.name));
-            }
-          }
-        }
-        if (all.isEmpty) return const SizedBox.shrink();
+        // Conta total de membros online em todos os clubes
+        final totalOnline = clubPresences.fold<int>(
+          0,
+          (sum, cp) => sum + cp.members.where((m) => m.isActive).length,
+        );
+        if (totalOnline == 0 || clubPresences.isEmpty) return const SizedBox.shrink();
 
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final divColor = isDark ? ReadLogColors.hairlineDark : ReadLogColors.hairline;
+        final clubName = clubPresences.first.club.name;
+        final isDark   = Theme.of(context).brightness == Brightness.dark;
+        final fgMut    = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 4),
+          child: Row(
+            children: [
+              _PresenceDot(
+                isActive: true,
+                color: ReadLogColors.read,
+                activeColor: ReadLogColors.readLight,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '$clubName · $totalOnline ${totalOnline == 1 ? 'lendo agora' : 'lendo agora'}',
+                style: ReadLogType.mono(size: 11, color: fgMut),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── Linha de atividade social (1 amigo, mais recente) ────────────────────────
+
+class _SocialActivityRow extends ConsumerWidget {
+  const _SocialActivityRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final presenceAsync = ref.watch(_homeFriendsPresenceProvider);
+
+    return presenceAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (clubPresences) {
+        // Pega o membro mais recente que NÃO está ativamente lendo (tem elapsed)
+        ClubPresenceMember? recent;
+        for (final cp in clubPresences) {
+          for (final m in cp.members) {
+            if (!m.isActive) {
+              recent = m;
+              break;
+            }
+          }
+          if (recent != null) break;
+        }
+        if (recent == null) return const SizedBox.shrink();
+
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final fg     = isDark ? ReadLogColors.inkInverse      : ReadLogColors.ink;
+        final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
+        final divColor = isDark ? ReadLogColors.hairlineDark  : ReadLogColors.hairline;
+
+        final name     = recent.userName ?? 'Alguém';
+        final elapsed  = recent.presenceLabel;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _SectionLabel(label: 'LENDO AGORA'),
-              const SizedBox(height: 16),
-              ...all.take(4).map((e) => _FriendRow(
-                    member: e.member,
-                    clubName: e.clubName,
-                  )),
+              RichText(
+                text: TextSpan(
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    color: fgMut,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: fg,
+                      ),
+                    ),
+                    TextSpan(text: ' estava lendo · $elapsed'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
               Divider(height: 1, thickness: 1, color: divColor),
             ],
           ),
@@ -604,90 +761,89 @@ class _HomeFriendsPresence extends ConsumerWidget {
   }
 }
 
-class _FriendRow extends StatelessWidget {
-  final ClubPresenceMember member;
-  final String clubName;
+// ── Linha de livro na estante ─────────────────────────────────────────────────
 
-  const _FriendRow({required this.member, required this.clubName});
+class _ShelfRow extends StatelessWidget {
+  final Book book;
+  final VoidCallback onTap;
+
+  const _ShelfRow({required this.book, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg = isDark ? ReadLogColors.inkInverse : ReadLogColors.ink;
+    final fg     = isDark ? ReadLogColors.inkInverse      : ReadLogColors.ink;
     final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
-    final bgAvatar = isDark ? ReadLogColors.canvasVariant : ReadLogColors.surfaceVariant;
-    final fgAvatar = isDark ? ReadLogColors.inkSecondaryInverse : ReadLogColors.inkSecondary;
-    final dotColor = member.isActive
-        ? ReadLogColors.progress
-        : ReadLogColors.idle;
+    final bgCover = isDark ? ReadLogColors.canvasVariant  : ReadLogColors.surfaceSubtle;
+    final divColor = isDark ? ReadLogColors.hairlineDark  : ReadLogColors.hairline;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
-        children: [
-          // Indicador de presença
-          Container(
-            width: 6,
-            height: 6,
-            margin: const EdgeInsets.only(right: 10, top: 1),
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
+    final progress = (book.totalPages != null && book.totalPages! > 0)
+        ? ((book.currentPage ?? 0) / book.totalPages!).clamp(0.0, 1.0)
+        : 0.0;
+    final pct = (progress * 100).round();
+    final pctLabel = pct > 0 ? '$pct%' : '—';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: divColor, width: 1),
           ),
-
-          // Avatar
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: bgAvatar,
-              shape: BoxShape.circle,
+        ),
+        child: Row(
+          children: [
+            // Miniatura da capa
+            Container(
+              width: 30,
+              height: 42,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(2),
+                color: bgCover,
+                image: book.coverUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(book.coverUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
             ),
-            child: member.avatarUrl != null
-                ? ClipOval(
-                    child: Image.network(
-                      member.avatarUrl!,
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                : Center(
-                    child: Text(
-                      (member.userName ?? '?')[0].toUpperCase(),
+
+            // Título e autor
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    book.title,
+                    style: ReadLogType.bookTitle(size: 14, color: fg),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (book.author != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      book.author!,
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: fgAvatar,
+                        color: fgMut,
                       ),
                     ),
-                  ),
-          ),
-
-          const SizedBox(width: 10),
-
-          Expanded(
-            child: Text(
-              member.userName ?? 'Leitor',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                color: fg,
+                  ],
+                ],
               ),
             ),
-          ),
 
-          Text(
-            member.isActive ? 'lendo agora' : member.presenceLabel,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              color: member.isActive
-                  ? (isDark ? ReadLogColors.progressLight : ReadLogColors.progress)
-                  : fgMut,
+            // Percentual
+            Text(
+              pctLabel,
+              style: ReadLogType.mono(size: 10.5, color: fgMut),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -714,7 +870,6 @@ class _SectionLabel extends StatelessWidget {
 // ── Banner de sessão ativa ────────────────────────────────────────────────────
 
 /// Aparece na home SOMENTE quando há uma sessão de leitura em andamento.
-/// Pulsa enquanto a sessão está rodando; exibe "pausada" quando pausada.
 class _ActiveSessionBanner extends ConsumerWidget {
   const _ActiveSessionBanner();
 
@@ -723,12 +878,12 @@ class _ActiveSessionBanner extends ConsumerWidget {
     final session = ref.watch(sessionNotifierProvider);
     if (!session.hasActiveSession) return const SizedBox.shrink();
 
-    final isDark      = Theme.of(context).brightness == Brightness.dark;
-    final bg          = isDark ? ReadLogColors.canvasVariant : ReadLogColors.surfaceVariant;
-    final dotColor    = session.isPaused ? ReadLogColors.idle : ReadLogColors.read;
+    final isDark        = Theme.of(context).brightness == Brightness.dark;
+    final bg            = isDark ? ReadLogColors.canvasVariant : ReadLogColors.surfaceVariant;
+    final dotColor      = session.isPaused ? ReadLogColors.idle : ReadLogColors.read;
     final dotColorLight = session.isPaused ? ReadLogColors.idle : ReadLogColors.readLight;
 
-    final elapsed     = session.elapsedSeconds;
+    final elapsed  = session.elapsedSeconds;
     final h = elapsed ~/ 3600;
     final m = (elapsed % 3600) ~/ 60;
     final s = elapsed % 60;
@@ -737,11 +892,11 @@ class _ActiveSessionBanner extends ConsumerWidget {
         : '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
 
     final statusLabel = session.isPaused ? 'pausada' : 'em leitura';
-    final fg     = isDark ? ReadLogColors.inkInverse  : ReadLogColors.ink;
+    final fg     = isDark ? ReadLogColors.ink : ReadLogColors.ink;
     final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
       child: GestureDetector(
         onTap: () {
           final bookId = session.session?.bookId;
@@ -755,19 +910,17 @@ class _ActiveSessionBanner extends ConsumerWidget {
             color: bg,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: session.isPaused
-                  ? ReadLogColors.idle
-                  : ReadLogColors.read,
+              color: session.isPaused ? ReadLogColors.idle : ReadLogColors.read,
             ),
           ),
           child: Row(
             children: [
-              // Dot pulsante (usa AnimatedContainer para brilhar)
-              _PresenceDot(isActive: !session.isPaused, color: dotColor, activeColor: dotColorLight),
-
+              _PresenceDot(
+                isActive: !session.isPaused,
+                color: dotColor,
+                activeColor: dotColorLight,
+              ),
               const SizedBox(width: 12),
-
-              // Título e status
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -789,29 +942,26 @@ class _ActiveSessionBanner extends ConsumerWidget {
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 11,
-                        color: session.isPaused ? ReadLogColors.idle : (isDark ? ReadLogColors.readLight : ReadLogColors.read),
+                        color: session.isPaused
+                            ? ReadLogColors.idle
+                            : (isDark ? ReadLogColors.readLight : ReadLogColors.read),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Timer
               Text(
                 timeStr,
                 style: ReadLogType.mono(
                   size: 15,
                   weight: FontWeight.w500,
-                  color: session.isPaused ? fgMut : (isDark ? ReadLogColors.readLight : ReadLogColors.read),
+                  color: session.isPaused
+                      ? fgMut
+                      : (isDark ? ReadLogColors.readLight : ReadLogColors.read),
                 ),
               ),
-
               const SizedBox(width: 8),
-              Icon(
-                Icons.chevron_right,
-                size: 16,
-                color: fgMut,
-              ),
+              Icon(Icons.chevron_right, size: 16, color: fgMut),
             ],
           ),
         ),
@@ -820,7 +970,7 @@ class _ActiveSessionBanner extends ConsumerWidget {
   }
 }
 
-/// Ponto de presença: pulsa quando ativo (simula um LED aceso).
+/// Ponto de presença: pulsa quando ativo.
 class _PresenceDot extends StatefulWidget {
   final bool isActive;
   final Color color;
@@ -870,8 +1020,8 @@ class _PresenceDotState extends State<_PresenceDot> with SingleTickerProviderSta
     return AnimatedBuilder(
       animation: _anim,
       builder: (_, __) => Container(
-        width: 8,
-        height: 8,
+        width: 6,
+        height: 6,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: widget.isActive
@@ -920,7 +1070,7 @@ class _EmptyState extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: isDark ? ReadLogColors.progressLight : ReadLogColors.progress,
+                color: isDark ? ReadLogColors.readLight : ReadLogColors.read,
               ),
             ),
           ),

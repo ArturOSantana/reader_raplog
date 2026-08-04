@@ -101,14 +101,30 @@ jobs:
             "$(pwd)/android/app/keystore.jks" \
             > android/key.properties
 
-      # ── 8b. Verificar key.properties gerado ───────────────────────────────
-      - name: Verify key.properties
+      # ── 8b. Verificar key.properties e imprimir SHAs da keystore ──────────
+      # Os SHAs impressos aqui DEVEM estar cadastrados em:
+      #   1. Firebase Console → Project Settings → Android app → SHA certificates
+      #   2. Google Cloud Console → Credentials → OAuth 2.0 Client ID (Android)
+      # Se divergirem, o Google Sign-In falha silenciosamente no device.
+      - name: Verify key.properties and print keystore SHAs
+        env:
+          STORE_PASS: ${{ secrets.KEYSTORE_STORE_PASS }}
+          KEY_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
         run: |
           echo "=== key.properties (senhas mascaradas) ==="
           sed 's/\(Password\|password\)=.*/\1=***/' android/key.properties
-          echo "=== keystore.jks size e SHA256 ==="
+
+          echo "=== keystore.jks size ==="
           wc -c android/app/keystore.jks
-          sha256sum android/app/keystore.jks
+
+          echo "=== SHA-1 e SHA-256 do certificado de release ==="
+          keytool -list \
+            -keystore android/app/keystore.jks \
+            -alias "$KEY_ALIAS" \
+            -storepass "$STORE_PASS" \
+            -v 2>/dev/null \
+            | grep -E "SHA1:|SHA256:"
+
           echo "=== .env (valores mascarados) ==="
           sed 's/=.*/=***/' .env
 

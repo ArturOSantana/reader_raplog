@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../data/book_search_result.dart';
@@ -62,6 +63,19 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
         });
       }
     });
+  }
+
+  Future<void> _openBarcodeScanner() async {
+    final scanned = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _BarcodeScannerSheet(),
+    );
+    if (scanned != null && scanned.isNotEmpty) {
+      _isbnController.text = scanned;
+      await _searchByIsbn();
+    }
   }
 
   Future<void> _searchByIsbn() async {
@@ -182,6 +196,16 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
                       minimumSize: const Size(72, 52),
                     ),
                     child: const Text('Buscar'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  height: 52,
+                  width: 52,
+                  child: IconButton.filled(
+                    onPressed: _searchingIsbn ? null : _openBarcodeScanner,
+                    tooltip: 'Escanear código de barras',
+                    icon: const Icon(Icons.qr_code_scanner),
                   ),
                 ),
               ],
@@ -375,6 +399,95 @@ class _SuggestionTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Barcode Scanner Bottom Sheet ─────────────────────────────────────────────
+
+class _BarcodeScannerSheet extends StatefulWidget {
+  const _BarcodeScannerSheet();
+
+  @override
+  State<_BarcodeScannerSheet> createState() => _BarcodeScannerSheetState();
+}
+
+class _BarcodeScannerSheetState extends State<_BarcodeScannerSheet> {
+  final MobileScannerController _controller = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    formats: [BarcodeFormat.ean13, BarcodeFormat.ean8, BarcodeFormat.code128],
+  );
+  bool _found = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_found) return;
+    final code = capture.barcodes.firstOrNull?.rawValue;
+    if (code == null || code.isEmpty) return;
+    _found = true;
+    Navigator.of(context).pop(code);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white38,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const Text(
+            'Aponte para o código de barras do livro',
+            style: TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(20),
+              ),
+              child: Stack(
+                children: [
+                  MobileScanner(
+                    controller: _controller,
+                    onDetect: _onDetect,
+                  ),
+                  // Guia visual central
+                  Center(
+                    child: Container(
+                      width: 260,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white54, width: 2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

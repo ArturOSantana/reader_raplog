@@ -133,8 +133,9 @@ class _StatusFilterBar extends ConsumerWidget {
       (BookStatus.abandoned, 'Abandonados'),
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: ReadLogColors.paperAlt,
+      color: isDark ? LumenColors.canvas : ReadLogColors.paperAlt,
       child: SizedBox(
         height: 46,
         child: ListView(

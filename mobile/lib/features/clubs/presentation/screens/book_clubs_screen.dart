@@ -127,6 +127,10 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
   @override
   Widget build(BuildContext context) {
     final clubsAsync = ref.watch(_myClubsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final activeColor = isDark ? LumenColors.inkInverse : LumenColors.ink;
+    final mutedColor  = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
+    final ghostColor  = isDark ? LumenColors.inkGhostInverse : LumenColors.inkGhost;
 
     return clubsAsync.when(
       loading: () => const SkelScreenList(),
@@ -143,9 +147,9 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
                 decoration: InputDecoration(
                   hintText: 'Buscar clube…',
                   hintStyle: ReadLogType.authorName(
-                      color: ReadLogColors.inkGhost, size: 14),
+                      color: ghostColor, size: 14),
                   prefixIcon: Icon(Icons.search,
-                      size: 18, color: ReadLogColors.inkGhost),
+                      size: 18, color: ghostColor),
                   contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 ),
                 onChanged: (v) => setState(() => _search = v),
@@ -171,8 +175,8 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
                                 style: ReadLogType.authorName(
                                   size: 13,
                                   color: _activeFilter == f
-                                      ? ReadLogColors.ink
-                                      : ReadLogColors.inkMuted,
+                                      ? activeColor
+                                      : mutedColor,
                                 ),
                               ),
                               const SizedBox(height: 3),
@@ -181,7 +185,7 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
                                 height: 1.5,
                                 width: 20,
                                 color: _activeFilter == f
-                                    ? ReadLogColors.ink
+                                    ? activeColor
                                     : Colors.transparent,
                               ),
                             ],
