@@ -51,11 +51,6 @@ android {
         multiDexEnabled = true
     }
 
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("release")
-        }
-    }
 }
 
 kotlin {
@@ -67,6 +62,13 @@ kotlin {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation("androidx.appcompat:appcompat:1.7.0")
+}
+
+// Aplica signingConfig de release DEPOIS que o Flutter Plugin configurou o buildType,
+// evitando que o bloco buildTypes {} sobrescreva os proguardFiles do plugin.
+afterEvaluate {
+    android.buildTypes.getByName("release").signingConfig =
+        android.signingConfigs.getByName("release")
 }
 
 flutter {
