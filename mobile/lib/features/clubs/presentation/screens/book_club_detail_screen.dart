@@ -684,6 +684,9 @@ class _ExploreLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? LumenColors.inkInverse : LumenColors.ink;
+    final iconColor = isDark ? LumenColors.inkMutedInverse : LumenColors.inkGhost;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -693,15 +696,15 @@ class _ExploreLink extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: ReadLogColors.ink,
+                  color: textColor,
                 ),
               ),
             ),
-            LumenIcon('chevron', size: 16, color: ReadLogColors.inkGhost),
+            LumenIcon('chevron', size: 16, color: iconColor),
           ],
         ),
       ),
@@ -1158,6 +1161,9 @@ class _MemberTile extends ConsumerWidget {
                 ? 'mentor'
                 : null;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? LumenColors.inkInverse : LumenColors.ink;
+    final mutedColor = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
@@ -1168,11 +1174,11 @@ class _MemberTile extends ConsumerWidget {
               children: [
                 Text(
                   member.name ?? 'Usuário',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 15,
                     fontWeight: FontWeight.w400,
-                    color: ReadLogColors.ink,
+                    color: textColor,
                   ),
                 ),
                 if (roleText != null)
@@ -1180,7 +1186,7 @@ class _MemberTile extends ConsumerWidget {
                     roleText,
                     style: ReadLogType.kicker(
                       size: 10,
-                      color: ReadLogColors.inkMuted,
+                      color: mutedColor,
                     ),
                   ),
               ],
@@ -3234,7 +3240,12 @@ class _ChallengesSection extends ConsumerWidget {
             Expanded(
               child: Text(
                 'DESAFIOS',
-                style: ReadLogType.kicker(size: 10, color: ReadLogColors.inkMuted),
+                style: ReadLogType.kicker(
+                  size: 10,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? LumenColors.inkMutedInverse
+                      : LumenColors.inkMuted,
+                ),
               ),
             ),
             if (club.canManage)
@@ -3242,7 +3253,12 @@ class _ChallengesSection extends ConsumerWidget {
                 onTap: () => _showCreateSheet(context, ref),
                 child: Text(
                   'Novo',
-                  style: ReadLogType.authorName(size: 13, color: ReadLogColors.inkMuted),
+                  style: ReadLogType.authorName(
+                    size: 13,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? LumenColors.inkMutedInverse
+                        : LumenColors.inkMuted,
+                  ),
                 ),
               ),
           ],
@@ -3891,11 +3907,12 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Text(
       text.toUpperCase(),
       style: ReadLogType.kicker(
         size: 10,
-        color: ReadLogColors.inkMuted,
+        color: isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
       ),
     );
   }
@@ -3935,18 +3952,22 @@ class _MemoryAccordionState extends State<_MemoryAccordion> {
                 Expanded(
                   child: Text(
                     widget.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
-                      color: ReadLogColors.ink,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? LumenColors.inkInverse
+                          : LumenColors.ink,
                     ),
                   ),
                 ),
                 Icon(
                   _expanded ? Icons.expand_less : Icons.expand_more,
                   size: 16,
-                  color: ReadLogColors.inkGhost,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? LumenColors.inkMutedInverse
+                      : LumenColors.inkGhost,
                 ),
               ],
             ),

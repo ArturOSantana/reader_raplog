@@ -1409,14 +1409,14 @@ class LumenTexturedBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Light → pontos pretos   4.5 % de opacidade sobre fundo claro.
-    // Dark  → pontos brancos  4.5 % de opacidade sobre fundo escuro.
+    // Light → pontos pretos   14 % de opacidade sobre fundo claro.
+    // Dark  → pontos brancos  14 % de opacidade sobre fundo escuro.
     // Sem BlendMode especial — srcOver puro é suficiente porque a cor
     // já é a oposta do fundo. BlendMode.overlay num PictureRecorder
     // isolado não acessa o fundo real do canvas pai e não produz efeito.
     final dotColor = isDark
-        ? const Color(0x0BFFFFFF) // ~4.5 % branco
-        : const Color(0x0B000000); // ~4.5 % preto
+        ? const Color(0x24FFFFFF) // ~14 % branco
+        : const Color(0x24000000); // ~14 % preto
     return CustomPaint(
       // foregroundPainter pinta NA FRENTE do child —
       // sobrepõe o backgroundColor opaco do Scaffold.

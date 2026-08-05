@@ -136,17 +136,18 @@ class ReadLogPageHeader extends StatelessWidget {
     final fg   = isDark ? LumenColors.inkInverse : LumenColors.ink;
     final muted = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
 
+    final topPadding = MediaQuery.paddingOf(context).top;
     return Container(
       color: bg,
-      padding: const EdgeInsets.fromLTRB(20, 0, 16, 16),
+      padding: EdgeInsets.fromLTRB(20, topPadding + 8, 4, 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (showMenuButton)
             GestureDetector(
               onTap: () => Scaffold.of(context).openDrawer(),
               child: Padding(
-                padding: const EdgeInsets.only(right: 12, bottom: 2),
+                padding: const EdgeInsets.only(right: 12),
                 child: LumenIcon('home', size: 20, color: fg),
               ),
             ),
