@@ -87,7 +87,7 @@ export default async function MFAPage({ searchParams }: PageProps) {
 
       {/* Bloqueado para Free */}
       {!canUseMFA && (
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl p-8 text-center">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-8 text-center">
           <p className="text-4xl mb-4">🔒</p>
           <p className="font-[Fraunces] text-xl text-[#1A1918] mb-2">Disponível no plano Premium</p>
           <p className="text-sm text-[#6B6863] mb-6">
@@ -104,7 +104,7 @@ export default async function MFAPage({ searchParams }: PageProps) {
 
       {/* MFA já ativo */}
       {canUseMFA && hasMFA && (
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl p-6">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-5">
             <span className="w-10 h-10 bg-[#E8F0EE] rounded-xl flex items-center justify-center text-lg">🔐</span>
             <div>
@@ -151,7 +151,7 @@ export default async function MFAPage({ searchParams }: PageProps) {
 
       {/* Enroll — passo 1: botão para iniciar */}
       {canUseMFA && !hasMFA && !enrollData && (
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl p-6">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6">
           <p className="text-sm text-[#6B6863] mb-5 leading-relaxed">
             MFA não está ativo. Ao ativar, você precisará de um app autenticador (Google Authenticator,
             Authy, etc.) a cada novo login.
@@ -167,7 +167,7 @@ export default async function MFAPage({ searchParams }: PageProps) {
 
       {/* Enroll — passo 2: QR Code */}
       {canUseMFA && !hasMFA && enrollData && (
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl p-6">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6">
           <p className="font-[Fraunces] text-lg font-semibold text-[#1A1918] mb-4">
             1. Escaneie o QR Code
           </p>

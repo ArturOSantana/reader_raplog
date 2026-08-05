@@ -45,7 +45,7 @@ export default async function ImportPage({ searchParams }: PageProps) {
 
       <div className="space-y-6">
         {/* Card Goodreads */}
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl p-6">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6">
           <div className="flex items-start gap-4 mb-5">
             <div className="w-10 h-10 bg-[#E8F0EE] rounded-xl flex items-center justify-center text-xl flex-shrink-0">
               📚
@@ -114,7 +114,7 @@ export default async function ImportPage({ searchParams }: PageProps) {
         </div>
 
         {/* Card CSV Genérico */}
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl p-6">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6">
           <div className="flex items-start gap-4 mb-5">
             <div className="w-10 h-10 bg-[#E8F0EE] rounded-xl flex items-center justify-center text-xl flex-shrink-0">
               📄

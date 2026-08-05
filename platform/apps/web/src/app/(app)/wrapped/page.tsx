@@ -131,7 +131,7 @@ export default async function WrappedPage({ searchParams }: PageProps) {
       </div>
 
       {totalBooks === 0 && totalSessions === 0 ? (
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl p-16 text-center">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-16 text-center">
           <p className="text-4xl mb-4">📖</p>
           <p className="font-[Fraunces] text-xl text-[#1A1918] mb-2">Nenhuma leitura em {year}</p>
           <p className="text-sm text-[#6B6863]">
@@ -148,7 +148,7 @@ export default async function WrappedPage({ searchParams }: PageProps) {
               { label: 'páginas lidas', value: totalPages.toLocaleString('pt-BR'), accent: false },
               { label: 'sessões', value: String(totalSessions), accent: false },
             ].map(({ label, value, accent }) => (
-              <div key={label} className={`rounded-2xl p-5 border ${accent ? 'bg-[#1A1918] border-[#1A1918]' : 'bg-white border-[#ECEAE9]'}`}>
+              <div key={label} className={`rounded-2xl p-5 border ${accent ? 'bg-[#1A1918] border-[#1A1918]' : 'bg-[#FAF9F7] border-[#ECEAE9]'}`}>
                 <p className={`font-[Fraunces] text-4xl font-bold ${accent ? 'text-white' : 'text-[#3D6B5A]'}`}>
                   {value}
                 </p>
@@ -160,7 +160,7 @@ export default async function WrappedPage({ searchParams }: PageProps) {
           </div>
 
           {/* Gráfico mensal */}
-          <div className="bg-white border border-[#ECEAE9] rounded-2xl p-6 mb-6">
+          <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6 mb-6">
             <p className="font-[IBM_Plex_Mono] text-xs text-[#6B6863] uppercase tracking-widest mb-5">
               Minutos por mês
             </p>
@@ -254,7 +254,7 @@ export default async function WrappedPage({ searchParams }: PageProps) {
 
           {/* Conquistas do ano */}
           {achievements && achievements.length > 0 && (
-            <div className="bg-white border border-[#ECEAE9] rounded-2xl p-6">
+            <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6">
               <p className="font-[IBM_Plex_Mono] text-xs text-[#6B6863] uppercase tracking-widest mb-4">
                 {achievements.length} conquista{achievements.length !== 1 ? 's' : ''} desbloqueada{achievements.length !== 1 ? 's' : ''}
               </p>

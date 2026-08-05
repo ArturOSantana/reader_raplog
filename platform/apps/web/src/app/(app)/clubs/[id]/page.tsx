@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createServerSupabase } from '@lumen/supabase/server'
 import { timeAgo, clubCategoryLabel } from '@lumen/ui'
+import { getDominantColor, rgbToCss } from '@/lib/dominant-color'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -113,8 +114,40 @@ export default async function ClubDetailPage({ params, searchParams }: PageProps
     removed: 'Membro removido.',
   }
 
+  // ── Cor dominante da capa do livro atual ────────────────────────────────
+  // Extraída server-side (sharp). Aplicada como wash 2-3% por trás do grain.
+  // Telas pessoais (Home, Perfil) ficam sem tint — só o clube tem identidade.
+  const dominantColor = club.current_book_cover_url
+    ? await getDominantColor(club.current_book_cover_url)
+    : null
+  const colorCss = dominantColor ? rgbToCss(dominantColor) : null
+
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div
+      className="p-6 max-w-4xl mx-auto relative"
+      style={
+        colorCss
+          ? ({
+              '--club-tint': colorCss,
+            } as React.CSSProperties)
+          : undefined
+      }
+    >
+      {/* Color wash — camada antes do grain (z-index 9999).
+          2 % de opacidade: dá personalidade sem inventar decoração.
+          A cor vem do próprio livro que o clube está lendo. */}
+      {colorCss && (
+        <div
+          aria-hidden
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: `rgba(var(--club-tint), 0.025)`,
+            pointerEvents: 'none',
+            zIndex: 10,
+          }}
+        />
+      )}
       {/* Feedback de ação */}
       {action && feedbackMsg[action] && (
         <div className="mb-6 bg-[#3D6B5A]/10 border border-[#3D6B5A]/20 text-[#3D6B5A] text-sm px-4 py-3 rounded-xl font-[IBM_Plex_Mono]">
@@ -182,7 +215,7 @@ export default async function ClubDetailPage({ params, searchParams }: PageProps
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Membros */}
         <div className="lg:col-span-2">
-          <div className="bg-white border border-[#ECEAE9] rounded-2xl overflow-hidden">
+          <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl overflow-hidden">
             <div className="px-5 py-3 border-b border-[#ECEAE9] flex items-center justify-between">
               <p className="font-[IBM_Plex_Mono] text-xs text-[#6B6863] uppercase tracking-widest">
                 Membros ({memberCount})
@@ -248,7 +281,7 @@ export default async function ClubDetailPage({ params, searchParams }: PageProps
 
         {/* Checkins recentes */}
         <div>
-          <div className="bg-white border border-[#ECEAE9] rounded-2xl overflow-hidden">
+          <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl overflow-hidden">
             <div className="px-5 py-3 border-b border-[#ECEAE9]">
               <p className="font-[IBM_Plex_Mono] text-xs text-[#6B6863] uppercase tracking-widest">
                 Atividade recente
@@ -291,7 +324,7 @@ export default async function ClubDetailPage({ params, searchParams }: PageProps
           </div>
 
           {/* Info */}
-          <div className="mt-4 bg-white border border-[#ECEAE9] rounded-2xl p-4">
+          <div className="mt-4 bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-4">
             <p className="font-[IBM_Plex_Mono] text-xs text-[#6B6863] uppercase tracking-widest mb-3">
               Sobre o clube
             </p>

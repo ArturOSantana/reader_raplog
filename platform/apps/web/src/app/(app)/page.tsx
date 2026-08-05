@@ -101,7 +101,7 @@ export default async function WebDashboardPage() {
           { value: booksRead ?? 0, label: 'livros lidos' },
           { value: totalSessions ?? 0, label: 'sessões totais' },
         ].map(({ value, label }) => (
-          <div key={label} className="bg-white border border-[#ECEAE9] rounded-lg p-5">
+          <div key={label} className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-lg p-5">
             <p className="font-[Fraunces] text-3xl font-bold text-[#1A1918]">{value}</p>
             <p className="text-xs font-[IBM_Plex_Mono] text-[#6B6863] mt-1">{label}</p>
           </div>
@@ -123,7 +123,7 @@ export default async function WebDashboardPage() {
           {reading && reading.length > 0 ? (
             <div className="space-y-3">
               {reading.map((b) => (
-                <div key={b.title} className="bg-white border border-[#ECEAE9] rounded-lg p-4">
+                <div key={b.title} className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-lg p-4">
                   <p className="font-medium text-[#1A1918] text-sm">{b.title}</p>
                   <p className="text-xs text-[#6B6863] mb-2">{b.author}</p>
                   {b.current_page && b.total_pages && (
@@ -166,7 +166,7 @@ export default async function WebDashboardPage() {
           {recentSessions && recentSessions.length > 0 ? (
             <div className="space-y-2">
               {recentSessions.map((s, i) => (
-                <div key={i} className="bg-white border border-[#ECEAE9] rounded-lg px-4 py-3 flex items-center justify-between">
+                <div key={i} className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-lg px-4 py-3 flex items-center justify-between">
                   <div>
                     <p className="text-sm text-[#1A1918] font-medium">
                       {formatMinutes(s.duration_minutes ?? 0)}
@@ -202,7 +202,7 @@ export default async function WebDashboardPage() {
           <Link
             key={href}
             href={href}
-            className="bg-white border border-[#ECEAE9] rounded-lg p-4 hover:border-[#B0AEA9] text-sm font-medium text-[#1A1918] flex flex-col items-center gap-2"
+            className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-lg p-4 hover:border-[#B0AEA9] text-sm font-medium text-[#1A1918] flex flex-col items-center gap-2"
           >
             <Icon className="h-5 w-5 text-[#6B6863]" />
             <span>{label}</span>

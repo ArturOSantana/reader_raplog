@@ -56,7 +56,8 @@ class WidgetsPreviewScreen extends StatelessWidget {
               color: ReadLogColors.cream.withValues(alpha: 0.1)),
         ),
       ),
-      body: ListView(
+      body: LumenTexturedBackground(
+        child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           // ── Painel do Leitor ─────────────────────────────────────────
@@ -179,7 +180,8 @@ class WidgetsPreviewScreen extends StatelessWidget {
             eventName: 'Clube do Livro',
             eventDate: _countdown,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

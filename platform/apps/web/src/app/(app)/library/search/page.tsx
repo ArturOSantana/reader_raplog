@@ -90,7 +90,7 @@ export default async function BookSearchPage({ searchParams }: PageProps) {
           {results.map((book) => (
             <div
               key={book.googleBooksId ?? book.title}
-              className="bg-white border border-[#ECEAE9] rounded-2xl p-4 flex gap-4 items-start hover:border-[#B0AEA9] transition-colors"
+              className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-4 flex gap-4 items-start hover:border-[#B0AEA9] transition-colors"
             >
               {/* Capa */}
               {book.coverUrl ? (

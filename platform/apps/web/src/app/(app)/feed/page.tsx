@@ -105,7 +105,7 @@ export default async function FeedPage() {
         {feedItems.map((event) => (
           <div
             key={event.id}
-            className="bg-white border border-[#ECEAE9] rounded-2xl p-4 flex items-start gap-4"
+            className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-4 flex items-start gap-4"
           >
             {/* Avatar */}
             <div className="w-9 h-9 rounded-full bg-[#E8F0EE] flex items-center justify-center text-sm font-[Fraunces] font-bold text-[#3D6B5A] flex-shrink-0">

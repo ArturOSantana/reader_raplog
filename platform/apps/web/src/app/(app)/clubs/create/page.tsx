@@ -43,7 +43,7 @@ export default async function CreateClubPage({ searchParams }: PageProps) {
         if (result?.error) {
           redirect(`/clubs/create?error=${encodeURIComponent(result.error)}`)
         }
-      }} className="bg-white border border-[#ECEAE9] rounded-2xl p-6 space-y-5">
+      }} className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6 space-y-5">
         <div>
           <label className="block text-xs font-[IBM_Plex_Mono] text-[#6B6863] uppercase tracking-widest mb-2">
             Nome do clube *
@@ -79,7 +79,7 @@ export default async function CreateClubPage({ searchParams }: PageProps) {
             <select
               name="category"
               defaultValue="general"
-              className="w-full border border-[#ECEAE9] rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:border-[#3D6B5A]"
+              className="w-full border border-[#ECEAE9] rounded-xl px-4 py-3 text-sm bg-[#FAF9F7] focus:outline-none focus:border-[#3D6B5A]"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>{clubCategoryLabel(c)}</option>
@@ -94,7 +94,7 @@ export default async function CreateClubPage({ searchParams }: PageProps) {
             <select
               name="visibility"
               defaultValue="public"
-              className="w-full border border-[#ECEAE9] rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:border-[#3D6B5A]"
+              className="w-full border border-[#ECEAE9] rounded-xl px-4 py-3 text-sm bg-[#FAF9F7] focus:outline-none focus:border-[#3D6B5A]"
             >
               <option value="public">Público</option>
               <option value="private">Privado</option>

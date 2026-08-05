@@ -76,7 +76,7 @@ export default async function ExportPage() {
       </div>
 
       {/* O que está incluído */}
-      <section className="bg-white border border-[#ECEAE9] rounded-2xl p-6 mb-6">
+      <section className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6 mb-6">
         <h2 className="font-[Fraunces] text-lg font-semibold text-[#1A1918] mb-5">
           O que está incluído
         </h2>
@@ -101,7 +101,7 @@ export default async function ExportPage() {
       </section>
 
       {/* Solicitação */}
-      <section className="bg-white border border-[#ECEAE9] rounded-2xl p-6 mb-6">
+      <section className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6 mb-6">
         <h2 className="font-[Fraunces] text-lg font-semibold text-[#1A1918] mb-4">
           Solicitar exportação
         </h2>
@@ -133,7 +133,7 @@ export default async function ExportPage() {
 
       {/* Histórico de solicitações */}
       {exportRequests.length > 0 && (
-        <section className="bg-white border border-[#ECEAE9] rounded-2xl p-6">
+        <section className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6">
           <h2 className="font-[Fraunces] text-lg font-semibold text-[#1A1918] mb-4">
             Solicitações anteriores
           </h2>

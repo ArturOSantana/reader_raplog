@@ -71,7 +71,7 @@ export default async function SettingsPage() {
       </div>
 
       {/* ─── Informações da conta ──────────────────── */}
-      <section className="bg-white border border-[#ECEAE9] rounded-2xl p-6 mb-6">
+      <section className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6 mb-6">
         <h2 className="font-[Fraunces] text-lg font-semibold text-[#1A1918] mb-5">Conta</h2>
         <div className="flex items-center gap-4 mb-6">
           <div className="w-14 h-14 rounded-full bg-[#E8F0EE] flex items-center justify-center text-2xl font-[Fraunces] font-bold text-[#3D6B5A] flex-shrink-0">
@@ -108,7 +108,7 @@ export default async function SettingsPage() {
       </section>
 
       {/* ─── Privacidade ───────────────────────────── */}
-      <section className="bg-white border border-[#ECEAE9] rounded-2xl p-6 mb-6">
+      <section className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6 mb-6">
         <div className="flex items-center justify-between mb-2">
           <h2 className="font-[Fraunces] text-lg font-semibold text-[#1A1918]">Privacidade</h2>
           <span className="text-[10px] font-[IBM_Plex_Mono] text-[#B0AEA9]">padrão: privado</span>
@@ -153,7 +153,7 @@ export default async function SettingsPage() {
       </section>
 
       {/* ─── LGPD / Seus dados ─────────────────────── */}
-      <section className="bg-white border border-[#ECEAE9] rounded-2xl p-6 mb-6">
+      <section className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6 mb-6">
         <h2 className="font-[Fraunces] text-lg font-semibold text-[#1A1918] mb-2">Seus dados</h2>
         <p className="text-xs text-[#6B6863] mb-6">
           Você tem controle total sobre seus dados. Exportação entregue em até 15 dias.

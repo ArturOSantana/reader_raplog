@@ -149,7 +149,7 @@ export default async function StatsPage() {
           { value: formatMinutes(totalMinutesYear), label: `lidos em ${currentYear}`, sub: `${sessionCountYear} sessões` },
           { value: totalPagesYear.toLocaleString('pt-BR'), label: `páginas em ${currentYear}`, sub: avgMin ? formatMinutes(avgMin) + ' média/sessão' : '' },
         ].map(({ value, label, sub }) => (
-          <div key={label} className="bg-white border border-[#ECEAE9] rounded-2xl p-5">
+          <div key={label} className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-5">
             <p className="font-[Fraunces] text-2xl font-bold text-[#3D6B5A]">{value}</p>
             <p className="text-xs font-[IBM_Plex_Mono] text-[#6B6863] mt-1">{label}</p>
             {sub && <p className="text-[10px] text-[#B0AEA9] mt-0.5 font-[IBM_Plex_Mono]">{sub}</p>}
@@ -158,7 +158,7 @@ export default async function StatsPage() {
       </div>
 
       {/* ─── Atividade mensal do ano ──────────────── */}
-      <section className="bg-white border border-[#ECEAE9] rounded-2xl p-6 mb-6">
+      <section className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6 mb-6">
         <h2 className="font-[Fraunces] text-lg font-semibold text-[#1A1918] mb-1">
           Atividade em {currentYear}
         </h2>
@@ -181,7 +181,7 @@ export default async function StatsPage() {
       </section>
 
       {/* ─── Heatmap 30 dias ─────────────────────── */}
-      <section className="bg-white border border-[#ECEAE9] rounded-2xl p-6 mb-6">
+      <section className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6 mb-6">
         <h2 className="font-[Fraunces] text-lg font-semibold text-[#1A1918] mb-1">
           Atividade — últimos 30 dias
         </h2>
@@ -213,7 +213,7 @@ export default async function StatsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ─── Maiores livros ──────────────────────── */}
         {topBooks && topBooks.length > 0 && (
-          <section className="bg-white border border-[#ECEAE9] rounded-2xl p-6">
+          <section className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6">
             <h2 className="font-[Fraunces] text-lg font-semibold text-[#1A1918] mb-1">
               Maiores livros lidos
             </h2>
@@ -253,7 +253,7 @@ export default async function StatsPage() {
 
         {/* ─── Conquistas recentes ─────────────────── */}
         {typedAchievements.length > 0 && (
-          <section className="bg-white border border-[#ECEAE9] rounded-2xl p-6">
+          <section className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6">
             <h2 className="font-[Fraunces] text-lg font-semibold text-[#1A1918] mb-1">
               Conquistas recentes
             </h2>
@@ -282,7 +282,7 @@ export default async function StatsPage() {
 
       {/* ─── Metas ativas ───────────────────────────── */}
       {typedGoals.length > 0 && (
-        <section className="bg-white border border-[#ECEAE9] rounded-2xl p-6 mt-6">
+        <section className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6 mt-6">
           <h2 className="font-[Fraunces] text-lg font-semibold text-[#1A1918] mb-4">Metas ativas</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {typedGoals.map((goal) => (

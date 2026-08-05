@@ -42,7 +42,7 @@ export default async function WebClubsPage() {
           <Link
             key={club.id}
             href={`/clubs/${club.slug ?? club.id}`}
-            className="bg-white border border-[#ECEAE9] rounded-lg p-5 hover:border-[#B0AEA9]"
+            className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-lg p-5 hover:border-[#B0AEA9]"
           >
             <div className="flex gap-4 items-start mb-3">
               {club.cover_url ? (

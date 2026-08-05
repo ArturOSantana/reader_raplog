@@ -19,7 +19,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl p-6">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-6">
           <a
             href="/auth/google"
             className="flex items-center justify-center gap-3 w-full border border-[#ECEAE9] rounded-xl px-4 py-3 text-sm font-medium text-[#1A1918] hover:bg-[#F2F1EF] transition-colors"
@@ -33,7 +33,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-[#ECEAE9]" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-white px-3 text-xs text-[#B0AEA9] font-[IBM_Plex_Mono]">ou</span>
+              <span className="bg-[#FAF9F7] px-3 text-xs text-[#B0AEA9] font-[IBM_Plex_Mono]">ou</span>
             </div>
           </div>
 

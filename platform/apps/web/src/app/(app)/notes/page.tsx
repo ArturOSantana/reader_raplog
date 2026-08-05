@@ -45,7 +45,7 @@ export default async function NotesPage() {
 
       <div className="space-y-4">
         {rows.map((note) => (
-          <div key={note.id} className="bg-white border border-[#ECEAE9] rounded-lg p-5">
+          <div key={note.id} className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-lg p-5">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[10px] font-[IBM_Plex_Mono] text-[#3D6B5A] uppercase tracking-widest">
                 {typeLabel[note.type] ?? note.type}

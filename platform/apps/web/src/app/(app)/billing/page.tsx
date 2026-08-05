@@ -76,7 +76,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
       )}
 
       {/* Card do plano atual */}
-      <div className={`rounded-2xl p-6 mb-6 border ${isPremium ? 'bg-[#1A1918] border-[#1A1918] text-white' : 'bg-white border-[#ECEAE9]'}`}>
+      <div className={`rounded-2xl p-6 mb-6 border ${isPremium ? 'bg-[#1A1918] border-[#1A1918] text-white' : 'bg-[#FAF9F7] border-[#ECEAE9]'}`}>
         <div className="flex items-start justify-between mb-4">
           <div>
             <p className={`text-xs font-[IBM_Plex_Mono] uppercase tracking-widest mb-1 ${isPremium ? 'text-white/60' : 'text-[#6B6863]'}`}>
@@ -117,7 +117,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Mensal */}
-            <div className="bg-white border border-[#ECEAE9] rounded-2xl p-5">
+            <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-5">
               <p className="font-[IBM_Plex_Mono] text-xs text-[#6B6863] uppercase tracking-widest mb-2">Mensal</p>
               <p className="font-[Fraunces] text-3xl font-bold text-[#1A1918] mb-1">R$ 14,90</p>
               <p className="text-xs text-[#6B6863] mb-4">por mês · 7 dias grátis</p>
@@ -150,7 +150,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
               }}>
                 <button
                   type="submit"
-                  className="w-full bg-white text-[#1A1918] py-2.5 rounded-xl text-sm hover:bg-[#FAF9F7] transition-colors font-medium"
+                  className="w-full bg-[#FAF9F7] text-[#1A1918] py-2.5 rounded-xl text-sm hover:bg-[#FAF9F7] transition-colors font-medium"
                 >
                   Assinar anual
                 </button>
@@ -185,7 +185,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
           {sub?.channel === 'stripe' && (
             <a
               href="https://billing.lumen.app/portal"
-              className="flex items-center justify-between w-full bg-white border border-[#ECEAE9] rounded-2xl px-5 py-4 hover:border-[#B0AEA9] transition-colors group"
+              className="flex items-center justify-between w-full bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl px-5 py-4 hover:border-[#B0AEA9] transition-colors group"
             >
               <div>
                 <p className="text-sm font-medium text-[#1A1918]">Gerenciar forma de pagamento</p>
@@ -196,7 +196,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
           )}
 
           {sub?.channel === 'apple' && (
-            <div className="bg-white border border-[#ECEAE9] rounded-2xl px-5 py-4">
+            <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl px-5 py-4">
               <p className="text-sm font-medium text-[#1A1918]">Assinatura via App Store</p>
               <p className="text-xs text-[#6B6863] mt-1">
                 Gerencie em: iPhone → Ajustes → [seu nome] → Assinaturas.
@@ -205,7 +205,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
           )}
 
           {sub?.channel === 'google' && (
-            <div className="bg-white border border-[#ECEAE9] rounded-2xl px-5 py-4">
+            <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl px-5 py-4">
               <p className="text-sm font-medium text-[#1A1918]">Assinatura via Google Play</p>
               <p className="text-xs text-[#6B6863] mt-1">
                 Gerencie em: Play Store → Menu → Assinaturas.
@@ -219,7 +219,7 @@ export default async function BillingPage({ searchParams }: PageProps) {
               <summary className="text-xs text-[#8B2E2E] font-[IBM_Plex_Mono] cursor-pointer hover:underline">
                 Cancelar assinatura
               </summary>
-              <div className="mt-3 bg-white border border-[#ECEAE9] rounded-2xl p-5">
+              <div className="mt-3 bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-5">
                 <p className="text-sm text-[#6B6863] mb-4">
                   Ao cancelar, você mantém acesso Premium até <strong>{sub.current_period_end ? formatDate(sub.current_period_end) : 'o fim do período'}</strong>.
                   Após isso, voltará para o plano gratuito. Seus dados são mantidos.

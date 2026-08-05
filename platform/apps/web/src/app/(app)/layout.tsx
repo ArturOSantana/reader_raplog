@@ -13,6 +13,7 @@ import {
   SettingsIcon,
 } from '@/lib/lumen-icons'
 import { LumenWordmark } from '@/lib/lumen-wordmark'
+import { MobileNav } from '@/components/mobile-nav'
 
 /**
  * Layout principal do Web Platform (app.lumen.app).
@@ -74,7 +75,7 @@ export default async function WebLayout({
   return (
     <div className="min-h-screen bg-[#FAF9F7] flex">
       {/* ── Sidebar ─────────────────────────────────────── */}
-      <aside className="w-52 border-r border-[#ECEAE9] bg-white flex-shrink-0 hidden md:flex flex-col sticky top-0 h-screen">
+      <aside className="w-52 border-r border-[#ECEAE9] bg-[#FAF9F7] flex-shrink-0 hidden md:flex flex-col sticky top-0 h-screen">
         <div className="px-5 h-14 flex items-center border-b border-[#ECEAE9]">
           <a href="https://lumen.app" aria-label="Lumen">
             <LumenWordmark className="h-7 w-auto" />
@@ -156,7 +157,7 @@ export default async function WebLayout({
 
       {/* ── Conteúdo ──────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden border-b border-[#ECEAE9] bg-white px-4 h-14 flex items-center justify-between flex-shrink-0">
+        <header className="md:hidden border-b border-[#ECEAE9] bg-[#FAF9F7] px-4 flex items-center justify-between flex-shrink-0" style={{ paddingTop: 'env(safe-area-inset-top)', minHeight: 'calc(3.5rem + env(safe-area-inset-top))' }}>
           <a href="https://lumen.app" aria-label="Lumen">
             <LumenWordmark className="h-6 w-auto" />
           </a>
@@ -175,12 +176,15 @@ export default async function WebLayout({
           </Link>
         </header>
 
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto md:pb-0 pb-16">
           {/* page-enter: fade + micro-slide ao navegar — casado com o grain */}
           <div className="page-enter">
             {children}
           </div>
         </main>
+
+        {/* ── Bottom nav (mobile only) ─────────────────────── */}
+        <MobileNav />
       </div>
     </div>
   )

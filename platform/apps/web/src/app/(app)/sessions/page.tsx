@@ -90,22 +90,22 @@ export default async function SessionsPage({ searchParams }: PageProps) {
 
       {/* Sumário */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl p-5">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-5">
           <p className="font-[Fraunces] text-3xl font-bold text-[#3D6B5A]">{totalSessions}</p>
           <p className="text-xs font-[IBM_Plex_Mono] text-[#6B6863] mt-1">sessões totais</p>
         </div>
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl p-5">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-5">
           <p className="font-[Fraunces] text-3xl font-bold text-[#3D6B5A]">{formatMinutes(totalMinutes)}</p>
           <p className="text-xs font-[IBM_Plex_Mono] text-[#6B6863] mt-1">tempo total</p>
         </div>
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl p-5">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-5">
           <p className="font-[Fraunces] text-3xl font-bold text-[#3D6B5A]">{totalPages30d}</p>
           <p className="text-xs font-[IBM_Plex_Mono] text-[#6B6863] mt-1">páginas lidas</p>
         </div>
       </div>
 
       {/* Filtros */}
-      <form method="GET" className="bg-white border border-[#ECEAE9] rounded-2xl p-5 mb-6">
+      <form method="GET" className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-5 mb-6">
         <p className="text-xs font-[IBM_Plex_Mono] text-[#6B6863] uppercase tracking-widest mb-4">Filtros</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
@@ -113,7 +113,7 @@ export default async function SessionsPage({ searchParams }: PageProps) {
             <select
               name="book"
               defaultValue={book}
-              className="w-full border border-[#ECEAE9] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3D6B5A]"
+              className="w-full border border-[#ECEAE9] rounded-xl px-3 py-2 text-sm bg-[#FAF9F7] focus:outline-none focus:border-[#3D6B5A]"
             >
               <option value="">Todos</option>
               {userBooks?.map((b) => (
@@ -127,7 +127,7 @@ export default async function SessionsPage({ searchParams }: PageProps) {
               type="date"
               name="from"
               defaultValue={from}
-              className="w-full border border-[#ECEAE9] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3D6B5A]"
+              className="w-full border border-[#ECEAE9] rounded-xl px-3 py-2 text-sm bg-[#FAF9F7] focus:outline-none focus:border-[#3D6B5A]"
             />
           </div>
           <div>
@@ -136,7 +136,7 @@ export default async function SessionsPage({ searchParams }: PageProps) {
               type="date"
               name="to"
               defaultValue={to}
-              className="w-full border border-[#ECEAE9] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3D6B5A]"
+              className="w-full border border-[#ECEAE9] rounded-xl px-3 py-2 text-sm bg-[#FAF9F7] focus:outline-none focus:border-[#3D6B5A]"
             />
           </div>
         </div>
@@ -160,7 +160,7 @@ export default async function SessionsPage({ searchParams }: PageProps) {
 
       {/* Lista de sessões */}
       {!sessions?.length ? (
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl py-16 text-center">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl py-16 text-center">
           <p className="text-4xl mb-4">📖</p>
           <p className="font-[Fraunces] text-lg font-semibold text-[#1A1918]">
             Nenhuma sessão encontrada
@@ -172,7 +172,7 @@ export default async function SessionsPage({ searchParams }: PageProps) {
           </p>
         </div>
       ) : (
-        <div className="bg-white border border-[#ECEAE9] rounded-2xl overflow-hidden">
+        <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl overflow-hidden">
           <div className="divide-y divide-[#ECEAE9]">
             {sessions.map((session) => {
               const bookData = Array.isArray(session.books) ? session.books[0] : session.books

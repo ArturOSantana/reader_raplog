@@ -4,6 +4,8 @@ import '../../../../shared/models/club_presence_stats.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../../theme/lumen_theme.dart';
 
+// ignore_for_file: deprecated_member_use
+
 /// Card "Vocês já leram juntos" — métricas coletivas do clube.
 /// Sem pílulas coloridas — dados como linhas separadas por Divider.
 class ClubCollectiveStatsCard extends ConsumerWidget {
@@ -35,6 +37,12 @@ class _StatsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inkColor    = isDark ? LumenColors.inkInverse      : LumenColors.ink;
+    final mutedColor  = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
+    final ghostColor  = isDark ? LumenColors.inkGhostInverse : LumenColors.inkGhost;
+    final hairline    = isDark ? LumenColors.hairlineDark    : LumenColors.hairline;
+
     final myPct = stats.myPagesPct.toStringAsFixed(1);
     final hasContribution = stats.myPagesPct > 0;
 
@@ -45,7 +53,7 @@ class _StatsBody extends StatelessWidget {
           'VOCÊS JÁ LERAM JUNTOS',
           style: ReadLogType.mono(
             size: 10,
-            color: ReadLogColors.inkGhost,
+            color: ghostColor,
           ).copyWith(letterSpacing: 1.4),
         ),
         const SizedBox(height: 12),
@@ -55,30 +63,31 @@ class _StatsBody extends StatelessWidget {
           stats.pagesFormatted,
           style: ReadLogType.display(
             size: 36,
-            color: ReadLogColors.ink,
+            color: inkColor,
             weight: FontWeight.w400,
           ),
         ),
         Text(
           'páginas',
-          style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+          style: ReadLogType.mono(size: 11, color: mutedColor),
         ),
         const SizedBox(height: 16),
 
         // Linhas de detalhe — sem pílulas, sem cor
-        const Divider(height: 1, color: ReadLogColors.hairline),
-        _StatRow(label: 'Sessões', value: _fmt(stats.totalSessions)),
-        const Divider(height: 1, color: ReadLogColors.hairline),
-        _StatRow(label: 'Livros lidos', value: _fmt(stats.totalBooksRead)),
-        const Divider(height: 1, color: ReadLogColors.hairline),
-        _StatRow(label: 'Horas de leitura', value: '${stats.minutesToHours}h'),
+        Divider(height: 1, color: hairline),
+        _StatRow(label: 'Sessões', value: _fmt(stats.totalSessions), isDark: isDark),
+        Divider(height: 1, color: hairline),
+        _StatRow(label: 'Livros lidos', value: _fmt(stats.totalBooksRead), isDark: isDark),
+        Divider(height: 1, color: hairline),
+        _StatRow(label: 'Horas de leitura', value: '${stats.minutesToHours}h', isDark: isDark),
 
         if (hasContribution) ...[
-          const Divider(height: 1, color: ReadLogColors.hairline),
+          Divider(height: 1, color: hairline),
           _StatRow(
             label: 'Sua contribuição',
             value: '$myPct%',
             highlightValue: true,
+            isDark: isDark,
           ),
         ],
       ],
@@ -97,15 +106,20 @@ class _StatRow extends StatelessWidget {
   final String label;
   final String value;
   final bool highlightValue;
+  final bool isDark;
 
   const _StatRow({
     required this.label,
     required this.value,
+    required this.isDark,
     this.highlightValue = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final mutedColor = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
+    final inkColor   = isDark ? LumenColors.inkInverse      : LumenColors.ink;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
@@ -113,13 +127,13 @@ class _StatRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: ReadLogType.mono(size: 12, color: ReadLogColors.inkMuted),
+            style: ReadLogType.mono(size: 12, color: mutedColor),
           ),
           Text(
             value,
             style: ReadLogType.mono(
               size: 12,
-              color: highlightValue ? ReadLogColors.progress : ReadLogColors.ink,
+              color: highlightValue ? LumenColors.read : inkColor,
               weight: FontWeight.w600,
             ),
           ),

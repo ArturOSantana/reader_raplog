@@ -74,7 +74,7 @@ export default async function DevicesPage({ searchParams }: PageProps) {
       )}
 
       {/* Sessão atual */}
-      <div className="bg-white border border-[#ECEAE9] rounded-2xl overflow-hidden mb-6">
+      <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl overflow-hidden mb-6">
         <div className="px-5 py-3 border-b border-[#ECEAE9]">
           <p className="text-xs font-[IBM_Plex_Mono] text-[#6B6863] uppercase tracking-widest">
             Sessão atual
@@ -112,7 +112,7 @@ export default async function DevicesPage({ searchParams }: PageProps) {
       </div>
 
       {/* Histórico de logins */}
-      <div className="bg-white border border-[#ECEAE9] rounded-2xl overflow-hidden mb-6">
+      <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl overflow-hidden mb-6">
         <div className="px-5 py-3 border-b border-[#ECEAE9] flex items-center justify-between">
           <p className="text-xs font-[IBM_Plex_Mono] text-[#6B6863] uppercase tracking-widest">
             Histórico de acesso
@@ -161,7 +161,7 @@ export default async function DevicesPage({ searchParams }: PageProps) {
       </div>
 
       {/* Encerrar todas as sessões */}
-      <div className="bg-white border border-[#ECEAE9] rounded-2xl p-5">
+      <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl p-5">
         <h2 className="font-[Fraunces] text-base font-semibold text-[#1A1918] mb-2">
           Encerrar todas as outras sessões
         </h2>

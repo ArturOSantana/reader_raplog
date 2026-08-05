@@ -76,7 +76,7 @@ export default async function LibraryPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="px-4 pt-5 pb-6 md:p-6 max-w-6xl mx-auto">
       {/* Feedback */}
       {action && feedbackMsg[action] && (
         <div className="mb-5 bg-[#3D6B5A]/10 border border-[#3D6B5A]/20 text-[#3D6B5A] px-4 py-2.5 rounded-xl text-sm font-[IBM_Plex_Mono]">
@@ -85,33 +85,33 @@ export default async function LibraryPage({ searchParams }: PageProps) {
       )}
 
       {/* Cabeçalho */}
-      <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
+      <div className="flex items-center justify-between mb-5 gap-3">
         <div>
-          <div className="flex items-center gap-2 mb-1 text-[#6B6863]">
+          <div className="flex items-center gap-2 mb-0.5 text-[#6B6863]">
             <LibraryIcon className="h-4 w-4" />
             <p className="text-xs font-[IBM_Plex_Mono] uppercase tracking-widest">
               {totalCount ?? 0} livros
             </p>
           </div>
-          <h1 className="font-[Fraunces] text-3xl font-bold text-[#1A1918]">Biblioteca</h1>
+          <h1 className="font-[Fraunces] text-2xl md:text-3xl font-bold text-[#1A1918]">Biblioteca</h1>
         </div>
         <div className="flex items-center gap-2">
           <Link
             href="/library/import"
-            className="text-sm px-4 py-2 border border-[#ECEAE9] rounded-xl text-[#6B6863] hover:bg-[#F2F1EF] font-[IBM_Plex_Mono] inline-flex items-center gap-2"
+            className="text-sm px-3 py-2 border border-[#ECEAE9] rounded-xl text-[#6B6863] hover:bg-[#F2F1EF] font-[IBM_Plex_Mono] inline-flex items-center gap-1.5"
           >
             <AddIcon className="h-4 w-4" />
-            <span>Importar</span>
+            <span className="hidden sm:inline">Importar</span>
           </Link>
           <a
             href="/api/export/library?format=csv"
-            className="text-sm px-4 py-2 border border-[#ECEAE9] rounded-xl text-[#6B6863] hover:bg-[#F2F1EF] font-[IBM_Plex_Mono]"
+            className="hidden md:inline text-sm px-4 py-2 border border-[#ECEAE9] rounded-xl text-[#6B6863] hover:bg-[#F2F1EF] font-[IBM_Plex_Mono]"
           >
             ↓ CSV
           </a>
           <a
             href="/api/export/library?format=json"
-            className="text-sm px-4 py-2 border border-[#ECEAE9] rounded-xl text-[#6B6863] hover:bg-[#F2F1EF] font-[IBM_Plex_Mono]"
+            className="hidden md:inline text-sm px-4 py-2 border border-[#ECEAE9] rounded-xl text-[#6B6863] hover:bg-[#F2F1EF] font-[IBM_Plex_Mono]"
           >
             ↓ JSON
           </a>
@@ -127,7 +127,7 @@ export default async function LibraryPage({ searchParams }: PageProps) {
             placeholder="Buscar livros em breve"
             disabled
             aria-label="Busca da biblioteca em breve"
-            className="w-full rounded-xl border border-[#ECEAE9] bg-white py-2.5 pl-9 pr-3 text-sm text-[#B0AEA9] outline-none"
+            className="w-full rounded-xl border border-[#ECEAE9] bg-[#FAF9F7] py-2.5 pl-9 pr-3 text-sm text-[#B0AEA9] outline-none"
           />
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -157,7 +157,7 @@ export default async function LibraryPage({ searchParams }: PageProps) {
                 name="sort"
                 defaultValue={sort}
                 onChange={undefined}
-                className="text-xs font-[IBM_Plex_Mono] border border-[#ECEAE9] rounded-lg px-2 py-1.5 bg-white text-[#6B6863] focus:outline-none"
+                className="text-xs font-[IBM_Plex_Mono] border border-[#ECEAE9] rounded-lg px-2 py-1.5 bg-[#FAF9F7] text-[#6B6863] focus:outline-none"
               >
                 {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -167,7 +167,7 @@ export default async function LibraryPage({ searchParams }: PageProps) {
                 name="order"
                 defaultValue={order}
                 onChange={undefined}
-                className="text-xs font-[IBM_Plex_Mono] border border-[#ECEAE9] rounded-lg px-2 py-1.5 bg-white text-[#6B6863] focus:outline-none"
+                className="text-xs font-[IBM_Plex_Mono] border border-[#ECEAE9] rounded-lg px-2 py-1.5 bg-[#FAF9F7] text-[#6B6863] focus:outline-none"
               >
                 <option value="desc">↓ Desc</option>
                 <option value="asc">↑ Asc</option>
@@ -260,7 +260,7 @@ export default async function LibraryPage({ searchParams }: PageProps) {
             </button>
           </div>
 
-          <div className="bg-white border border-[#ECEAE9] rounded-2xl overflow-hidden">
+          <div className="bg-[#FAF9F7] border border-[#ECEAE9] rounded-2xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#ECEAE9] text-[10px] font-[IBM_Plex_Mono] text-[#B0AEA9] uppercase tracking-widest">
