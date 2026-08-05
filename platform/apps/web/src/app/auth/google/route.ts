@@ -1,9 +1,9 @@
-import { createServerSupabase } from '@lumen/supabase/server'
-import { NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { type NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { origin } = new URL(request.url)
   // Usa a URL canônica da app se disponível, evitando que o origin do proxy
   // (que pode ser http:// ou um hostname interno) seja enviado ao Supabase.
@@ -13,7 +13,22 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${appUrl}/login?error=missing_env`)
   }
 
-  const supabase = await createServerSupabase()
+  const response = NextResponse.next()
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll() },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          )
+        },
+      },
+    },
+  )
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
