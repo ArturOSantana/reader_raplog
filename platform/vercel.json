@@ -1,0 +1,9 @@
+{
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "buildCommand": "npx turbo run build --filter=@lumen/web",
+  "outputDirectory": "apps/web/.next",
+  "git": {
+    "deploymentEnabled": false
+  }
+}

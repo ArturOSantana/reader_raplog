@@ -4,8 +4,14 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-       "inputs": ["$TURBO_DEFAULT$", ".env.local"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "inputs": ["$TURBO_DEFAULT$", ".env.local"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_APP_URL",
+        "GOOGLE_WEB_CLIENT_ID"
+      ]
     },
     "dev": {
       "cache": false,
