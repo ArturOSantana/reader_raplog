@@ -103,7 +103,8 @@ class _ReadingScheduleScreenState
     final timeLabel =
         '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}';
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       backgroundColor: AppColors.offWhite,
       appBar: AppBar(
         title: Text(
@@ -218,6 +219,7 @@ class _ReadingScheduleScreenState
           ),
         ],
       ),
+    )
     );
   }
 }

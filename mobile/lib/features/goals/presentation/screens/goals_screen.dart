@@ -15,7 +15,8 @@ class GoalsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final goals = ref.watch(_goalsProvider);
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(automaticallyImplyLeading: false, title: const Text('Missões')),
       body: goals.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -28,6 +29,7 @@ class GoalsScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),
+    )
     );
   }
 

@@ -50,7 +50,8 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final data = ref.watch(_dashboardDataProvider);
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : ReadLogColors.surface,
       body: data.when(
         loading: () => const SkelScreenList(count: 8),
@@ -198,6 +199,7 @@ class DashboardScreen extends ConsumerWidget {
           );
         },
       ),
+    )
     );
   }
 }

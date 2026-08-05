@@ -139,8 +139,10 @@ class _ClubDetailBody extends ConsumerWidget {
     // Invalida presença e stats ao refrescar
     // (já invalidado no onRefresh abaixo via clubPresenceProvider)
 
-    return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+    return LumenClubTintBackground(
+      coverUrl: club.currentBookCoverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_clubDetailProvider(clubId));
@@ -229,13 +231,17 @@ class _ClubDetailBody extends ConsumerWidget {
               label: 'Feed',
               onTap: () => context.push(
                 '/clubs/$clubId/feed',
-                extra: {'clubName': club.name},
+                extra: {
+                  'clubName': club.name,
+                  'coverUrl': club.currentBookCoverUrl,
+                },
               ),
             ),
             const Divider(height: 1),
             _ReadingRoomLink(
               clubId: clubId,
               clubName: club.name,
+              coverUrl: club.currentBookCoverUrl,
             ),
             const Divider(height: 1),
             _ExploreLink(
@@ -257,6 +263,7 @@ class _ClubDetailBody extends ConsumerWidget {
                 extra: {
                   'clubName': club.name,
                   'canManage': club.canManage,
+                  'coverUrl': club.currentBookCoverUrl,
                 },
               ),
             ),
@@ -268,6 +275,7 @@ class _ClubDetailBody extends ConsumerWidget {
                 extra: {
                   'clubName': club.name,
                   'canManage': club.canManage,
+                  'coverUrl': club.currentBookCoverUrl,
                 },
               ),
             ),
@@ -279,6 +287,7 @@ class _ClubDetailBody extends ConsumerWidget {
                 extra: {
                   'clubName': club.name,
                   'canManage': club.canManage,
+                  'coverUrl': club.currentBookCoverUrl,
                 },
               ),
             ),
@@ -287,7 +296,10 @@ class _ClubDetailBody extends ConsumerWidget {
               label: 'Calendário',
               onTap: () => context.push(
                 '/clubs/$clubId/calendar',
-                extra: {'clubName': club.name},
+                extra: {
+                  'clubName': club.name,
+                  'coverUrl': club.currentBookCoverUrl,
+                },
               ),
             ),
             const Divider(height: 1),
@@ -299,6 +311,7 @@ class _ClubDetailBody extends ConsumerWidget {
                   'clubName': club.name,
                   'hasCurrentBook': club.currentBookStatus == 'reading',
                   'bookStartedAt': club.readingStartedAt,
+                  'coverUrl': club.currentBookCoverUrl,
                 },
               ),
             ),
@@ -330,9 +343,9 @@ class _ClubDetailBody extends ConsumerWidget {
                   const SizedBox(height: 4),
                   _HallOfFameSection(clubId: clubId),
                   const Divider(height: 24),
-                  _TimelineButton(clubId: clubId, clubName: club.name),
+                  _TimelineButton(clubId: clubId, clubName: club.name, coverUrl: club.currentBookCoverUrl),
                   const Divider(height: 1),
-                  _StatsButton(clubId: clubId, clubName: club.name),
+                  _StatsButton(clubId: clubId, clubName: club.name, coverUrl: club.currentBookCoverUrl),
                 ],
               ),
             ),
@@ -378,6 +391,7 @@ class _ClubDetailBody extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -700,8 +714,13 @@ class _ExploreLink extends StatelessWidget {
 class _ReadingRoomLink extends ConsumerWidget {
   final String clubId;
   final String clubName;
+  final String? coverUrl;
 
-  const _ReadingRoomLink({required this.clubId, required this.clubName});
+  const _ReadingRoomLink({
+    required this.clubId,
+    required this.clubName,
+    this.coverUrl,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -714,7 +733,7 @@ class _ReadingRoomLink extends ConsumerWidget {
       label: label,
       onTap: () => context.push(
         '/clubs/$clubId/reading-room',
-        extra: {'clubName': clubName},
+        extra: {'clubName': clubName, 'coverUrl': coverUrl},
       ),
     );
   }
@@ -733,6 +752,12 @@ class _InviteCodeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryTextColor =
+        isDark ? LumenColors.inkInverse : ReadLogColors.ink;
+    final secondaryTextColor =
+        isDark ? LumenColors.inkMutedInverse : ReadLogColors.inkMuted;
+
     // field-line: sem fundo, sem borda — label à esquerda, código à direita
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 11),
@@ -743,18 +768,18 @@ class _InviteCodeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                    'Código de convite',
-                    style: ReadLogType.kicker(size: 10, color: ReadLogColors.inkMuted),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    inviteCode.toUpperCase(),
-                    style: ReadLogType.mono(
-                      size: 16,
-                      color: ReadLogColors.ink,
-                      weight: FontWeight.w600,
-                    ).copyWith(letterSpacing: 2.0),
-                  ),
+                  'Código de convite',
+                  style: ReadLogType.kicker(size: 10, color: secondaryTextColor),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  inviteCode.toUpperCase(),
+                  style: ReadLogType.mono(
+                    size: 16,
+                    color: primaryTextColor,
+                    weight: FontWeight.w600,
+                  ).copyWith(letterSpacing: 2.0),
+                ),
               ],
             ),
           ),
@@ -769,7 +794,7 @@ class _InviteCodeCard extends StatelessWidget {
             child: Icon(
               Icons.copy_outlined,
               size: 16,
-              color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
+              color: secondaryTextColor,
             ),
           ),
           const SizedBox(width: 16),
@@ -788,7 +813,7 @@ class _InviteCodeCard extends StatelessWidget {
             child: Icon(
               Icons.share_outlined,
               size: 16,
-              color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
+              color: secondaryTextColor,
             ),
           ),
         ],
@@ -972,6 +997,11 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
   Widget build(BuildContext context) {
     final club = widget.club;
     final hasBook = club.currentBookTitle != null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryTextColor =
+        isDark ? LumenColors.inkInverse : ReadLogColors.ink;
+    final secondaryTextColor =
+        isDark ? LumenColors.inkMutedInverse : ReadLogColors.inkMuted;
 
     // Sem container bordado — conteúdo editorial direto
     return Column(
@@ -982,7 +1012,7 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
           'EM LEITURA',
           style: ReadLogType.kicker(
             size: 10,
-            color: ReadLogColors.inkMuted,
+            color: secondaryTextColor,
           ),
         ),
         const SizedBox(height: 12),
@@ -1001,7 +1031,7 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
             club.currentBookTitle!,
             style: ReadLogType.bookTitle(
               size: 26,
-              color: ReadLogColors.ink,
+              color: primaryTextColor,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -1012,7 +1042,7 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
               club.currentBookAuthor!,
               style: ReadLogType.authorName(
                 size: 14,
-                color: ReadLogColors.inkMuted,
+                color: secondaryTextColor,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1030,7 +1060,7 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
               ].join(' · '),
               style: ReadLogType.mono(
                 size: 11,
-                color: ReadLogColors.inkMuted,
+                color: secondaryTextColor,
               ),
             ),
           ],
@@ -1042,26 +1072,26 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (_addingToLibrary)
-                  const SizedBox(
+                  SizedBox(
                     width: 12,
                     height: 12,
                     child: CircularProgressIndicator(
                       strokeWidth: 1.5,
-                      color: ReadLogColors.inkMuted,
+                      color: secondaryTextColor,
                     ),
                   )
                 else
                   Icon(
                     Icons.add,
                     size: 14,
-                    color: ReadLogColors.inkMuted,
+                    color: secondaryTextColor,
                   ),
                 const SizedBox(width: 6),
                 Text(
                   'Adicionar à minha biblioteca',
                   style: ReadLogType.authorName(
                     size: 13,
-                    color: ReadLogColors.inkMuted,
+                    color: secondaryTextColor,
                   ),
                 ),
               ],
@@ -1713,6 +1743,11 @@ class _ReadingProgressSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progressAsync = ref.watch(_clubReadingProgressProvider(clubId));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryTextColor =
+        isDark ? LumenColors.inkInverse : ReadLogColors.ink;
+    final secondaryTextColor =
+        isDark ? LumenColors.inkMutedInverse : ReadLogColors.inkMuted;
 
     return progressAsync.when(
       loading: () => const SizedBox.shrink(),
@@ -1727,7 +1762,7 @@ class _ReadingProgressSection extends ConsumerWidget {
             // Kicker
             Text(
               'PROGRESSO DO GRUPO',
-              style: ReadLogType.kicker(size: 10, color: ReadLogColors.inkMuted),
+              style: ReadLogType.kicker(size: 10, color: secondaryTextColor),
             ),
             const SizedBox(height: 10),
             // Linha fina canônica — LumenReadingProgress
@@ -1742,16 +1777,22 @@ class _ReadingProgressSection extends ConsumerWidget {
                 _ProgressStat(
                   value: '${progress.totalPagesRead}',
                   label: 'pág lidas',
+                  primaryTextColor: primaryTextColor,
+                  secondaryTextColor: secondaryTextColor,
                 ),
                 const SizedBox(width: 20),
                 _ProgressStat(
                   value: '${progress.membersReadToday}',
                   label: 'hoje',
+                  primaryTextColor: primaryTextColor,
+                  secondaryTextColor: secondaryTextColor,
                 ),
                 const SizedBox(width: 20),
                 _ProgressStat(
                   value: 'pág ${progress.avgCurrentPage.toStringAsFixed(0)}',
                   label: 'média',
+                  primaryTextColor: primaryTextColor,
+                  secondaryTextColor: secondaryTextColor,
                 ),
               ],
             ),
@@ -1765,8 +1806,15 @@ class _ReadingProgressSection extends ConsumerWidget {
 class _ProgressStat extends StatelessWidget {
   final String value;
   final String label;
+  final Color primaryTextColor;
+  final Color secondaryTextColor;
 
-  const _ProgressStat({required this.value, required this.label});
+  const _ProgressStat({
+    required this.value,
+    required this.label,
+    required this.primaryTextColor,
+    required this.secondaryTextColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1775,12 +1823,12 @@ class _ProgressStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: ReadLogType.bookTitle(size: 22, color: ReadLogColors.ink),
+          style: ReadLogType.bookTitle(size: 22, color: primaryTextColor),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: ReadLogType.kicker(size: 10, color: ReadLogColors.inkMuted),
+          style: ReadLogType.kicker(size: 10, color: secondaryTextColor),
         ),
       ],
     );
@@ -1899,6 +1947,35 @@ class _HallOfFameSection extends ConsumerWidget {
   }
 }
 
+/// Constrói um [LumenPodiumEntry] para cada destaque individual de um ciclo.
+/// Usa os 3 destaques já gravados na tabela (topReader, topStreak, topSessions).
+/// Retorna null se algum dos 3 não estiver disponível.
+List<LumenPodiumEntry>? _buildPodiumEntries(ClubHallOfFameEntry e) {
+  if (e.topReaderName == null ||
+      e.topStreakName == null ||
+      e.topSessionsName == null) {
+    return null;
+  }
+
+  return [
+    LumenPodiumEntry(
+      name: e.topReaderName!,
+      checkinDays: e.topReaderPages ?? 0,
+      position: 1,
+    ),
+    LumenPodiumEntry(
+      name: e.topStreakName!,
+      checkinDays: e.topStreakDays ?? 0,
+      position: 2,
+    ),
+    LumenPodiumEntry(
+      name: e.topSessionsName!,
+      checkinDays: e.topSessionsCount ?? 0,
+      position: 3,
+    ),
+  ];
+}
+
 class _HofRow extends StatelessWidget {
   final ClubHallOfFameEntry entry;
 
@@ -1959,6 +2036,15 @@ class _HofRow extends StatelessWidget {
                 _HofStat(label: 'sessões', value: '${entry.totalSessions}'),
             ],
           ),
+          // ── Pódio — só aparece quando os 3 destaques estão disponíveis ─
+          ...() {
+            final podium = _buildPodiumEntries(entry);
+            if (podium == null) return <Widget>[];
+            return [
+              const SizedBox(height: 12),
+              LumenHallOfFamePodium(entries: podium),
+            ];
+          }(),
           // ── Destaques individuais ─────────────────────────────────────
           if (entry.topReaderName != null ||
               entry.topStreakName != null ||
@@ -1970,7 +2056,6 @@ class _HofRow extends StatelessWidget {
               children: [
                 if (entry.topReaderName != null)
                   _HofHighlight(
-                    icon: '📖',
                     label: 'mais leu',
                     name: entry.topReaderName!,
                     detail: entry.topReaderPages != null
@@ -1979,7 +2064,6 @@ class _HofRow extends StatelessWidget {
                   ),
                 if (entry.topStreakName != null)
                   _HofHighlight(
-                    icon: '🔥',
                     label: 'maior streak',
                     name: entry.topStreakName!,
                     detail: entry.topStreakDays != null
@@ -1988,7 +2072,6 @@ class _HofRow extends StatelessWidget {
                   ),
                 if (entry.topSessionsName != null)
                   _HofHighlight(
-                    icon: '⏱',
                     label: 'mais sessões',
                     name: entry.topSessionsName!,
                     detail: entry.topSessionsCount != null
@@ -2030,13 +2113,11 @@ class _HofStat extends StatelessWidget {
 }
 
 class _HofHighlight extends StatelessWidget {
-  final String icon;
   final String label;
   final String name;
   final String? detail;
 
   const _HofHighlight({
-    required this.icon,
     required this.label,
     required this.name,
     this.detail,
@@ -2047,8 +2128,6 @@ class _HofHighlight extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(icon, style: const TextStyle(fontSize: 12)),
-        const SizedBox(width: 3),
         Text(
           name,
           style: ReadLogType.mono(size: 12, color: ReadLogColors.ink),
@@ -3141,6 +3220,8 @@ class _ChallengesSection extends ConsumerWidget {
 
   const _ChallengesSection({required this.club, required this.clubId});
 
+  String? get _coverUrl => club.currentBookCoverUrl;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final challengesAsync = ref.watch(_clubChallengesProvider(clubId));
@@ -3192,11 +3273,13 @@ class _ChallengesSection extends ConsumerWidget {
                 ...active.map((c) => _ChallengeCard(
                       challenge: c,
                       clubId: clubId,
+                      coverUrl: _coverUrl,
                       isActive: true,
                     )),
                 ...others.take(3).map((c) => _ChallengeCard(
                       challenge: c,
                       clubId: clubId,
+                      coverUrl: _coverUrl,
                       isActive: false,
                     )),
               ],
@@ -3227,11 +3310,13 @@ class _ChallengeCard extends ConsumerWidget {
   final ClubChallenge challenge;
   final String clubId;
   final bool isActive;
+  final String? coverUrl;
 
   const _ChallengeCard({
     required this.challenge,
     required this.clubId,
     required this.isActive,
+    this.coverUrl,
   });
 
   @override
@@ -3241,7 +3326,10 @@ class _ChallengeCard extends ConsumerWidget {
     return InkWell(
       onTap: () => context.push(
         '/clubs/$clubId/challenges/${challenge.id}',
-        extra: {'challengeTitle': challenge.title},
+        extra: {
+          'challengeTitle': challenge.title,
+          'coverUrl': coverUrl,
+        },
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 13),
@@ -3879,15 +3967,20 @@ class _MemoryAccordionState extends State<_MemoryAccordion> {
 class _TimelineButton extends StatelessWidget {
   final String clubId;
   final String clubName;
+  final String? coverUrl;
 
-  const _TimelineButton({required this.clubId, required this.clubName});
+  const _TimelineButton({
+    required this.clubId,
+    required this.clubName,
+    this.coverUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.push(
         '/clubs/$clubId/timeline',
-        extra: {'clubName': clubName},
+        extra: {'clubName': clubName, 'coverUrl': coverUrl},
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 11),
@@ -3911,15 +4004,20 @@ class _TimelineButton extends StatelessWidget {
 class _StatsButton extends StatelessWidget {
   final String clubId;
   final String clubName;
+  final String? coverUrl;
 
-  const _StatsButton({required this.clubId, required this.clubName});
+  const _StatsButton({
+    required this.clubId,
+    required this.clubName,
+    this.coverUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.push(
         '/clubs/$clubId/stats',
-        extra: {'clubName': clubName},
+        extra: {'clubName': clubName, 'coverUrl': coverUrl},
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 11),

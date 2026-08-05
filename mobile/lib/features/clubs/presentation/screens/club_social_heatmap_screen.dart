@@ -12,21 +12,25 @@ import '../../../../../theme/lumen_theme.dart';
 class ClubSocialHeatmapScreen extends ConsumerWidget {
   final String clubId;
   final String clubName;
+  final String? coverUrl;
 
   const ClubSocialHeatmapScreen({
     super.key,
     required this.clubId,
     required this.clubName,
+    this.coverUrl,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final heatmapAsync = ref.watch(clubSocialHeatmapProvider(clubId));
 
-    return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+    return LumenClubTintBackground(
+      coverUrl: coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: ReadLogColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
         title: Column(
@@ -63,6 +67,7 @@ class ClubSocialHeatmapScreen extends ConsumerWidget {
           child: _HeatmapBody(days: days),
         ),
       ),
+    ),
     );
   }
 }

@@ -204,7 +204,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final isFirst = _currentPage == 0;
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       backgroundColor: AppColors.offWhite,
       body: SafeArea(
         child: Column(
@@ -310,6 +311,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ],
         ),
       ),
+    )
     );
   }
 }

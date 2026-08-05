@@ -21,12 +21,14 @@ class MilestoneDiscussionScreen extends ConsumerStatefulWidget {
   final ClubMilestone milestone;
   final String clubId;
   final String clubName;
+  final String? coverUrl;
 
   const MilestoneDiscussionScreen({
     super.key,
     required this.milestone,
     required this.clubId,
     required this.clubName,
+    this.coverUrl,
   });
 
   @override
@@ -70,8 +72,12 @@ class _MilestoneDiscussionScreenState
     final topics = ref.watch(_milestoneTopicsProvider(widget.milestone.id));
     final isUnlocked = widget.milestone.isUnlocked;
 
-    return Scaffold(
+    return LumenClubTintBackground(
+      coverUrl: widget.coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -198,6 +204,7 @@ class _MilestoneDiscussionScreenState
           ),
         ],
       ),
+    ),
     );
   }
 

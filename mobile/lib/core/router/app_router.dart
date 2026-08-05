@@ -274,10 +274,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'reading-room',
                     builder: (_, state) {
                       final extra =
-                          state.extra as Map<String, String>? ?? {};
+                          state.extra as Map<String, dynamic>? ?? {};
                       return ClubReadingRoomScreen(
                         clubId: state.pathParameters['clubId']!,
-                        clubName: extra['clubName'] ?? 'Clube',
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -317,6 +318,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                         challengeTitle: challenge?.title ??
                             extra['challengeTitle'] as String? ?? 'Desafio',
                         challenge: challenge,
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -324,10 +326,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'feed',
                     builder: (_, state) {
                       final extra =
-                          state.extra as Map<String, String>? ?? {};
+                          state.extra as Map<String, dynamic>? ?? {};
                       return ClubFeedScreen(
                         clubId: state.pathParameters['clubId']!,
-                        clubName: extra['clubName'] ?? 'Clube',
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -338,6 +341,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                           state.extra as Map<String, dynamic>? ?? {};
                       return ChallengeHeatmapScreen(
                         challenge: extra['challenge'] as ClubChallenge,
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -348,6 +352,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                           state.extra as Map<String, dynamic>? ?? {};
                       return ChallengeResultScreen(
                         challenge: extra['challenge'] as ClubChallenge,
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -355,10 +360,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'stats',
                     builder: (_, state) {
                       final extra =
-                          state.extra as Map<String, String>? ?? {};
+                          state.extra as Map<String, dynamic>? ?? {};
                       return ClubAdvancedStatsScreen(
                         clubId: state.pathParameters['clubId']!,
-                        clubName: extra['clubName'] ?? 'Clube',
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -366,10 +372,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'timeline',
                     builder: (_, state) {
                       final extra =
-                          state.extra as Map<String, String>? ?? {};
+                          state.extra as Map<String, dynamic>? ?? {};
                       return ClubTimelineScreen(
                         clubId: state.pathParameters['clubId']!,
-                        clubName: extra['clubName'] ?? 'Clube',
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -383,6 +390,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                         clubName: extra['clubName'] as String? ?? 'Clube',
                         isManager: extra['isManager'] as bool? ?? false,
                         members: (extra['members'] as List<ClubMemberSummary>?) ?? const [],
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -395,6 +403,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                         milestone: extra['milestone'] as ClubMilestone,
                         clubId: state.pathParameters['clubId']!,
                         clubName: extra['clubName'] as String? ?? 'Clube',
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -407,6 +416,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                         clubId: state.pathParameters['clubId']!,
                         clubName: extra['clubName'] as String? ?? 'Clube',
                         canManage: extra['canManage'] as bool? ?? false,
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -452,6 +462,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                         userName:
                             extra['userName'] as String? ?? 'Membro',
                         avatarUrl: extra['avatarUrl'] as String?,
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -459,10 +470,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'social-heatmap',
                     builder: (_, state) {
                       final extra =
-                          state.extra as Map<String, String>? ?? {};
+                          state.extra as Map<String, dynamic>? ?? {};
                       return ClubSocialHeatmapScreen(
                         clubId: state.pathParameters['clubId']!,
-                        clubName: extra['clubName'] ?? 'Clube',
+                        clubName: extra['clubName'] as String? ?? 'Clube',
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -475,6 +487,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                         clubId: state.pathParameters['clubId']!,
                         clubName: extra['clubName'] as String? ?? 'Clube',
                         canManage: extra['canManage'] as bool? ?? false,
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -487,6 +500,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                         clubId: state.pathParameters['clubId']!,
                         clubName: extra['clubName'] as String? ?? 'Clube',
                         canManage: extra['canManage'] as bool? ?? false,
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),
@@ -502,6 +516,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                             extra['hasCurrentBook'] as bool? ?? false,
                         bookStartedAt:
                             extra['bookStartedAt'] as DateTime?,
+                        coverUrl: extra['coverUrl'] as String?,
                       );
                     },
                   ),

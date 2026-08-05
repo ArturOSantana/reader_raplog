@@ -29,10 +29,14 @@ class ClubReadingRoomScreen extends ConsumerStatefulWidget {
   final String clubId;
   final String clubName;
 
+  /// URL da capa do livro atual — usado para o tint de cor do fundo.
+  final String? coverUrl;
+
   const ClubReadingRoomScreen({
     super.key,
     required this.clubId,
     required this.clubName,
+    this.coverUrl,
   });
 
   @override
@@ -80,9 +84,9 @@ class _ClubReadingRoomScreenState
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: ReadLogColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
         title: Column(
@@ -103,15 +107,18 @@ class _ClubReadingRoomScreenState
           ],
         ),
       ),
-      body: readingAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: ReadLogColors.progress),
+      body: LumenClubTintBackground(
+        coverUrl: widget.coverUrl,
+        child: readingAsync.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: ReadLogColors.progress),
+          ),
+          error: (e, _) => Center(child: Text('Erro: $e')),
+          data: (readers) => readers.isEmpty
+              ? _EmptyRoom(cs: cs)
+              : _ReadersList(readers: readers, clubId: widget.clubId),
         ),
-        error: (e, _) => Center(child: Text('Erro: $e')),
-        data: (readers) => readers.isEmpty
-            ? _EmptyRoom(cs: cs)
-            : _ReadersList(readers: readers, clubId: widget.clubId),
-      ),
+        ),
     );
   }
 }
@@ -246,16 +253,23 @@ class _ReaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 11),
+      padding: const EdgeInsets.symmetric(vertical: 9),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            entry.userName ?? 'Leitor',
-            style: ReadLogType.display(
-              size: 15,
-              color: ReadLogColors.ink,
-              weight: FontWeight.w500,
+          LumenAvatar(
+            name: entry.userName ?? 'Leitor',
+            avatarUrl: entry.avatarUrl,
+            radius: 15,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              entry.userName ?? 'Leitor',
+              style: ReadLogType.display(
+                size: 15,
+                color: ReadLogColors.ink,
+                weight: FontWeight.w500,
+              ),
             ),
           ),
           Text(

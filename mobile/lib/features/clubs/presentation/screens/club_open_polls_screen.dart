@@ -19,20 +19,26 @@ class ClubOpenPollsScreen extends ConsumerWidget {
   final String clubId;
   final String clubName;
   final bool canManage;
+  final String? coverUrl;
 
   const ClubOpenPollsScreen({
     super.key,
     required this.clubId,
     required this.clubName,
     required this.canManage,
+    this.coverUrl,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pollsAsync = ref.watch(_openPollsProvider(clubId));
 
-    return Scaffold(
+    return LumenClubTintBackground(
+      coverUrl: coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -120,6 +126,7 @@ class ClubOpenPollsScreen extends ConsumerWidget {
           },
         ),
       ),
+    ),
     );
   }
 

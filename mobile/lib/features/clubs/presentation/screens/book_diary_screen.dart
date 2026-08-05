@@ -32,23 +32,24 @@ class BookDiaryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final diary = ref.watch(_bookDiaryProvider(bookId));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Diário de leitura',
-                style: ReadLogType.bookTitle(size: 16)),
-            Text(
-              bookTitle,
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkMuted, size: 12),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+    return LumenClubTintBackground(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Diário de leitura',
+                  style: ReadLogType.bookTitle(size: 16)),
+              Text(
+                bookTitle,
+                style: ReadLogType.authorName(
+                    color: ReadLogColors.inkMuted, size: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
-      ),
-      body: diary.when(
+        body: diary.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Padding(
@@ -106,6 +107,7 @@ class BookDiaryScreen extends ConsumerWidget {
             ],
           );
         },
+        ),
       ),
     );
   }

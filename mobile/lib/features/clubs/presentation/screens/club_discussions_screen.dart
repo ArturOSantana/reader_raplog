@@ -23,12 +23,14 @@ class ClubDiscussionsScreen extends ConsumerStatefulWidget {
   final String clubId;
   final String clubName;
   final bool canManage;
+  final String? coverUrl;
 
   const ClubDiscussionsScreen({
     super.key,
     required this.clubId,
     required this.clubName,
     this.canManage = false,
+    this.coverUrl,
   });
 
   @override
@@ -60,8 +62,12 @@ class _ClubDiscussionsScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return LumenClubTintBackground(
+      coverUrl: widget.coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -99,6 +105,7 @@ class _ClubDiscussionsScreenState
           ),
         ],
       ),
+    ),
     );
   }
 }

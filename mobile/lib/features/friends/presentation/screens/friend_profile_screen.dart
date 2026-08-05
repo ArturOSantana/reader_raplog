@@ -42,7 +42,8 @@ class FriendProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(_pubProfileProvider(userId));
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       backgroundColor: AppColors.offWhite,
       appBar: AppBar(
         backgroundColor: AppColors.offWhite,
@@ -73,6 +74,7 @@ class FriendProfileScreen extends ConsumerWidget {
           );
         },
       ),
+    )
     );
   }
 }

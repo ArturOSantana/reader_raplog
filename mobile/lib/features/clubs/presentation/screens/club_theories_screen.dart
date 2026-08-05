@@ -23,12 +23,14 @@ class ClubTheoriesScreen extends ConsumerStatefulWidget {
   final String clubId;
   final String clubName;
   final bool canManage;
+  final String? coverUrl;
 
   const ClubTheoriesScreen({
     super.key,
     required this.clubId,
     required this.clubName,
     this.canManage = false,
+    this.coverUrl,
   });
 
   @override
@@ -41,10 +43,12 @@ class _ClubTheoriesScreenState extends ConsumerState<ClubTheoriesScreen> {
   Widget build(BuildContext context) {
     final theoriesAsync = ref.watch(_theoriesProvider(widget.clubId));
 
-    return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+    return LumenClubTintBackground(
+      coverUrl: widget.coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: ReadLogColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
         title: Column(
@@ -144,6 +148,7 @@ class _ClubTheoriesScreenState extends ConsumerState<ClubTheoriesScreen> {
           );
         },
       ),
+    ),
     );
   }
 

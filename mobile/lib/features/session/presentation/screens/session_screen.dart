@@ -583,7 +583,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final elapsed = sessionState.elapsedSeconds;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       backgroundColor: isRunning
         ? ReadLogColors.ink
         : (isDark ? ReadLogColors.canvas : ReadLogColors.surface),
@@ -640,6 +641,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               onGoalValueChanged: (v) => setState(() => _goalValue = v),
               onStart: _selectedBook != null ? _startSession : null,
             ),
+    )
     );
   }
 }

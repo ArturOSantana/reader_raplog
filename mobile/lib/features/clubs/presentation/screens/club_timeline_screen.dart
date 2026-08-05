@@ -48,11 +48,13 @@ class _TLEvent {
 class ClubTimelineScreen extends ConsumerWidget {
   final String clubId;
   final String clubName;
+  final String? coverUrl;
 
   const ClubTimelineScreen({
     super.key,
     required this.clubId,
     required this.clubName,
+    this.coverUrl,
   });
 
   @override
@@ -65,8 +67,12 @@ class ClubTimelineScreen extends ConsumerWidget {
         hallAsync.isLoading ||
         meetingsAsync.isLoading;
 
-    return Scaffold(
+    return LumenClubTintBackground(
+      coverUrl: coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -87,6 +93,7 @@ class ClubTimelineScreen extends ConsumerWidget {
               },
               child: _buildTimeline(context, ref),
             ),
+    ),
     );
   }
 

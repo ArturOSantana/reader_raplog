@@ -30,6 +30,14 @@ final _restDaysLeftProvider =
       .fetchRestDaysLeft(challengeId);
 });
 
+final _todayContributorsProvider =
+    FutureProvider.family<List<Map<String, String?>>, String>(
+        (ref, challengeId) {
+  return ref
+      .read(bookClubRepositoryProvider)
+      .fetchTodayContributors(challengeId);
+});
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 class ChallengeDetailScreen extends ConsumerWidget {
@@ -40,12 +48,16 @@ class ChallengeDetailScreen extends ConsumerWidget {
   /// Objeto completo do desafio — necessário para tela de resultado.
   final ClubChallenge? challenge;
 
+  /// URL da capa do livro atual do clube — usado para o tint de cor do fundo.
+  final String? coverUrl;
+
   const ChallengeDetailScreen({
     super.key,
     required this.clubId,
     required this.challengeId,
     required this.challengeTitle,
     this.challenge,
+    this.coverUrl,
   });
 
   @override
@@ -60,9 +72,9 @@ class ChallengeDetailScreen extends ConsumerWidget {
         ref.watch(_collectiveProgressProvider(challengeId));
 
     return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: ReadLogColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
         title: Column(
@@ -98,22 +110,27 @@ class ChallengeDetailScreen extends ConsumerWidget {
             ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(_collectiveProgressProvider(challengeId));
-          ref.invalidate(_myContributionPctProvider(challengeId));
-          ref.invalidate(_restDaysLeftProvider(challengeId));
-        },
-        child: progressAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: ReadLogColors.progress),
-          ),
-          error: (e, _) => Center(child: Text('Erro: $e')),
-          data: (collective) => _ChallengeBody(
-            collective: collective,
-            clubId: clubId,
-            challengeId: challengeId,
-            challenge: challenge,
+      body: LumenClubTintBackground(
+        coverUrl: coverUrl,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(_collectiveProgressProvider(challengeId));
+            ref.invalidate(_myContributionPctProvider(challengeId));
+            ref.invalidate(_restDaysLeftProvider(challengeId));
+            ref.invalidate(_todayContributorsProvider(challengeId));
+          },
+          child: progressAsync.when(
+            loading: () => const Center(
+              child: CircularProgressIndicator(color: ReadLogColors.progress),
+            ),
+            error: (e, _) => Center(child: Text('Erro: $e')),
+            data: (collective) => _ChallengeBody(
+              collective: collective,
+              clubId: clubId,
+              challengeId: challengeId,
+              challenge: challenge,
+              totalMembers: collective?.totalMembers ?? 0,
+            ),
           ),
         ),
       ),
@@ -128,12 +145,14 @@ class _ChallengeBody extends ConsumerWidget {
   final String clubId;
   final String challengeId;
   final ClubChallenge? challenge;
+  final int totalMembers;
 
   const _ChallengeBody({
     required this.collective,
     required this.clubId,
     required this.challengeId,
     this.challenge,
+    this.totalMembers = 0,
   });
 
   @override
@@ -148,15 +167,33 @@ class _ChallengeBody extends ConsumerWidget {
     final restDaysAsync = ref.watch(_restDaysLeftProvider(challengeId));
     final restDaysLeft = restDaysAsync.valueOrNull ?? 0;
 
+    // "Já leram hoje" — carregado em paralelo, não bloqueia o corpo
+    final todayAsync = ref.watch(_todayContributorsProvider(challengeId));
+    final todayContributors = todayAsync.valueOrNull ?? [];
+
     if (collective == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
-          child: Text(
-            'Nenhum progresso ainda.\nComece a ler para aparecer aqui.',
-            style:
-                ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Participação automática — contexto para quem vê pela 1ª vez
+              if (totalMembers > 0) ...[
+                Text(
+                  'Todos os $totalMembers membros participam automaticamente',
+                  style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+              ],
+              Text(
+                'Nenhum progresso ainda.\nComece a ler para aparecer aqui.',
+                style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       );
@@ -164,10 +201,20 @@ class _ChallengeBody extends ConsumerWidget {
 
     final c = collective!;
     final barFill = (c.pctComplete / 100).clamp(0.0, 1.0);
+    final effectiveTotalMembers = totalMembers > 0 ? totalMembers : c.totalMembers;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
       children: [
+        // ── Participação automática — todos N membros ─────────────────────
+        if (effectiveTotalMembers > 0) ...[
+          Text(
+            'Todos os $effectiveTotalMembers membros participam automaticamente',
+            style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+          ),
+          const SizedBox(height: 20),
+        ],
+
         // ── Bloco coletivo — progresso do clube ───────────────────────────
         Text(
           'Meta do clube',
@@ -262,10 +309,56 @@ class _ChallengeBody extends ConsumerWidget {
 
         // ── Participação ──────────────────────────────────────────────────
         Text(
-          '${c.activeMembers} de ${c.totalMembers} membros contribuíram',
+          '${c.activeMembers} de $effectiveTotalMembers membros contribuíram',
           style: ReadLogType.mono(size: 12, color: ReadLogColors.inkMuted),
         ),
+
+        // ── Já leram hoje — fileira de fotos, reforço social ──────────────
+        if (todayContributors.isNotEmpty) ...[
+          const Divider(height: 28, color: ReadLogColors.hairline),
+          Text(
+            'já leram hoje',
+            style: ReadLogType.mono(size: 10, color: ReadLogColors.inkGhost)
+                .copyWith(letterSpacing: 1.2),
+          ),
+          const SizedBox(height: 10),
+          _TodayAvatarRow(contributors: todayContributors),
+        ],
       ],
+    );
+  }
+}
+
+// ── Fileira de avatares sobrepostos — "Já leram hoje" ────────────────────────
+
+class _TodayAvatarRow extends StatelessWidget {
+  final List<Map<String, String?>> contributors;
+
+  const _TodayAvatarRow({required this.contributors});
+
+  @override
+  Widget build(BuildContext context) {
+    const double r = 14; // raio
+    const double overlap = 10; // sobreposição em px
+    // Limita a 12 avatares visíveis — sem número ao lado, só a fileira
+    final visible = contributors.take(12).toList();
+
+    return SizedBox(
+      height: r * 2 + 2, // altura exata dos círculos
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (var i = 0; i < visible.length; i++)
+            Positioned(
+              left: i * (r * 2 - overlap),
+              child: LumenAvatar(
+                name: visible[i]['name'] ?? '',
+                avatarUrl: visible[i]['avatar_url'],
+                radius: r,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

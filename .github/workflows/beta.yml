@@ -154,37 +154,33 @@ jobs:
             --no-daemon 2>&1 | grep -E "PGCHECK|PG:" || echo "NOTHING MATCHED"
 
       - name: Build APK
-        # --split-per-abi gera um APK menor por arquitetura (arm64-v8a, armeabi-v7a, x86_64)
-        # em vez de um fat APK. Cada device baixa apenas o APK compatível com sua CPU.
+        # Fat APK: compatível com qualquer arquitetura (arm64-v8a, armeabi-v7a, x86_64).
+        # Não requer que o usuário escolha o APK correto para o seu device.
         run: |
-          flutter build apk --release --split-per-abi \
+          flutter build apk --release \
             --build-number=${{ steps.ver.outputs.code }} \
             --build-name=${{ steps.ver.outputs.name }}
 
-      # ── 9b. Verificar APKs gerados ────────────────────────────────────────
-      - name: Verify APKs
+      # ── 9b. Verificar APK gerado ──────────────────────────────────────────
+      - name: Verify APK
         run: |
+          APK="build/app/outputs/flutter-apk/app-release.apk"
           APKSIGNER="$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)/apksigner"
-          for APK in build/app/outputs/flutter-apk/app-*-release.apk; do
-            echo "=== $APK ==="
-            ls -lh "$APK"
-            echo "--- signer ---"
-            $APKSIGNER verify --print-certs "$APK" 2>&1 \
-              | grep -E "certificate DN|Verified using" || \
-            unzip -l "$APK" | grep -E "META-INF.*\.(SF|RSA|DSA|EC)" || true
-          done
+          echo "=== $APK ==="
+          ls -lh "$APK"
+          echo "--- signer ---"
+          $APKSIGNER verify --print-certs "$APK" 2>&1 \
+            | grep -E "certificate DN|Verified using" || \
+          unzip -l "$APK" | grep -E "META-INF.*\.(SF|RSA|DSA|EC)" || true
 
-      # ── 10. Renomeia os artefatos com a versão ────────────────────────────
-      - name: Rename APKs
+      # ── 10. Renomeia o artefato com a versão ──────────────────────────────
+      - name: Rename APK
         run: |
-          for ABI in arm64-v8a armeabi-v7a x86_64; do
-            SRC="build/app/outputs/flutter-apk/app-${ABI}-release.apk"
-            DST="build/app/outputs/flutter-apk/lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}-${ABI}.apk"
-            [ -f "$SRC" ] && mv "$SRC" "$DST" || echo "SKIP: $SRC not found"
-          done
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}.apk
 
-      # ── 11. Upload artefatos no GitHub ────────────────────────────────────
-      - name: Upload APK artifacts
+      # ── 11. Upload artefato no GitHub ─────────────────────────────────────
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}
@@ -212,20 +208,12 @@ jobs:
           Commit: ${{ github.sha }}
           Mensagem: ${{ github.event.head_commit.message }}"
 
-          # Distribui cada APK por ABI — o Firebase App Distribution aceita múltiplos
-          # uploads para o mesmo release; cada device receberá o APK compatível.
-          for ABI in arm64-v8a armeabi-v7a x86_64; do
-            APK="build/app/outputs/flutter-apk/lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}-${ABI}.apk"
-            if [ -f "$APK" ]; then
-              echo "Distributing $APK..."
-              firebase appdistribution:distribute "$APK" \
-                --app "$FIREBASE_APP_ID" \
-                --groups "beta-testers" \
-                --release-notes "$NOTES"
-            else
-              echo "SKIP: $APK not found"
-            fi
-          done
+          APK="build/app/outputs/flutter-apk/lumen-${{ steps.ver.outputs.name }}+${{ steps.ver.outputs.code }}.apk"
+          echo "Distributing $APK..."
+          firebase appdistribution:distribute "$APK" \
+            --app "$FIREBASE_APP_ID" \
+            --groups "beta-testers" \
+            --release-notes "$NOTES"
 
           # Remove o arquivo temporário do service account
           rm -f "$SA_FILE"

@@ -76,20 +76,22 @@ class _ClubCheckinScreenState extends ConsumerState<ClubCheckinScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Impressão de leitura',
-            style: ReadLogType.bookTitle(size: 16)),
+    return LumenClubTintBackground(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Impressão de leitura',
+              style: ReadLogType.bookTitle(size: 16)),
+        ),
+        body: _done
+            ? const _SuccessView()
+            : _CheckinForm(
+                mood: _mood,
+                reviewController: _reviewController,
+                loading: _loading,
+                onMoodSelected: (m) => setState(() => _mood = m),
+                onConfirm: _confirm,
+              ),
       ),
-      body: _done
-          ? const _SuccessView()
-          : _CheckinForm(
-              mood: _mood,
-              reviewController: _reviewController,
-              loading: _loading,
-              onMoodSelected: (m) => setState(() => _mood = m),
-              onConfirm: _confirm,
-            ),
     );
   }
 }

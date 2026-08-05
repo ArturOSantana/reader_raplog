@@ -146,7 +146,8 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Adicionar livro'),
         actions: [
@@ -334,6 +335,7 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
           ],
         ),
       ),
+    )
     );
   }
 }

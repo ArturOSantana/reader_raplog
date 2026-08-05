@@ -18,7 +18,8 @@ class NotesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notes = ref.watch(_notesProvider(bookId));
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(title: const Text('Notas')),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddNoteSheet(context, ref),
@@ -59,6 +60,7 @@ class NotesScreen extends ConsumerWidget {
           );
         },
       ),
+    )
     );
   }
 

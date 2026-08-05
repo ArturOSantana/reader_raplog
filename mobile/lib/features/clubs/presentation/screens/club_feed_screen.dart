@@ -18,19 +18,25 @@ final _clubFeedProvider =
 class ClubFeedScreen extends ConsumerWidget {
   final String clubId;
   final String clubName;
+  final String? coverUrl;
 
   const ClubFeedScreen({
     super.key,
     required this.clubId,
     required this.clubName,
+    this.coverUrl,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final feedAsync = ref.watch(_clubFeedProvider(clubId));
 
-    return Scaffold(
+    return LumenClubTintBackground(
+      coverUrl: coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -52,6 +58,7 @@ class ClubFeedScreen extends ConsumerWidget {
           onRefresh: () async => ref.invalidate(_clubFeedProvider(clubId)),
         ),
       ),
+    ),
     );
   }
 }

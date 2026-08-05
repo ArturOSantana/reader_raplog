@@ -23,7 +23,8 @@ class HighlightsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final highlights = ref.watch(_highlightsProvider(bookId));
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(
         title: Text(bookTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
@@ -38,6 +39,7 @@ class HighlightsScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         child: const Icon(Icons.format_quote),
       ),
+    )
     );
   }
 

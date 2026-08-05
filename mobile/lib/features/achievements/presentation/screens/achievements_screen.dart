@@ -16,7 +16,8 @@ class AchievementsScreen extends ConsumerWidget {
     final achievements = ref.watch(_achievementsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       backgroundColor: isDark ? LumenColors.canvas : ReadLogColors.paperAlt,
       body: achievements.when(
         loading: () => const Center(
@@ -91,6 +92,7 @@ class AchievementsScreen extends ConsumerWidget {
           );
         },
       ),
+    )
     );
   }
 }

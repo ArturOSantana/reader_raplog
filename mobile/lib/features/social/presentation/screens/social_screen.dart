@@ -50,7 +50,8 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Social'),
         automaticallyImplyLeading: false,
@@ -78,6 +79,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
           BookClubsBody(),
         ],
       ),
+    )
     );
   }
 }

@@ -23,7 +23,8 @@ class SessionHistoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sessions = ref.watch(_sessionsProvider(bookId));
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(
         title: Text(bookTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
@@ -77,6 +78,7 @@ class SessionHistoryScreen extends ConsumerWidget {
           );
         },
       ),
+    )
     );
   }
 }

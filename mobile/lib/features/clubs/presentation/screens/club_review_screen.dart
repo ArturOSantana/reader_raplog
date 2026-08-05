@@ -95,34 +95,35 @@ class _ClubReviewScreenState extends ConsumerState<ClubReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.existing != null ? 'Editar resenha' : 'Escrever resenha',
-          style: ReadLogType.bookTitle(size: 16),
-        ),
-        actions: [
-          if (_loading)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+    return LumenClubTintBackground(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            widget.existing != null ? 'Editar resenha' : 'Escrever resenha',
+            style: ReadLogType.bookTitle(size: 16),
+          ),
+          actions: [
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
+              )
+            else
+              TextButton(
+                onPressed: _canSave ? _save : null,
+                child: const Text('Salvar'),
               ),
-            )
-          else
-            TextButton(
-              onPressed: _canSave ? _save : null,
-              child: const Text('Salvar'),
-            ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
-        children: [
+          ],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+          children: [
           // ── Livro ─────────────────────────────────────────────────────
           Text(
             widget.bookTitle,
@@ -231,7 +232,8 @@ class _ClubReviewScreenState extends ConsumerState<ClubReviewScreen> {
                     color: ReadLogColors.inkMuted, size: 12),
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }

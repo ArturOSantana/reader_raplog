@@ -34,17 +34,23 @@ final _controversialBooksProvider =
 class ClubAdvancedStatsScreen extends ConsumerWidget {
   final String clubId;
   final String clubName;
+  final String? coverUrl;
 
   const ClubAdvancedStatsScreen({
     super.key,
     required this.clubId,
     required this.clubName,
+    this.coverUrl,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
+    return LumenClubTintBackground(
+      coverUrl: coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -121,6 +127,7 @@ class ClubAdvancedStatsScreen extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

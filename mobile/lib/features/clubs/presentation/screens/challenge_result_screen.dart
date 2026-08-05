@@ -18,17 +18,24 @@ final _challengeResultProvider =
 
 class ChallengeResultScreen extends ConsumerWidget {
   final ClubChallenge challenge;
+  final String? coverUrl;
 
-  const ChallengeResultScreen({super.key, required this.challenge});
+  const ChallengeResultScreen({
+    super.key,
+    required this.challenge,
+    this.coverUrl,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final resultAsync = ref.watch(_challengeResultProvider(challenge.id));
 
-    return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+    return LumenClubTintBackground(
+      coverUrl: coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: ReadLogColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
         title: Text(
@@ -50,6 +57,7 @@ class ChallengeResultScreen extends ConsumerWidget {
           result: result,
         ),
       ),
+    ),
     );
   }
 }

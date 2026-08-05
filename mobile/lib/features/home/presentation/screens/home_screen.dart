@@ -114,7 +114,8 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: bg,
-      body: data.when(
+      body: LumenTexturedBackground(
+        child: data.when(
         loading: () => const SkelScreenList(count: 4),
         error: (e, _) => Center(
           child: Padding(
@@ -222,6 +223,7 @@ class HomeScreen extends ConsumerWidget {
           );
         },
       ),
+      ),
     );
   }
 
@@ -288,31 +290,34 @@ class _HomeHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                userName,
-                style: ReadLogType.bookTitle(
-                  size: 30,
-                  color: fg,
-                  weight: FontWeight.w500,
-                ),
-              ),
-              if (streak > 0) ...[
-                const SizedBox(width: 10),
-                Text(
-                  'Sequência de $streak ${streak == 1 ? 'dia' : 'dias'}',
-                  style: TextStyle(
-                    fontFamily: 'IBM Plex Mono',
-                    fontSize: 11,
-                    color: fgMut,
-                  ),
-                ),
-              ],
-            ],
+          Text(
+            userName,
+            style: ReadLogType.bookTitle(
+              size: 30,
+              color: fg,
+              weight: FontWeight.w500,
+            ),
           ),
+          if (streak > 0) ...[
+            const SizedBox(height: 16),
+            // Streak — número grande Fraunces + legenda mono abaixo
+            Text(
+              '$streak',
+              style: ReadLogType.display(
+                size: 42,
+                color: fg,
+                weight: FontWeight.w400,
+              ),
+            ),
+            Text(
+              streak == 1 ? 'dia em sequência' : 'dias em sequência',
+              style: TextStyle(
+                fontFamily: 'IBM Plex Mono',
+                fontSize: 11,
+                color: fgMut,
+              ),
+            ),
+          ],
         ],
       ),
     );

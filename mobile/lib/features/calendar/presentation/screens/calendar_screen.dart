@@ -43,7 +43,8 @@ class CalendarScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final data = ref.watch(_calendarDataProvider);
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Calendário'),
         automaticallyImplyLeading: false,
@@ -91,6 +92,7 @@ class CalendarScreen extends ConsumerWidget {
           );
         },
       ),
+    )
     );
   }
 }

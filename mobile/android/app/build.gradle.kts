@@ -48,7 +48,7 @@ android {
         //   - share_plus 13.x / google_sign_in_android 6.x / image_picker_android: minSdk 21
         //   - flutter_local_notifications 18.x: minSdk 19
         // flutter.minSdkVersion no Flutter 3.44+ retorna 24, por isso sobrescrevemos.
-        minSdk = 21
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

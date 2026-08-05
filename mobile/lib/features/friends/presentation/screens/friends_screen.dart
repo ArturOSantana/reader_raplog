@@ -67,7 +67,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
     final pendingAsync = ref.watch(_pendingReceivedProvider);
     final pendingCount = pendingAsync.valueOrNull?.length ?? 0;
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Amigos'),
@@ -109,6 +110,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
           _SearchTab(controller: _searchController),
         ],
       ),
+    )
     );
   }
 

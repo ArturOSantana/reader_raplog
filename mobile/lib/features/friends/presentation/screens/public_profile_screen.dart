@@ -28,7 +28,8 @@ class PublicProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(_publicProfileProvider(userId));
     final relAsync = ref.watch(_relationshipProvider(userId));
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(title: const Text('Perfil')),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -47,6 +48,7 @@ class PublicProfileScreen extends ConsumerWidget {
           );
         },
       ),
+    )
     );
   }
 }

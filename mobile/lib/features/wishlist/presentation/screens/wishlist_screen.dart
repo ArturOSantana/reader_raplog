@@ -15,7 +15,8 @@ class WishlistScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(_wishlistProvider);
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(automaticallyImplyLeading: false, title: const Text('Lista de Desejos')),
       body: items.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -28,6 +29,7 @@ class WishlistScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),
+    )
     );
   }
 

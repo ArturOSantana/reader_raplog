@@ -76,11 +76,13 @@ Future<void> _addToGoogleCalendar(_CalEvent event) async {
 class ClubCalendarScreen extends ConsumerWidget {
   final String clubId;
   final String clubName;
+  final String? coverUrl;
 
   const ClubCalendarScreen({
     super.key,
     required this.clubId,
     required this.clubName,
+    this.coverUrl,
   });
 
   @override
@@ -145,7 +147,10 @@ class ClubCalendarScreen extends ConsumerWidget {
         .reversed
         .toList();
 
-    return Scaffold(
+    return LumenClubTintBackground(
+      coverUrl: coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: _buildAppBar(context),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -165,6 +170,7 @@ class ClubCalendarScreen extends ConsumerWidget {
                 milestones: milestones,
                 clubId: clubId,
                 clubName: clubName,
+                coverUrl: coverUrl,
               ),
               const SizedBox(height: 28),
             ],
@@ -191,6 +197,7 @@ class ClubCalendarScreen extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -311,11 +318,13 @@ class _MilestonesList extends StatelessWidget {
   final List<ClubMilestone> milestones;
   final String clubId;
   final String clubName;
+  final String? coverUrl;
 
   const _MilestonesList({
     required this.milestones,
     required this.clubId,
     required this.clubName,
+    this.coverUrl,
   });
 
   @override
@@ -335,6 +344,7 @@ class _MilestonesList extends StatelessWidget {
                         extra: {
                           'milestone': m,
                           'clubName': clubName,
+                          'coverUrl': coverUrl,
                         },
                       ),
               child: Padding(

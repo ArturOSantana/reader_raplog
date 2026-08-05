@@ -29,7 +29,8 @@ class NotificationsScreen extends ConsumerWidget {
 
     final groups = _groupByDate(items);
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : ReadLogColors.surface,
       appBar: AppBar(
         backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : ReadLogColors.surface,
@@ -96,6 +97,7 @@ class NotificationsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    )
     );
   }
 

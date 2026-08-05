@@ -1012,6 +1012,43 @@ class BookClubRepository {
         rows.first as Map<String, dynamic>);
   }
 
+  // ── Membros que já contribuíram hoje no desafio ──────────────────────────
+
+  /// Retorna lista de membros que registraram pelo menos uma sessão de leitura
+  /// hoje (UTC) dentro do período do desafio.
+  /// Usado pela fileira de avatares "Já leram hoje" na tela de detalhe.
+  Future<List<Map<String, String?>>> fetchTodayContributors(
+      String challengeId) async {
+    final today = DateTime.now().toUtc();
+    final dayStart = DateTime.utc(today.year, today.month, today.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
+
+    // Busca sessões associadas ao desafio hoje, join com perfil para foto
+    final data = await _client
+        .from('club_challenge_contributions')
+        .select('user_id, profile:profiles!club_challenge_contributions_user_id_fkey(name, avatar_url)')
+        .eq('challenge_id', challengeId)
+        .gte('contributed_at', dayStart.toIso8601String())
+        .lt('contributed_at', dayEnd.toIso8601String());
+
+    final rows = (data as List).cast<Map<String, dynamic>>();
+    // Deduplica por user_id (pode ter múltiplas contribuições no dia)
+    final seen = <String>{};
+    final result = <Map<String, String?>>[];
+    for (final row in rows) {
+      final uid = row['user_id'] as String? ?? '';
+      if (seen.contains(uid)) continue;
+      seen.add(uid);
+      final profile = row['profile'] as Map<String, dynamic>? ?? {};
+      result.add({
+        'user_id': uid,
+        'name': profile['name'] as String?,
+        'avatar_url': profile['avatar_url'] as String?,
+      });
+    }
+    return result;
+  }
+
   // ── Contribuição pessoal do usuário corrente no desafio ─────────────────
 
   /// Retorna o percentual de contribuição do usuário no total coletivo.

@@ -20,6 +20,7 @@ class ClubSealsScreen extends ConsumerWidget {
   final String clubId;
   final String clubName;
   final bool isManager;
+  final String? coverUrl;
 
   /// Lista de membros disponíveis para receber selos.
   final List<ClubMemberSummary> members;
@@ -30,16 +31,19 @@ class ClubSealsScreen extends ConsumerWidget {
     required this.clubName,
     required this.isManager,
     required this.members,
+    this.coverUrl,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sealsAsync = ref.watch(_clubSealsProvider(clubId));
 
-    return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+    return LumenClubTintBackground(
+      coverUrl: coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: ReadLogColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
         title: Column(
@@ -122,6 +126,7 @@ class ClubSealsScreen extends ConsumerWidget {
           );
         },
       ),
+    ),
     );
   }
 

@@ -176,7 +176,10 @@ export default async function WebLayout({
         </header>
 
         <main className="flex-1 overflow-auto">
-          {children}
+          {/* page-enter: fade + micro-slide ao navegar — casado com o grain */}
+          <div className="page-enter">
+            {children}
+          </div>
         </main>
       </div>
     </div>

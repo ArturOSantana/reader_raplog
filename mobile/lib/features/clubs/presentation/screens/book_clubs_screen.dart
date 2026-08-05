@@ -51,36 +51,38 @@ class BookClubsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SafeArea(
-            bottom: false,
-            child: ReadLogPageHeader(
-              kicker: 'SEÇÃO',
-              title: 'Clubes',
-              dark: false,
-              showMenuButton: true,
-              actions: [
-                IconButton(
-                  icon: LumenIcon('search', size: 20, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
-                  onPressed: () {},
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                ),
-                // Ação de criar/entrar — ícone + no topo, sem FAB
-                IconButton(
-                  icon: LumenIcon('add', size: 22, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
-                  onPressed: () {},
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                ),
-              ],
+    return LumenTexturedBackground(
+      child: Scaffold(
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SafeArea(
+              bottom: false,
+              child: ReadLogPageHeader(
+                kicker: 'SEÇÃO',
+                title: 'Clubes',
+                dark: false,
+                showMenuButton: true,
+                actions: [
+                  IconButton(
+                    icon: LumenIcon('search', size: 20, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
+                    onPressed: () {},
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  ),
+                  // Ação de criar/entrar — ícone + no topo, sem FAB
+                  IconButton(
+                    icon: LumenIcon('add', size: 22, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
+                    onPressed: () {},
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Expanded(child: BookClubsBody()),
-        ],
+            const Expanded(child: BookClubsBody()),
+          ],
+        ),
       ),
     );
   }

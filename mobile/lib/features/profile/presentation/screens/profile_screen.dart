@@ -81,7 +81,8 @@ class ProfileScreen extends ConsumerWidget {
     final fullName = profileAsync.valueOrNull?.name ?? user?.userMetadata?['full_name'] as String?;
     final email = user?.email ?? '';
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : LumenColors.surface,
       appBar: AppBar(
         backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : LumenColors.surface,
@@ -180,6 +181,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: LumenSpace.xl),
         ],
       ),
+    )
     );
   }
 

@@ -122,7 +122,8 @@ class _EditBookScreenState extends ConsumerState<EditBookScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Editar livro'),
         actions: [
@@ -285,6 +286,7 @@ class _EditBookScreenState extends ConsumerState<EditBookScreen> {
           ],
         ),
       ),
+    )
     );
   }
 }

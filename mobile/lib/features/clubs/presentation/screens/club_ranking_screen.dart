@@ -20,12 +20,16 @@ class ClubRankingScreen extends ConsumerStatefulWidget {
   final bool hasCurrentBook;
   final DateTime? bookStartedAt;
 
+  /// URL da capa do livro atual — usado para o tint de cor do fundo.
+  final String? coverUrl;
+
   const ClubRankingScreen({
     super.key,
     required this.clubId,
     required this.clubName,
     this.hasCurrentBook = false,
     this.bookStartedAt,
+    this.coverUrl,
   });
 
   @override
@@ -99,27 +103,30 @@ class _ClubRankingScreenState extends ConsumerState<ClubRankingScreen>
                 child: Divider(height: 1, color: theme.dividerColor),
               ),
       ),
-      body: widget.hasCurrentBook
-          ? TabBarView(
-              controller: _tabs,
-              children: [
-                _RankingList(
-                  clubId: widget.clubId,
-                  scope: 'all',
-                  bookStartedAt: null,
-                ),
-                _RankingList(
-                  clubId: widget.clubId,
-                  scope: 'current_book',
-                  bookStartedAt: widget.bookStartedAt,
-                ),
-              ],
-            )
-          : _RankingList(
-              clubId: widget.clubId,
-              scope: 'all',
-              bookStartedAt: null,
-            ),
+      body: LumenClubTintBackground(
+        coverUrl: widget.coverUrl,
+        child: widget.hasCurrentBook
+            ? TabBarView(
+                controller: _tabs,
+                children: [
+                  _RankingList(
+                    clubId: widget.clubId,
+                    scope: 'all',
+                    bookStartedAt: null,
+                  ),
+                  _RankingList(
+                    clubId: widget.clubId,
+                    scope: 'current_book',
+                    bookStartedAt: widget.bookStartedAt,
+                  ),
+                ],
+              )
+            : _RankingList(
+                clubId: widget.clubId,
+                scope: 'all',
+                bookStartedAt: null,
+              ),
+        ),
     );
   }
 }
@@ -166,18 +173,92 @@ class _RankingList extends ConsumerWidget {
             ),
           );
         }
+
+        // Entrada do usuário atual — pode ser null se ainda não tem check-in
+        final myEntry = currentUserId != null
+            ? entries.where((e) => e.userId == currentUserId).firstOrNull
+            : null;
+
         return ListView.builder(
           padding: const EdgeInsets.symmetric(
             horizontal: LumenSpace.lg,
             vertical: LumenSpace.md,
           ),
-          itemCount: entries.length,
-          itemBuilder: (context, i) => _RankRow(
-            entry: entries[i],
-            isCurrentUser: entries[i].userId == currentUserId,
-          ),
+          // +1 para o bloco "Sua posição" no topo, se houver
+          itemCount: entries.length + (myEntry != null ? 1 : 0),
+          itemBuilder: (context, i) {
+            // Índice 0 → bloco "Sua posição"
+            if (myEntry != null && i == 0) {
+              return _MyPositionBlock(entry: myEntry);
+            }
+            final entry = entries[myEntry != null ? i - 1 : i];
+            return _RankRow(
+              entry: entry,
+              isCurrentUser: entry.userId == currentUserId,
+            );
+          },
         );
       },
+    );
+  }
+}
+
+// ── Bloco "Sua posição" — acima da lista ─────────────────────────────────────
+
+class _MyPositionBlock extends StatelessWidget {
+  final ClubCheckinRankingEntry entry;
+
+  const _MyPositionBlock({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final onSurface = theme.colorScheme.onSurface;
+    final muted = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: LumenSpace.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'sua posição',
+            style: LumenType.mono(size: 10, color: muted)
+                .copyWith(letterSpacing: 1.2),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '${entry.position}º',
+                style: LumenType.display(
+                  size: 42,
+                  color: onSurface,
+                  weight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${entry.checkinDays} ${entry.checkinDays == 1 ? 'check-in' : 'check-ins'}',
+                    style: LumenType.mono(
+                      size: 13,
+                      color: onSurface,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const Divider(height: LumenSpace.xl),
+        ],
+      ),
     );
   }
 }
@@ -194,11 +275,17 @@ class _RankRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isTop3 = entry.position <= 3;
+    // Fundo levemente destacado para a linha do próprio usuário
+    final bg = isCurrentUser
+        ? LumenColors.accent.withValues(alpha: 0.06)
+        : Colors.transparent;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
+        color: bg,
         border: Border(bottom: BorderSide(color: theme.dividerColor)),
+        borderRadius: LumenRadius.cardAll,
       ),
       child: Row(
         children: [
@@ -217,19 +304,11 @@ class _RankRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          // Avatar simples — sem anel, sem cor de posição
-          CircleAvatar(
+          // Avatar — foto real ou iniciais neutras
+          LumenAvatar(
+            name: entry.userName ?? '?',
+            avatarUrl: entry.avatarUrl,
             radius: 16,
-            backgroundColor: LumenColors.divider,
-            backgroundImage: entry.avatarUrl != null
-                ? NetworkImage(entry.avatarUrl!)
-                : null,
-            child: entry.avatarUrl == null
-                ? Text(
-                    (entry.userName ?? '?').characters.first.toUpperCase(),
-                    style: LumenType.mono(size: 11, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted),
-                  )
-                : null,
           ),
           const SizedBox(width: 12),
           // Nome

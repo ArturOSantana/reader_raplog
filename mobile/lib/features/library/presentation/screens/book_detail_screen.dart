@@ -45,7 +45,8 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
   Widget build(BuildContext context) {
     final book = ref.watch(_bookDetailProvider(widget.bookId));
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       appBar: AppBar(
         actions: [
           if (book.valueOrNull != null) ...[
@@ -124,6 +125,7 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
         error: (e, _) => Center(child: Text('Erro: $e')),
         data: (b) => _BookDetailBody(book: b),
       ),
+    )
     );
   }
 

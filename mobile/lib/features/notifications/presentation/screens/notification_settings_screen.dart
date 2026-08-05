@@ -12,7 +12,8 @@ class NotificationSettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final prefsAsync = ref.watch(notificationPrefsProvider);
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       backgroundColor: AppColors.offWhite,
       appBar: AppBar(
         title: const Text('Notificações'),
@@ -122,6 +123,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
           ],
         ),
       ),
+    )
     );
   }
 }

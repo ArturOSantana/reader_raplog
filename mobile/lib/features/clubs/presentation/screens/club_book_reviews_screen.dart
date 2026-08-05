@@ -38,36 +38,37 @@ class ClubBookReviewsScreen extends ConsumerWidget {
     final reviewsAsync = ref.watch(_reviewsProvider(bookHistoryId));
     final myReviewAsync = ref.watch(_myReviewProvider(bookHistoryId));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Resenhas',
+    return LumenClubTintBackground(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Resenhas',
             style: ReadLogType.bookTitle(size: 16)),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final existing = myReviewAsync.valueOrNull;
-              final saved = await context.push<bool>(
-                '/clubs/$clubId/reviews/new',
-                extra: {
-                  'clubId': clubId,
-                  'bookHistoryId': bookHistoryId,
-                  'bookTitle': bookTitle,
-                  'existing': existing,
-                },
-              );
-              if (saved == true) {
-                ref.invalidate(_reviewsProvider(bookHistoryId));
-                ref.invalidate(_myReviewProvider(bookHistoryId));
-              }
-            },
-            child: Text(
-              myReviewAsync.valueOrNull != null ? 'Editar' : 'Escrever',
-              style: ReadLogType.kicker(color: ReadLogColors.ink, size: 12),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                final existing = myReviewAsync.valueOrNull;
+                final saved = await context.push<bool>(
+                  '/clubs/$clubId/reviews/new',
+                  extra: {
+                    'clubId': clubId,
+                    'bookHistoryId': bookHistoryId,
+                    'bookTitle': bookTitle,
+                    'existing': existing,
+                  },
+                );
+                if (saved == true) {
+                  ref.invalidate(_reviewsProvider(bookHistoryId));
+                  ref.invalidate(_myReviewProvider(bookHistoryId));
+                }
+              },
+              child: Text(
+                myReviewAsync.valueOrNull != null ? 'Editar' : 'Escrever',
+                style: ReadLogType.kicker(color: ReadLogColors.ink, size: 12),
+              ),
             ),
-          ),
-        ],
-      ),
-      body: reviewsAsync.when(
+          ],
+        ),
+        body: reviewsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erro: $e')),
         data: (reviews) {
@@ -121,6 +122,7 @@ class ClubBookReviewsScreen extends ConsumerWidget {
             ],
           );
         },
+      ),
       ),
     );
   }

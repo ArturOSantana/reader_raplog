@@ -42,6 +42,7 @@ class MemberProfileScreen extends ConsumerWidget {
   final String userId;
   final String userName;
   final String? avatarUrl;
+  final String? coverUrl;
 
   const MemberProfileScreen({
     super.key,
@@ -49,6 +50,7 @@ class MemberProfileScreen extends ConsumerWidget {
     required this.userId,
     required this.userName,
     this.avatarUrl,
+    this.coverUrl,
   });
 
   @override
@@ -56,10 +58,12 @@ class MemberProfileScreen extends ConsumerWidget {
     final statsAsync =
         ref.watch(_allTimeStatsProvider(_StatsKey(clubId, userId)));
 
-    return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+    return LumenClubTintBackground(
+      coverUrl: coverUrl,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: ReadLogColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
         title: Text(
@@ -88,6 +92,7 @@ class MemberProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

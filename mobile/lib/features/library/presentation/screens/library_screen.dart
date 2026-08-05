@@ -25,7 +25,8 @@ class LibraryScreen extends ConsumerWidget {
     final genreView = ref.watch(_genreViewProvider);
     final books = ref.watch(_booksProvider);
 
-    return Scaffold(
+    return LumenTexturedBackground(
+      child: Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark ? ReadLogColors.canvas : ReadLogColors.surface,
       body: Column(
         children: [
@@ -112,6 +113,7 @@ class LibraryScreen extends ConsumerWidget {
           ),
         ],
       ),
+    )
     );
   }
 }
