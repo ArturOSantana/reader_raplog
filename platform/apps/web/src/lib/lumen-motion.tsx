@@ -52,6 +52,7 @@ interface SkelBlockProps {
   /** border-radius CSS, default "4px" */
   radius?: string
   className?: string
+  style?: React.CSSProperties
 }
 
 /**
@@ -67,11 +68,12 @@ export function SkelBlock({
   height = '1rem',
   radius = '4px',
   className = '',
+  style,
 }: SkelBlockProps) {
   return (
     <div
       className={`skel${className ? ` ${className}` : ''}`}
-      style={{ width, height, borderRadius: radius }}
+      style={{ width, height, borderRadius: radius, ...style }}
       aria-hidden
     />
   )

@@ -65,11 +65,6 @@ android {
         release {
             signingConfig = signingConfigs.getByName("release")
         }
-        debug {
-            // Suffix garante que debug e release coexistam no mesmo device sem
-            // conflito de certificado — são tratados como apps distintos pelo Android.
-            applicationIdSuffix = ".debug"
-        }
     }
 }
 
