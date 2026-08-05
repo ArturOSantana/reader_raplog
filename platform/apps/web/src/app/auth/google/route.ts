@@ -5,41 +5,45 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   const { origin } = new URL(request.url)
-  // Usa a URL canônica da app se disponível, evitando que o origin do proxy
-  // (que pode ser http:// ou um hostname interno) seja enviado ao Supabase.
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ?? origin
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return NextResponse.redirect(`${appUrl}/login?error=missing_env`)
-  }
+  try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return NextResponse.redirect(`${appUrl}/login?error=missing_env`)
+    }
 
-  const response = NextResponse.next()
+    const response = NextResponse.next()
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          )
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() { return request.cookies.getAll() },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options),
+            )
+          },
         },
       },
-    },
-  )
+    )
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${appUrl}/auth/callback`,
-    },
-  })
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${appUrl}/auth/callback`,
+      },
+    })
 
-  if (error || !data.url) {
-    return NextResponse.redirect(`${appUrl}/login?error=oauth_failed`)
+    if (error || !data.url) {
+      const msg = error?.message ?? 'no_url'
+      return NextResponse.redirect(`${appUrl}/login?error=oauth_failed&detail=${encodeURIComponent(msg)}`)
+    }
+
+    return NextResponse.redirect(data.url)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return NextResponse.redirect(`${appUrl}/login?error=exception&detail=${encodeURIComponent(msg)}`)
   }
-
-  return NextResponse.redirect(data.url)
 }
