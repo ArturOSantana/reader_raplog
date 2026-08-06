@@ -1488,4 +1488,14 @@ class BookClubRepository {
     }
     return result;
   }
+
+  /// Adiciona um membro ao clube com o papel 'member'.
+  /// Usado para convites diretos de amigos.
+  Future<void> addMemberToClub(String clubId, String userId) async {
+    await _client.from('book_club_members').insert({
+      'club_id': clubId,
+      'user_id': userId,
+      'role': 'member',
+    });
+  }
 }

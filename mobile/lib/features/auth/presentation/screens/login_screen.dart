@@ -119,81 +119,84 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final onSurface = colorScheme.onSurface;
+
     return LumenTexturedBackground(
       child: Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 48),
-                Text(
-                  'Lumen',
-                  style: AppTextStyles.displayLarge.copyWith(
-                    color: AppColors.forestGreen,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _isSignUp ? 'Crie sua conta' : 'Bem-vindo de volta',
-                  style: AppTextStyles.bodyLarge,
-                ),
-                const SizedBox(height: 40),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'E-mail'),
-                  validator: (v) =>
-                      v == null || !v.contains('@') ? 'E-mail invalido' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Senha'),
-                  validator: (v) => v == null || v.length < 6
-                      ? 'Minimo 6 caracteres'
-                      : null,
-                ),
-                const SizedBox(height: 32),
-                FilledButton(
-                  onPressed: _isLoading ? null : _submit,
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(_isSignUp ? 'Criar conta' : 'Entrar'),
-                ),
-                const SizedBox(height: 12),
-                _GoogleSignInButton(
-                  onPressed: _isLoading ? null : _signInWithGoogle,
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: TextButton(
-                    onPressed: () => setState(() => _isSignUp = !_isSignUp),
-                    child: Text(
-                      _isSignUp
-                          ? 'Ja tenho conta'
-                          : 'Nao tenho conta — cadastrar',
-                      style: TextStyle(color: AppColors.forestGreen),
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 48),
+                  Text(
+                    'Lumen',
+                    style: AppTextStyles.displayLarge.copyWith(
+                      color: LumenColors.readLight,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    _isSignUp ? 'Crie sua conta' : 'Bem-vindo de volta',
+                    style: AppTextStyles.bodyLarge.copyWith(color: onSurface),
+                  ),
+                  const SizedBox(height: 40),
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(labelText: 'E-mail'),
+                    validator: (v) =>
+                        v == null || !v.contains('@') ? 'E-mail invalido' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'Senha'),
+                    validator: (v) => v == null || v.length < 6
+                        ? 'Minimo 6 caracteres'
+                        : null,
+                  ),
+                  const SizedBox(height: 32),
+                  FilledButton(
+                    onPressed: _isLoading ? null : _submit,
+                    child: _isLoading
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: colorScheme.onPrimary,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(_isSignUp ? 'Criar conta' : 'Entrar'),
+                  ),
+                  const SizedBox(height: 12),
+                  _GoogleSignInButton(
+                    onPressed: _isLoading ? null : _signInWithGoogle,
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: TextButton(
+                      onPressed: () => setState(() => _isSignUp = !_isSignUp),
+                      child: Text(
+                        _isSignUp
+                            ? 'Ja tenho conta'
+                            : 'Nao tenho conta — cadastrar',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    )
     );
   }
 }
@@ -210,8 +213,6 @@ class _GoogleSignInButton extends StatelessWidget {
       icon: const _GoogleLogo(),
       label: const Text('Entrar com Google'),
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.textPrimary,
-        side: BorderSide(color: AppColors.border),
         minimumSize: const Size.fromHeight(48),
       ),
     );

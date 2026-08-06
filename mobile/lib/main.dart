@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:timezone/data/latest.dart' as tz;
 import 'core/config/app_env.dart';
 import 'core/local/local_database.dart';
 import 'core/observability/observability_service.dart';
@@ -97,6 +98,7 @@ Future<void> _bootAndRun() async {
   }
 
   await initializeDateFormatting('pt_BR');
+  tz.initializeTimeZones();
 
   // Inicializa banco SQLite antes do runApp.
   // Se o banco falhar (ex: migração corrompida), recria do zero para não

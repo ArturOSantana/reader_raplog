@@ -29,6 +29,13 @@ final _searchResultsProvider =
   return ref.read(friendsRepositoryProvider).searchByName(q);
 });
 
+/// Rastreia o status de relacionamento com cada usuário na busca.
+/// Chave: userId
+final _relationshipStatusProvider =
+    FutureProvider.family<String, String>((ref, userId) {
+  return ref.read(friendsRepositoryProvider).relationshipStatus(userId);
+});
+
 // ── Screen ───────────────────────────────────────────────────────────────
 
 class FriendsScreen extends ConsumerStatefulWidget {
@@ -424,13 +431,41 @@ class _SearchResultTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final relAsync = ref.watch(_relationshipStatusProvider(profile.id));
+
     return ListTile(
       leading: _SmallAvatar(url: profile.avatarUrl, name: profile.name ?? '?'),
       title: Text(profile.name ?? 'Leitor'),
       subtitle: profile.bio != null && profile.bio!.isNotEmpty
           ? Text(profile.bio!, maxLines: 1, overflow: TextOverflow.ellipsis)
           : null,
-      trailing: const Icon(Icons.chevron_right),
+      trailing: relAsync.when(
+        loading: () => const SizedBox(
+          width: 40,
+          child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))),
+        ),
+        error: (_, __) => const Icon(Icons.chevron_right),
+        data: (status) {
+          if (status == 'friend') {
+            return const Tooltip(
+              message: 'Já é amigo',
+              child: Icon(Icons.done_outline, color: AppColors.success),
+            );
+          } else if (status == 'pending_sent') {
+            return const Tooltip(
+              message: 'Convite enviado',
+              child: Icon(Icons.schedule_outlined, color: AppColors.forestGreen),
+            );
+          } else if (status == 'pending_received') {
+            return const Tooltip(
+              message: 'Pendente',
+              child: Icon(Icons.mark_email_unread_outlined, color: AppColors.forestGreen),
+            );
+          } else {
+            return const Icon(Icons.chevron_right);
+          }
+        },
+      ),
       onTap: () => context.push('/friends/profile/${profile.id}'),
     );
   }

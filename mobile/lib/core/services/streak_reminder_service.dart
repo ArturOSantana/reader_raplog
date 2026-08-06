@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 /// Gerencia notificações locais para:
 ///  - Ofensiva em risco  → se o usuário não abrir/ler no dia corrente
@@ -183,6 +185,36 @@ class StreakReminderService {
   Future<void> _scheduleStreakAtRisk(int streak) async {
     final days = streak == 1 ? '1 dia' : '$streak dias';
 
+    final quotes = [
+      _NotificationQuote(
+        '🔥 Sua ofensiva de $days está em risco!',
+        '"Ler é sonhar pela mão de outrem." — Fernando Pessoa. Que tal ler hoje?',
+      ),
+      _NotificationQuote(
+        '🔥 Não perca sua sequência de $days!',
+        '"Creio que uma forma de felicidade é a leitura." — Jorge Luis Borges.',
+      ),
+      _NotificationQuote(
+        '🔥 Proteja seus $days de ofensiva!',
+        '"Um livro deve ser o machado para o mar congelado em nós." — Franz Kafka.',
+      ),
+      _NotificationQuote(
+        '🔥 Sequência de $days em risco!',
+        '"Ler não é decifrar, é viver." — Cecília Meireles. Abra o seu livro de hoje!',
+      ),
+      _NotificationQuote(
+        '🔥 Ofensiva em perigo ($days)!',
+        '"Para viajar longe, não há melhor navio do que um livro." — Emily Dickinson.',
+      ),
+      _NotificationQuote(
+        '🔥 Continue sua sequência de $days!',
+        '"Ler é alimentar a alma." — Sêneca. Nutra seu espírito com algumas páginas!',
+      ),
+    ];
+
+    final random = Random();
+    final quote = quotes[random.nextInt(quotes.length)];
+
     final androidDetails = AndroidNotificationDetails(
       _streakChannelId,
       _streakChannelName,
@@ -192,17 +224,67 @@ class StreakReminderService {
       icon: 'ic_reading_notification',
     );
 
-    // Mostra agora como notificação diferida (sem API de agendamento exato
-    // para manter compatibilidade com Android 12+ sem permissão SCHEDULE_EXACT_ALARM)
-    await _plugin.show(
+    // Calcula o momento ideal para o alerta:
+    // Se o usuário abrir o app, agendamos para daqui a 3 horas, ou para as 21:00 de hoje, o que vier primeiro.
+    // Mas garantimos que o horário agendado seja no futuro!
+    final agora = tz.TZDateTime.now(tz.local);
+    
+    // Alvo: hoje às 21h
+    var target = tz.TZDateTime(
+      tz.local,
+      agora.year,
+      agora.month,
+      agora.day,
+      21,
+      0,
+    );
+
+    // Se já passou das 21h de hoje, jogamos para as 21h de amanhã
+    if (target.isBefore(agora)) {
+      target = target.add(const Duration(days: 1));
+    }
+
+    // Daqui a 3h
+    final daquiTresHoras = agora.add(const Duration(hours: 3));
+    
+    // O que vier primeiro (desde que seja no futuro)
+    final scheduledDate = daquiTresHoras.isBefore(target) ? daquiTresHoras : target;
+
+    await _plugin.zonedSchedule(
       _streakAtRiskId,
-      '🔥 Sua ofensiva está em risco!',
-      'Você tem $days de sequência. Leia algo hoje para não perder!',
+      quote.title,
+      quote.body,
+      scheduledDate,
       NotificationDetails(android: androidDetails),
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
     );
   }
 
   Future<void> _scheduleInactivity() async {
+    final quotes = [
+      _NotificationQuote(
+        '📖 Saudades de você!',
+        '"A literatura é a maneira mais agradável de ignorar a vida." — Fernando Pessoa.',
+      ),
+      _NotificationQuote(
+        '📖 Que tal retomar a leitura?',
+        '"Ler é uma das formas de ser." — Clarice Lispector. Volte a ler seu livro!',
+      ),
+      _NotificationQuote(
+        '📖 Seus livros te esperam!',
+        '"A leitura nos dá um lugar para ir quando temos que ficar." — Mason Cooley.',
+      ),
+      _NotificationQuote(
+        '📖 Um convite à leitura...',
+        '"Os livros são amigos que nunca nos abandonam." — Charles Kingsley.',
+      ),
+    ];
+
+    final random = Random();
+    final quote = quotes[random.nextInt(quotes.length)];
+
     const androidDetails = AndroidNotificationDetails(
       _streakChannelId,
       _streakChannelName,
@@ -212,11 +294,19 @@ class StreakReminderService {
       icon: 'ic_reading_notification',
     );
 
-    await _plugin.show(
+    // Agenda inatividade para 36 horas a partir de agora
+    final agora = tz.TZDateTime.now(tz.local);
+    final scheduledDate = agora.add(const Duration(hours: 36));
+
+    await _plugin.zonedSchedule(
       _inactivityId,
-      '📖 Saudades de você!',
-      'Faz um tempinho que você não lê. Que tal retomar agora?',
+      quote.title,
+      quote.body,
+      scheduledDate,
       NotificationDetails(android: androidDetails),
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
     );
   }
 

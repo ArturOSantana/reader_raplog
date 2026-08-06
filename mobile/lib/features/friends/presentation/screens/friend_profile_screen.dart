@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/models/friend.dart';
 import '../../../../shared/providers/providers.dart';
+import '../widgets/invite_to_club_sheet.dart';
 
 // ── Providers ────────────────────────────────────────────────────────────────
 
@@ -358,7 +359,7 @@ class _ActionRow extends ConsumerWidget {
         _SmallButton(
           icon: Icons.library_books_outlined,
           label: 'Convidar',
-          onTap: () {},
+          onTap: () => _inviteToClub(context),
         ),
       ],
     );
@@ -408,6 +409,21 @@ class _ActionRow extends ConsumerWidget {
             child: const Text('Remover'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _inviteToClub(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => InviteToClubSheet(
+        friendId: profile.id,
+        friendName: profile.name,
       ),
     );
   }

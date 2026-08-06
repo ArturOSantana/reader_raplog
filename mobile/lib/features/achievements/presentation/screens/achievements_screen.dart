@@ -9,6 +9,27 @@ final _achievementsProvider = FutureProvider<List<Achievement>>((ref) {
   return ref.watch(achievementRepositoryProvider).fetchAll();
 });
 
+// Mapeia a chave da conquista para o nome do ícone SVG correspondente.
+// Se a conquista tiver `icon` preenchido no banco, esse campo tem precedência.
+String _iconForKey(String key) {
+  switch (key) {
+    case 'first_book':
+      return 'achievement-primeiro-livro';
+    case 'hours_100':
+      return 'achievement-cem-horas';
+    case 'first_club':
+      return 'achievement-primeiro-clube';
+    case 'first_collective_read':
+      return 'achievement-leitura-coletiva';
+    case 'books_100':
+      return 'achievement-cem-livros';
+    case 'streak_365':
+      return 'achievement-365-dias';
+    default:
+      return 'achievement-primeiro-livro';
+  }
+}
+
 class AchievementsScreen extends ConsumerWidget {
   const AchievementsScreen({super.key});
 
@@ -21,9 +42,7 @@ class AchievementsScreen extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: isDark ? LumenColors.canvas : LumenColors.surface,
         body: achievements.when(
-          loading: () => const Center(
-            child: LumenGrainLoader(),
-          ),
+          loading: () => const Center(child: LumenGrainLoader()),
           error: (e, _) => Center(
             child: Text(
               'Erro ao carregar conquistas',
@@ -47,22 +66,10 @@ class AchievementsScreen extends ConsumerWidget {
                   total: list.length,
                   progress: progress,
                 ),
-                if (unlocked.isNotEmpty) ...[
-                  _SectionLabel(label: 'Conquistadas', isDark: isDark),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _AchievementsGrid(
-                        items: unlocked, unlocked: true, isDark: isDark),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+                ...unlocked.map((a) => _AchievementRow(achievement: a, isUnlocked: true, isDark: isDark)),
                 if (locked.isNotEmpty) ...[
-                  _SectionLabel(label: 'Bloqueadas', isDark: isDark, muted: true),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _AchievementsGrid(
-                        items: locked, unlocked: false, isDark: isDark),
-                  ),
+                  _Divider(isDark: isDark),
+                  ...locked.map((a) => _AchievementRow(achievement: a, isUnlocked: false, isDark: isDark)),
                 ],
                 const SizedBox(height: 40),
               ],
@@ -74,7 +81,7 @@ class AchievementsScreen extends ConsumerWidget {
   }
 }
 
-// ── Header com progresso ────────────────────────────────────────────────────
+// ── Header ──────────────────────────────────────────────────────────────────
 
 class _AchievementsHeader extends StatelessWidget {
   final int unlocked;
@@ -101,17 +108,10 @@ class _AchievementsHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'CONQUISTAS',
-            style: LumenType.kicker(size: 10, color: muted),
-          ),
+          Text('CONQUISTAS', style: LumenType.kicker(size: 10, color: muted)),
           const SizedBox(height: 4),
-          Text(
-            'Carimbos',
-            style: LumenType.bookTitle(size: 28, color: fg),
-          ),
+          Text('Carimbos', style: LumenType.bookTitle(size: 28, color: fg)),
           const SizedBox(height: 20),
-          // Linha de progresso com contagem
           Row(
             children: [
               Expanded(
@@ -122,16 +122,12 @@ class _AchievementsHeader extends StatelessWidget {
                     minHeight: 3,
                     backgroundColor:
                         isDark ? LumenColors.hairlineDark : LumenColors.surfaceSubtle,
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(LumenColors.read),
+                    valueColor: const AlwaysStoppedAnimation<Color>(LumenColors.read),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                '$unlocked / $total',
-                style: LumenType.mono(size: 11, color: muted),
-              ),
+              Text('$unlocked / $total', style: LumenType.mono(size: 11, color: muted)),
             ],
           ),
         ],
@@ -140,184 +136,77 @@ class _AchievementsHeader extends StatelessWidget {
   }
 }
 
-// ── Label de seção ──────────────────────────────────────────────────────────
+// ── Divisor entre desbloqueadas e bloqueadas ─────────────────────────────────
 
-class _SectionLabel extends StatelessWidget {
-  final String label;
+class _Divider extends StatelessWidget {
   final bool isDark;
-  final bool muted;
+  const _Divider({required this.isDark});
 
-  const _SectionLabel({
-    required this.label,
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      child: Divider(
+        height: 1,
+        thickness: 1,
+        color: isDark ? LumenColors.hairlineDark : LumenColors.hairline,
+      ),
+    );
+  }
+}
+
+// ── Linha de conquista ───────────────────────────────────────────────────────
+
+class _AchievementRow extends StatelessWidget {
+  final Achievement achievement;
+  final bool isUnlocked;
+  final bool isDark;
+
+  const _AchievementRow({
+    required this.achievement,
+    required this.isUnlocked,
     required this.isDark,
-    this.muted = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = muted
-        ? (isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted)
-        : (isDark ? LumenColors.inkInverse : LumenColors.ink);
+    final iconName = achievement.icon ?? _iconForKey(achievement.key);
+    final fg = isDark ? LumenColors.inkInverse : LumenColors.ink;
+    final muted = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-      child: Text(
-        label,
-        style: LumenType.bookTitle(size: 15, color: color),
-      ),
-    );
-  }
-}
-
-// ── Grid de conquistas ──────────────────────────────────────────────────────
-
-class _AchievementsGrid extends StatelessWidget {
-  final List<Achievement> items;
-  final bool unlocked;
-  final bool isDark;
-
-  const _AchievementsGrid({
-    required this.items,
-    required this.unlocked,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 1.55,
-      ),
-      itemBuilder: (context, i) =>
-          _AchievementCard(achievement: items[i], unlocked: unlocked),
-    );
-  }
-}
-
-// ── Card individual ─────────────────────────────────────────────────────────
-
-class _AchievementCard extends StatelessWidget {
-  final Achievement achievement;
-  final bool unlocked;
-
-  const _AchievementCard({required this.achievement, required this.unlocked});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final bgColor = unlocked
-        ? (isDark
-            ? LumenColors.canvasVariant
-            : LumenColors.surfaceVariant)
-        : (isDark
-            ? LumenColors.canvas
-            : LumenColors.surface);
-
-    final borderColor = unlocked
-        ? (isDark ? LumenColors.dividerDark : LumenColors.divider)
-        : (isDark ? LumenColors.hairlineDark : LumenColors.hairline);
-
-    final titleColor = unlocked
-        ? (isDark ? LumenColors.inkInverse : LumenColors.ink)
-        : (isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted);
-
-    final descColor =
-        isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
-
-    final iconBg = unlocked
-        ? LumenColors.read.withValues(alpha: 0.12)
-        : (isDark
-            ? LumenColors.hairlineDark
-            : LumenColors.surfaceSubtle);
-
-    final iconColor = unlocked
-        ? LumenColors.read
-        : (isDark ? LumenColors.inkSecondaryInverse : LumenColors.inkSecondary);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: LumenRadius.cardAll,
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Ícone
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: iconBg,
-                ),
-                child: Center(
-                  child: LumenIcon(
-                    unlocked ? 'check' : 'bookmark',
-                    size: 15,
-                    color: iconColor,
+          // Ícone SVG — opacidade 32% se bloqueada
+          Opacity(
+            opacity: isUnlocked ? 1.0 : 0.32,
+            child: LumenIcon(iconName, size: 32, color: fg),
+          ),
+          const SizedBox(width: 14),
+          // Nome + data
+          Expanded(
+            child: Opacity(
+              opacity: isUnlocked ? 1.0 : 0.5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    achievement.name,
+                    style: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w500, color: fg, height: 1.3),
                   ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Nome
-              Expanded(
-                child: Text(
-                  achievement.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: LumenType.mono(
-                    size: 10,
-                    weight: FontWeight.w500,
-                    color: titleColor,
-                  ).copyWith(letterSpacing: 0.2, height: 1.35),
-                ),
-              ),
-            ],
-          ),
-          // Descrição
-          Text(
-            achievement.description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 10,
-              height: 1.4,
-              color: descColor,
-            ),
-          ),
-          // Data de desbloqueio ou XP
-          if (unlocked && achievement.unlockedAt != null)
-            Text(
-              DateFormat('dd/MM/yy').format(achievement.unlockedAt!),
-              style: LumenType.mono(
-                size: 9,
-                color: LumenColors.read,
-              ),
-            )
-          else
-            Text(
-              '+${achievement.xpReward} XP',
-              style: LumenType.mono(
-                size: 9,
-                color: isDark
-                    ? LumenColors.inkSecondaryInverse
-                    : LumenColors.inkSecondary,
+                  const SizedBox(height: 2),
+                  Text(
+                    isUnlocked && achievement.unlockedAt != null
+                        ? DateFormat("dd MMM yyyy", "pt_BR")
+                            .format(achievement.unlockedAt!)
+                        : 'ainda não desbloqueada',
+                    style: LumenType.mono(size: 10, color: muted),
+                  ),
+                ],
               ),
             ),
+          ),
         ],
       ),
     );

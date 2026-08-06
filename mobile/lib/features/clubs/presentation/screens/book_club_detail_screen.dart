@@ -1514,6 +1514,7 @@ class _HistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final dateFmt = DateFormat('MMM/yyyy', 'pt_BR');
     final period = entry.isFinished
         ? '${dateFmt.format(entry.startedAt)} → ${dateFmt.format(entry.endedAt!)}'
@@ -1529,7 +1530,10 @@ class _HistoryTile extends StatelessWidget {
               children: [
                 Text(
                   entry.bookTitle,
-                  style: LumenType.bookTitle(size: 15, color: LumenColors.ink),
+                  style: LumenType.bookTitle(
+                    size: 15,
+                    color: isDark ? LumenColors.inkInverse : LumenColors.ink,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1540,7 +1544,10 @@ class _HistoryTile extends StatelessWidget {
                     period,
                     if (entry.meetingCount > 0) '${entry.meetingCount} encontros',
                   ].join(' · '),
-                  style: LumenType.authorName(size: 12, color: LumenColors.inkMuted),
+                  style: LumenType.authorName(
+                    size: 12,
+                    color: isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -3334,7 +3341,12 @@ class _ChallengeCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textColor = isActive ? LumenColors.ink : LumenColors.inkMuted;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isActive
+        ? (isDark ? LumenColors.inkInverse : LumenColors.ink)
+        : (isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted);
+    final mutedColor = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
+    final ghostColor = isDark ? LumenColors.inkGhostInverse : LumenColors.inkGhost;
 
     return InkWell(
       onTap: () => context.push(
@@ -3369,7 +3381,7 @@ class _ChallengeCard extends ConsumerWidget {
                       'meta: ${challenge.goalValue} ${challenge.goalType.unit}',
                       challenge.daysLeftLabel,
                     ].join(' · '),
-                    style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
+                    style: LumenType.mono(size: 11, color: mutedColor),
                   ),
                 ],
               ),
@@ -3379,11 +3391,11 @@ class _ChallengeCard extends ConsumerWidget {
               isActive ? 'ativo' : (challenge.status.dbValue == 'finished' ? 'encerrado' : 'cancelado'),
               style: LumenType.kicker(
                 size: 9,
-                color: isActive ? LumenColors.progress : LumenColors.inkGhost,
+                color: isActive ? LumenColors.progress : ghostColor,
               ),
             ),
             const SizedBox(width: 6),
-            Icon(Icons.chevron_right, size: 14, color: LumenColors.inkGhost),
+            Icon(Icons.chevron_right, size: 14, color: ghostColor),
           ],
         ),
       ),

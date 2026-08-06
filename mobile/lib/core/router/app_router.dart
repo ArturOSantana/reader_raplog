@@ -46,6 +46,7 @@ import '../../features/clubs/presentation/screens/club_social_heatmap_screen.dar
 import '../../features/clubs/presentation/screens/club_discussions_screen.dart';
 import '../../features/clubs/presentation/screens/club_theories_screen.dart';
 import '../../features/clubs/presentation/screens/club_ranking_screen.dart';
+import '../../features/clubs/presentation/screens/club_members_screen.dart';
 import '../../shared/models/club_reviews.dart';
 
 import '../../shared/models/club_schedule_milestones_challenges.dart';
@@ -501,6 +502,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                         clubName: extra['clubName'] as String? ?? 'Clube',
                         canManage: extra['canManage'] as bool? ?? false,
                         coverUrl: extra['coverUrl'] as String?,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'members',
+                    builder: (_, state) {
+                      return ClubMembersScreen(
+                        clubId: state.pathParameters['clubId']!,
                       );
                     },
                   ),

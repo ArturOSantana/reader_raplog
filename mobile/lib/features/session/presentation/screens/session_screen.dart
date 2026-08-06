@@ -604,7 +604,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           'Leitura',
           style: LumenType.display(
               size: 19,
-              color: isRunning ? LumenColors.cream : LumenColors.charcoal),
+              color: isRunning
+                  ? LumenColors.cream
+                  : (isDark ? LumenColors.inkInverse : LumenColors.charcoal)),
         ),
         actions: [
           if (isRunning)
