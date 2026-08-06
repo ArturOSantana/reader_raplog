@@ -197,7 +197,7 @@ class StreakReminderService {
         '"Ler é sonhar pela mão de outrem." — Fernando Pessoa. Que tal ler hoje?',
       ),
       _NotificationQuote(
-        '🔥 Não perca sua sequência de $days!',
+        'Não perca sua sequência de $days!',
         '"Creio que uma forma de felicidade é a leitura." — Jorge Luis Borges.',
       ),
       _NotificationQuote(
