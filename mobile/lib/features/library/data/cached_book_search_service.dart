@@ -27,7 +27,7 @@ class CachedBookSearchService {
   CachedBookSearchService({
     required BookSearchService delegate,
     required CacheProvider cache,
-    this.searchTtl = const Duration(hours: 6),
+    this.searchTtl = const Duration(hours: 24),
   })  : _delegate = delegate,
         _cache = cache;
 

@@ -32,7 +32,7 @@ class GoogleBooksService {
     final uri = Uri.parse(_baseUrl).replace(queryParameters: params);
 
     try {
-      final response = await http.get(uri).timeout(const Duration(seconds: 8));
+      final response = await http.get(uri).timeout(const Duration(seconds: 5));
       if (response.statusCode != 200) return [];
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;

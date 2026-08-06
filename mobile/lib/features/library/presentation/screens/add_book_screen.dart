@@ -7,7 +7,6 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../../../theme/lumen_theme.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../data/book_search_result.dart';
-import '../../data/book_search_service.dart';
 
 class AddBookScreen extends ConsumerStatefulWidget {
   const AddBookScreen({super.key});
@@ -26,7 +25,6 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
   final _genreController = TextEditingController();
   final _publisherController = TextEditingController();
 
-  final _bookSearch = BookSearchService();
   Timer? _debounce;
   List<BookSearchResult> _suggestions = [];
   bool _searching = false;
@@ -54,8 +52,8 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
       return;
     }
     setState(() => _searching = true);
-    _debounce = Timer(const Duration(milliseconds: 500), () async {
-      final results = await _bookSearch.search(query);
+    _debounce = Timer(const Duration(milliseconds: 350), () async {
+      final results = await ref.read(cachedBookSearchProvider).search(query);
       if (mounted) {
         setState(() {
           _suggestions = results;
@@ -82,7 +80,7 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
     final isbn = _isbnController.text.trim().replaceAll(RegExp(r'[-\s]'), '');
     if (isbn.isEmpty) return;
     setState(() => _searchingIsbn = true);
-    final results = await _bookSearch.search('isbn:$isbn');
+    final results = await ref.read(cachedBookSearchProvider).search('isbn:$isbn');
     setState(() => _searchingIsbn = false);
     if (results.isNotEmpty) {
       _fillFromResult(results.first);

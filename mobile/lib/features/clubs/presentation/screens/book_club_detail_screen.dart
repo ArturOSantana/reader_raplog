@@ -15,7 +15,6 @@ import '../../../../shared/models/club_schedule_milestones_challenges.dart';
 import '../../../../shared/models/club_bets_and_polls.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../library/data/book_search_result.dart';
-import '../../../library/data/book_search_service.dart';
 import '../widgets/club_activity_spotlight.dart';
 import '../widgets/club_collective_stats_card.dart';
 import '../widgets/club_presence_strip.dart';
@@ -2532,7 +2531,7 @@ class _CreatePollSheetState extends ConsumerState<_CreatePollSheet> {
 
 // ── Widget de opção de livro com busca ───────────────────────────────────────
 
-class _OptionEntryWidget extends StatefulWidget {
+class _OptionEntryWidget extends ConsumerStatefulWidget {
   final _OptionEntry entry;
   final int index;
   final bool canRemove;
@@ -2549,11 +2548,10 @@ class _OptionEntryWidget extends StatefulWidget {
   });
 
   @override
-  State<_OptionEntryWidget> createState() => _OptionEntryWidgetState();
+  ConsumerState<_OptionEntryWidget> createState() => _OptionEntryWidgetState();
 }
 
-class _OptionEntryWidgetState extends State<_OptionEntryWidget> {
-  final _bookSearch = BookSearchService();
+class _OptionEntryWidgetState extends ConsumerState<_OptionEntryWidget> {
   Timer? _debounce;
   List<BookSearchResult> _suggestions = [];
   bool _searching = false;
@@ -2571,8 +2569,8 @@ class _OptionEntryWidgetState extends State<_OptionEntryWidget> {
       return;
     }
     setState(() => _searching = true);
-    _debounce = Timer(const Duration(milliseconds: 500), () async {
-      final results = await _bookSearch.search(query);
+    _debounce = Timer(const Duration(milliseconds: 350), () async {
+      final results = await ref.read(cachedBookSearchProvider).search(query);
       if (mounted) {
         setState(() {
           _suggestions = results;
@@ -2789,7 +2787,6 @@ class _SetBookSheetState extends ConsumerState<_SetBookSheet> {
   final _searchController = TextEditingController();
   final _titleController = TextEditingController();
   final _authorController = TextEditingController();
-  final _bookSearch = BookSearchService();
   Timer? _debounce;
   List<BookSearchResult> _suggestions = [];
   bool _searching = false;
@@ -2813,8 +2810,8 @@ class _SetBookSheetState extends ConsumerState<_SetBookSheet> {
       return;
     }
     setState(() => _searching = true);
-    _debounce = Timer(const Duration(milliseconds: 500), () async {
-      final results = await _bookSearch.search(query);
+    _debounce = Timer(const Duration(milliseconds: 350), () async {
+      final results = await ref.read(cachedBookSearchProvider).search(query);
       if (mounted) {
         setState(() {
           _suggestions = results;
