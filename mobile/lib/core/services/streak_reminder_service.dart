@@ -14,6 +14,12 @@ import 'package:timezone/timezone.dart' as tz;
 /// (tipicamente ao abrir o app ou ao fechar sessão).  A lógica é simples:
 /// agendamos notificações para daqui a N horas caso o usuário não volte;
 /// ao voltar, chamamos [cancel] antes de reagendar.
+class _NotificationQuote {
+  final String title;
+  final String body;
+  const _NotificationQuote(this.title, this.body);
+}
+
 class StreakReminderService {
   StreakReminderService._();
   static final StreakReminderService instance = StreakReminderService._();
@@ -203,11 +209,11 @@ class StreakReminderService {
         '"Ler não é decifrar, é viver." — Cecília Meireles. Abra o seu livro de hoje!',
       ),
       _NotificationQuote(
-        '🔥 Ofensiva em perigo ($days)!',
+        ' Ofensiva em perigo ($days)!',
         '"Para viajar longe, não há melhor navio do que um livro." — Emily Dickinson.',
       ),
       _NotificationQuote(
-        '🔥 Continue sua sequência de $days!',
+        ' Continue sua sequência de $days!',
         '"Ler é alimentar a alma." — Sêneca. Nutra seu espírito com algumas páginas!',
       ),
     ];
