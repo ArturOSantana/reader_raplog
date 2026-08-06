@@ -235,7 +235,7 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _JoinClubSheet(
+      builder: (_) => JoinClubSheet(
         onJoined: (club) {
           ref.invalidate(_myClubsProvider);
           if (context.mounted) context.push('/clubs/${club.id}');
@@ -553,16 +553,17 @@ class _VisibilityToggle extends StatelessWidget {
 
 // ── Join Club Sheet ───────────────────────────────────────────────────────────
 
-class _JoinClubSheet extends ConsumerStatefulWidget {
+/// Visível para testes (@visibleForTesting).
+class JoinClubSheet extends ConsumerStatefulWidget {
   final ValueChanged<BookClub> onJoined;
 
-  const _JoinClubSheet({required this.onJoined});
+  const JoinClubSheet({super.key, required this.onJoined});
 
   @override
-  ConsumerState<_JoinClubSheet> createState() => _JoinClubSheetState();
+  ConsumerState<JoinClubSheet> createState() => _JoinClubSheetState();
 }
 
-class _JoinClubSheetState extends ConsumerState<_JoinClubSheet> {
+class _JoinClubSheetState extends ConsumerState<JoinClubSheet> {
   final _codeController = TextEditingController();
   bool _loading = false;
 

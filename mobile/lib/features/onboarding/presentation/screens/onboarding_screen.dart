@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../theme/lumen_theme.dart';
+import '../../../../core/services/streak_reminder_service.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../shared/models/goal.dart';
 
@@ -144,6 +146,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _finish() async {
     setState(() => _saving = true);
+
+    // Solicita permissão de notificação no momento em que o usuário
+    // conclui o onboarding (contexto natural — acabou de configurar metas).
+    if (!kIsWeb) {
+      try {
+        await StreakReminderService.instance.requestPermission();
+      } catch (_) {
+        // Falha silenciosa — não bloqueia a conclusão do onboarding.
+      }
+    }
+
     try {
       final yearlyGoal = int.tryParse(_yearlyGoalController.text.trim());
 

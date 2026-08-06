@@ -1,9 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/streak_reminder_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../data/notification_models.dart';
+
+// ── Provider de permissão ─────────────────────────────────────────────────────
+
+final _notifPermissionProvider = FutureProvider.autoDispose<bool>((ref) async {
+  if (kIsWeb) return true;
+  return StreakReminderService.instance.areNotificationsEnabled();
+});
 
 class NotificationSettingsScreen extends ConsumerWidget {
   const NotificationSettingsScreen({super.key});
@@ -11,6 +20,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final prefsAsync = ref.watch(notificationPrefsProvider);
+    final permAsync  = ref.watch(_notifPermissionProvider);
 
     return LumenTexturedBackground(
       child: Scaffold(
@@ -25,6 +35,22 @@ class NotificationSettingsScreen extends ConsumerWidget {
         data: (prefs) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // ── Banner de permissão ────────────────────────────────────────
+            permAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (enabled) => enabled
+                  ? const SizedBox.shrink()
+                  : _PermissionBanner(
+                      onRequest: () async {
+                        await StreakReminderService.instance.requestPermission();
+                        // ignore: unused_result
+                        ref.invalidate(_notifPermissionProvider);
+                      },
+                    ),
+            ),
+            const SizedBox(height: 4),
+
             // ── Seção categorias ───────────────────────────────────────────
             _SectionHeader(label: 'Categorias'),
             const SizedBox(height: 8),
@@ -267,6 +293,64 @@ class _SectionHeader extends StatelessWidget {
       style: AppTextStyles.titleMedium.copyWith(
         color: AppColors.textPrimary,
         fontSize: 15,
+      ),
+    );
+  }
+}
+
+// ── Banner de permissão desabilitada ─────────────────────────────────────────
+
+class _PermissionBanner extends StatelessWidget {
+  final VoidCallback onRequest;
+
+  const _PermissionBanner({required this.onRequest});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.notifications_off_outlined,
+              color: Colors.orange, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Notificações desativadas',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Habilite para receber lembretes de leitura e alertas de ofensiva.',
+                  style: TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: onRequest,
+                  child: Text(
+                    'Habilitar notificações →',
+                    style: TextStyle(
+                      color: AppColors.forestGreen,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

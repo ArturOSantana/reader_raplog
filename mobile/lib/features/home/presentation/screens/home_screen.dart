@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../theme/lumen_theme.dart';
+import '../../../../core/services/streak_reminder_service.dart';
 import '../../../../shared/models/book.dart';
 import '../../../../shared/models/book_club.dart';
 import '../../../../shared/models/club_presence_stats.dart';
@@ -135,6 +136,11 @@ class HomeScreen extends ConsumerWidget {
           final streak  = d['streak'] as int;
           final reading = d['reading'] as List<Book>;
           final goals   = d['goals'] as List<Goal>;
+
+          // Agenda/cancela lembretes de ofensiva cada vez que a home carrega.
+          unawaited(StreakReminderService.instance.onAppOpen(
+            currentStreak: streak,
+          ));
 
           final todayPages = (daily['total_pages'] as num?)?.toInt() ?? 0;
 

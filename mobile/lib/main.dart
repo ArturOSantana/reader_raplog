@@ -13,6 +13,7 @@ import 'core/observability/observability_service.dart';
 import 'core/router/app_router.dart';
 import 'core/router/route_persistence.dart';
 import 'core/services/reading_notification_service.dart';
+import 'core/services/streak_reminder_service.dart';
 import 'core/widgets/widget_manager.dart';
 import 'theme/lumen_theme.dart';
 
@@ -135,6 +136,16 @@ Future<void> _bootAndRun() async {
         e,
         s,
         context: 'reading_notification_service.init',
+      );
+    }
+
+    try {
+      await StreakReminderService.instance.init();
+    } catch (e, s) {
+      ObservabilityService.instance.captureError(
+        e,
+        s,
+        context: 'streak_reminder_service.init',
       );
     }
   }

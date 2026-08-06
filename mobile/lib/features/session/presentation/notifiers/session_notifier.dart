@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/reading_session.dart';
 import '../../../../shared/providers/providers.dart';
 import '../../../../core/services/reading_notification_service.dart';
+import '../../../../core/services/streak_reminder_service.dart';
 
 // Duração máxima contínua sem interação antes de auto-pausar a sessão.
 const _kInactivityAutoPause = Duration(hours: 4);
@@ -240,6 +241,16 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
           mood: mood,
           miniReview: miniReview,
         );
+
+    // Registra leitura do dia → cancela alertas de ofensiva pendentes
+    // e reagenda para proteger a sequência no dia seguinte.
+    final streak = await ref
+        .read(sessionRepositoryProvider)
+        .fetchStreak()
+        .catchError((_) async => 0);
+    unawaited(StreakReminderService.instance.onUserRead(
+      currentStreak: (streak as num?)?.toInt() ?? 0,
+    ));
 
     state = const ActiveSessionState();
     return finished;
