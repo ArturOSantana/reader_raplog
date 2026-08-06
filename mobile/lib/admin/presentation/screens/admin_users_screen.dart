@@ -13,13 +13,13 @@ class AdminUsersScreen extends ConsumerWidget {
     final usersAsync = ref.watch(adminUsersProvider);
 
     return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: LumenColors.surface,
       body: usersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text(
             'Erro ao carregar usuários',
-            style: ReadLogType.mono(size: 13, color: ReadLogColors.danger),
+            style: LumenType.mono(size: 13, color: LumenColors.danger),
           ),
         ),
         data: (users) => Column(
@@ -35,14 +35,14 @@ class AdminUsersScreen extends ConsumerWidget {
                       children: [
                         Text(
                           'Usuários',
-                          style: ReadLogType.display(
-                              size: 26, color: ReadLogColors.ink),
+                          style: LumenType.display(
+                              size: 26, color: LumenColors.ink),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           '${users.length} registros',
-                          style: ReadLogType.mono(
-                              size: 12, color: ReadLogColors.inkMuted),
+                          style: LumenType.mono(
+                              size: 12, color: LumenColors.inkMuted),
                         ),
                       ],
                     ),
@@ -50,12 +50,12 @@ class AdminUsersScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            Divider(color: ReadLogColors.divider, height: 1),
+            Divider(color: LumenColors.divider, height: 1),
             Expanded(
               child: ListView.separated(
                 itemCount: users.length,
                 separatorBuilder: (_, __) =>
-                    Divider(color: ReadLogColors.hairline, height: 1),
+                    Divider(color: LumenColors.hairline, height: 1),
                 itemBuilder: (context, index) =>
                     _UserRow(user: users[index]),
               ),
@@ -92,16 +92,16 @@ class _UserRow extends StatelessWidget {
             height: 36,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: ReadLogColors.surfaceSubtle,
+              color: LumenColors.surfaceSubtle,
               shape: BoxShape.circle,
-              border: Border.all(color: ReadLogColors.divider),
+              border: Border.all(color: LumenColors.divider),
             ),
             child: Text(
               initials.isEmpty ? '?' : initials,
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 12,
                 weight: FontWeight.w700,
-                color: ReadLogColors.inkMuted,
+                color: LumenColors.inkMuted,
               ),
             ),
           ),
@@ -113,9 +113,9 @@ class _UserRow extends StatelessWidget {
               children: [
                 Text(
                   user.name ?? user.email,
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 14,
-                    color: ReadLogColors.ink,
+                    color: LumenColors.ink,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -123,8 +123,8 @@ class _UserRow extends StatelessWidget {
                 if (user.name != null)
                   Text(
                     user.email,
-                    style: ReadLogType.mono(
-                        size: 11, color: ReadLogColors.inkMuted),
+                    style: LumenType.mono(
+                        size: 11, color: LumenColors.inkMuted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -137,17 +137,17 @@ class _UserRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: user.onboardingCompleted
-                  ? ReadLogColors.progressSubtle
-                  : ReadLogColors.surfaceSubtle,
+                  ? LumenColors.progressSubtle
+                  : LumenColors.surfaceSubtle,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               user.onboardingCompleted ? 'Ativo' : 'Incompleto',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 10,
                 color: user.onboardingCompleted
-                    ? ReadLogColors.progress
-                    : ReadLogColors.inkMuted,
+                    ? LumenColors.progress
+                    : LumenColors.inkMuted,
               ),
             ),
           ),
@@ -155,7 +155,7 @@ class _UserRow extends StatelessWidget {
           // Data
           Text(
             fmt.format(user.createdAt),
-            style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+            style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
           ),
         ],
       ),

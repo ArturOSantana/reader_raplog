@@ -37,19 +37,19 @@ class CurrentBookWidget extends StatelessWidget {
           const _WidgetHeader(icon: Icons.menu_book_outlined, label: 'Lendo agora'),
           const SizedBox(height: 10),
           Text(title,
-              style: ReadLogType.display(size: 15, color: ReadLogColors.cream),
+              style: LumenType.display(size: 15, color: LumenColors.cream),
               overflow: TextOverflow.ellipsis),
           Text(author,
               style:
-                  ReadLogType.mono(size: 11, color: ReadLogColors.brassLight)),
+                  LumenType.mono(size: 11, color: LumenColors.brassLight)),
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
               value: _progress,
               minHeight: 5,
-              backgroundColor: ReadLogColors.cream.withValues(alpha: 0.1),
-              color: ReadLogColors.brass,
+              backgroundColor: LumenColors.cream.withValues(alpha: 0.1),
+              color: LumenColors.brass,
             ),
           ),
           const SizedBox(height: 4),
@@ -57,12 +57,12 @@ class CurrentBookWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('p. $currentPage / $totalPages',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                       size: 10,
-                      color: ReadLogColors.cream.withValues(alpha: 0.5))),
+                      color: LumenColors.cream.withValues(alpha: 0.5))),
               Text('$pct%',
-                  style: ReadLogType.mono(
-                      size: 10, color: ReadLogColors.brassLight)),
+                  style: LumenType.mono(
+                      size: 10, color: LumenColors.brassLight)),
             ],
           ),
           const SizedBox(height: 10),
@@ -108,23 +108,23 @@ class DailyGoalWidget extends StatelessWidget {
             child: LinearProgressIndicator(
               value: _progress,
               minHeight: 5,
-              backgroundColor: ReadLogColors.cream.withValues(alpha: 0.1),
-              color: _done ? ReadLogColors.sage : ReadLogColors.brass,
+              backgroundColor: LumenColors.cream.withValues(alpha: 0.1),
+              color: _done ? LumenColors.sage : LumenColors.brass,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             '$current / $target $unit',
-            style: ReadLogType.mono(size: 14, color: ReadLogColors.cream),
+            style: LumenType.mono(size: 14, color: LumenColors.cream),
           ),
           const SizedBox(height: 2),
           Text(
             _done ? 'Meta atingida!' : 'Faltam $remaining $unit',
-            style: ReadLogType.mono(
+            style: LumenType.mono(
                 size: 11,
                 color: _done
-                    ? ReadLogColors.sage
-                    : ReadLogColors.cream.withValues(alpha: 0.5)),
+                    ? LumenColors.sage
+                    : LumenColors.cream.withValues(alpha: 0.5)),
           ),
         ],
       ),
@@ -154,22 +154,22 @@ class StreakWidget extends StatelessWidget {
               children: [
                 Text(
                   '$days',
-                  style: ReadLogType.display(
-                      size: 48, color: ReadLogColors.stamp),
+                  style: LumenType.display(
+                      size: 48, color: LumenColors.stamp),
                 ),
                 Text(
                   days == 1 ? 'dia consecutivo' : 'dias consecutivos',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                       size: 12,
-                      color: ReadLogColors.cream.withValues(alpha: 0.6)),
+                      color: LumenColors.cream.withValues(alpha: 0.6)),
                 ),
                 if (motivationalText != null) ...[
                   const SizedBox(height: 10),
                   Text(
                     '"$motivationalText"',
-                    style: ReadLogType.display(
+                    style: LumenType.display(
                       size: 12,
-                      color: ReadLogColors.brassLight,
+                      color: LumenColors.brassLight,
                       italic: true,
                     ),
                     textAlign: TextAlign.center,
@@ -232,22 +232,22 @@ class NextMeetingWidget extends StatelessWidget {
               icon: Icons.groups_outlined, label: 'Clube do Livro'),
           const SizedBox(height: 10),
           Text(clubName,
-              style: ReadLogType.display(size: 14, color: ReadLogColors.cream),
+              style: LumenType.display(size: 14, color: LumenColors.cream),
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 4),
           Text(bookTitle,
-              style: ReadLogType.mono(
-                  size: 12, color: ReadLogColors.brassLight),
+              style: LumenType.mono(
+                  size: 12, color: LumenColors.brassLight),
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 8),
           Row(
             children: [
               const Icon(Icons.access_time_outlined,
-                  size: 13, color: ReadLogColors.sage),
+                  size: 13, color: LumenColors.sage),
               const SizedBox(width: 4),
               Text('$_dayLabel · $hour',
-                  style: ReadLogType.mono(
-                      size: 11, color: ReadLogColors.sage)),
+                  style: LumenType.mono(
+                      size: 11, color: LumenColors.sage)),
             ],
           ),
         ],
@@ -319,15 +319,15 @@ class _CalRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = done
-        ? ReadLogColors.sage
+        ? LumenColors.sage
         : accent
-            ? ReadLogColors.brassLight
-            : ReadLogColors.cream.withValues(alpha: 0.7);
+            ? LumenColors.brassLight
+            : LumenColors.cream.withValues(alpha: 0.7);
     return Row(
       children: [
         Icon(icon, size: 14, color: color),
         const SizedBox(width: 6),
-        Text(label, style: ReadLogType.mono(size: 12, color: color)),
+        Text(label, style: LumenType.mono(size: 12, color: color)),
       ],
     );
   }
@@ -358,12 +358,12 @@ class ReadingTimeWidget extends StatelessWidget {
           const SizedBox(height: 14),
           Text(label,
               style:
-                  ReadLogType.display(size: 28, color: ReadLogColors.cream)),
+                  LumenType.display(size: 28, color: LumenColors.cream)),
           const SizedBox(height: 4),
           Text('$pages páginas lidas',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                   size: 12,
-                  color: ReadLogColors.cream.withValues(alpha: 0.6))),
+                  color: LumenColors.cream.withValues(alpha: 0.6))),
         ],
       ),
     );
@@ -389,9 +389,9 @@ class QuoteWidget extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             '"$quote"',
-            style: ReadLogType.display(
+            style: LumenType.display(
                 size: 13,
-                color: ReadLogColors.cream.withValues(alpha: 0.9),
+                color: LumenColors.cream.withValues(alpha: 0.9),
                 italic: true),
           ),
           const SizedBox(height: 6),
@@ -399,8 +399,8 @@ class QuoteWidget extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: Text(
               '— $author',
-              style: ReadLogType.mono(
-                  size: 11, color: ReadLogColors.brassLight),
+              style: LumenType.mono(
+                  size: 11, color: LumenColors.brassLight),
             ),
           ),
         ],
@@ -434,13 +434,13 @@ class ContinueReadingWidget extends StatelessWidget {
               icon: Icons.play_circle_outline, label: 'Continue lendo'),
           const SizedBox(height: 10),
           Text(title,
-              style: ReadLogType.display(size: 15, color: ReadLogColors.cream),
+              style: LumenType.display(size: 15, color: LumenColors.cream),
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
           Text('Página $page',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                   size: 11,
-                  color: ReadLogColors.cream.withValues(alpha: 0.55))),
+                  color: LumenColors.cream.withValues(alpha: 0.55))),
           const SizedBox(height: 10),
           _ActionButton(
               icon: Icons.arrow_forward_outlined, label: 'Abrir', onTap: onTap),
@@ -498,11 +498,11 @@ class _BigStat extends StatelessWidget {
     return Column(
       children: [
         Text(value,
-            style: ReadLogType.display(size: 26, color: ReadLogColors.cream)),
+            style: LumenType.display(size: 26, color: LumenColors.cream)),
         Text(label,
-            style: ReadLogType.mono(
+            style: LumenType.mono(
                 size: 10,
-                color: ReadLogColors.cream.withValues(alpha: 0.5))),
+                color: LumenColors.cream.withValues(alpha: 0.5))),
       ],
     );
   }
@@ -555,28 +555,28 @@ class FriendsActivityWidget extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(_iconForEvent(e.type),
-                        size: 14, color: ReadLogColors.sage),
+                        size: 14, color: LumenColors.sage),
                     const SizedBox(width: 6),
                     Expanded(
                       child: RichText(
                         text: TextSpan(children: [
                           TextSpan(
                               text: '${e.name} ',
-                              style: ReadLogType.mono(
+                              style: LumenType.mono(
                                   size: 11,
                                   weight: FontWeight.w600,
-                                  color: ReadLogColors.cream)),
+                                  color: LumenColors.cream)),
                           TextSpan(
                               text: '${e.action} ',
-                              style: ReadLogType.mono(
+                              style: LumenType.mono(
                                   size: 11,
-                                  color: ReadLogColors.cream
+                                  color: LumenColors.cream
                                       .withValues(alpha: 0.6))),
                           TextSpan(
                               text: e.bookTitle,
-                              style: ReadLogType.mono(
+                              style: LumenType.mono(
                                   size: 11,
-                                  color: ReadLogColors.brassLight)),
+                                  color: LumenColors.brassLight)),
                         ]),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -619,7 +619,7 @@ class ClubProgressWidget extends StatelessWidget {
           _WidgetHeader(icon: Icons.groups_2_outlined, label: clubName),
           const SizedBox(height: 10),
           Text(bookTitle,
-              style: ReadLogType.display(size: 14, color: ReadLogColors.cream),
+              style: LumenType.display(size: 14, color: LumenColors.cream),
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 8),
           ClipRRect(
@@ -627,25 +627,25 @@ class ClubProgressWidget extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 5,
-              backgroundColor: ReadLogColors.cream.withValues(alpha: 0.1),
-              color: ReadLogColors.brass,
+              backgroundColor: LumenColors.cream.withValues(alpha: 0.1),
+              color: LumenColors.brass,
             ),
           ),
           const SizedBox(height: 4),
           Text('$pct% do clube',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                   size: 10,
-                  color: ReadLogColors.cream.withValues(alpha: 0.5))),
+                  color: LumenColors.cream.withValues(alpha: 0.5))),
           if (nextMeetingLabel != null) ...[
             const SizedBox(height: 6),
             Row(
               children: [
                 const Icon(Icons.access_time_outlined,
-                    size: 12, color: ReadLogColors.sage),
+                    size: 12, color: LumenColors.sage),
                 const SizedBox(width: 4),
                 Text(nextMeetingLabel!,
-                    style: ReadLogType.mono(
-                        size: 10, color: ReadLogColors.sage)),
+                    style: LumenType.mono(
+                        size: 10, color: LumenColors.sage)),
               ],
             ),
           ],
@@ -672,19 +672,19 @@ class QuickSessionWidget extends StatelessWidget {
         children: [
           const SizedBox(height: 8),
           const Icon(Icons.play_circle_filled,
-              size: 48, color: ReadLogColors.brass),
+              size: 48, color: LumenColors.brass),
           const SizedBox(height: 10),
           Text(
             bookTitle != null ? bookTitle! : 'Iniciar leitura',
-            style: ReadLogType.display(size: 14, color: ReadLogColors.cream),
+            style: LumenType.display(size: 14, color: LumenColors.cream),
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text('Toque para começar',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                   size: 10,
-                  color: ReadLogColors.cream.withValues(alpha: 0.45))),
+                  color: LumenColors.cream.withValues(alpha: 0.45))),
           const SizedBox(height: 8),
         ],
       ),
@@ -717,8 +717,8 @@ class HeatmapWidget extends StatelessWidget {
                 height: 18,
                 decoration: BoxDecoration(
                   color: read
-                      ? ReadLogColors.sage.withValues(alpha: 0.8)
-                      : ReadLogColors.cream.withValues(alpha: 0.12),
+                      ? LumenColors.sage.withValues(alpha: 0.8)
+                      : LumenColors.cream.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(2),
                 ),
               );
@@ -755,27 +755,27 @@ class AchievementWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: ReadLogColors.stamp.withValues(alpha: 0.15),
+                color: LumenColors.stamp.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(2),
               ),
               child: Text('NOVO SELO',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                       size: 9,
                       weight: FontWeight.w600,
-                      color: ReadLogColors.stamp)),
+                      color: LumenColors.stamp)),
             ),
             const SizedBox(height: 8),
           ],
-          Icon(icon, size: 40, color: ReadLogColors.brass),
+          Icon(icon, size: 40, color: LumenColors.brass),
           const SizedBox(height: 8),
           Text(name,
-              style: ReadLogType.display(size: 15, color: ReadLogColors.cream),
+              style: LumenType.display(size: 15, color: LumenColors.cream),
               textAlign: TextAlign.center),
           const SizedBox(height: 2),
           Text(description,
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                   size: 11,
-                  color: ReadLogColors.cream.withValues(alpha: 0.6)),
+                  color: LumenColors.cream.withValues(alpha: 0.6)),
               textAlign: TextAlign.center),
         ],
       ),
@@ -810,29 +810,29 @@ class CountdownWidget extends StatelessWidget {
         children: [
           const SizedBox(height: 4),
           const Icon(Icons.event_outlined,
-              size: 24, color: ReadLogColors.brassLight),
+              size: 24, color: LumenColors.brassLight),
           const SizedBox(height: 8),
           Text(
             days > 0 ? '$days' : '$hours',
-            style: ReadLogType.display(size: 40, color: ReadLogColors.cream),
+            style: LumenType.display(size: 40, color: LumenColors.cream),
           ),
           Text(
             days > 0
                 ? (days == 1 ? 'dia' : 'dias')
                 : (hours == 1 ? 'hora' : 'horas'),
-            style: ReadLogType.mono(
+            style: LumenType.mono(
                 size: 11,
-                color: ReadLogColors.cream.withValues(alpha: 0.5)),
+                color: LumenColors.cream.withValues(alpha: 0.5)),
           ),
           const SizedBox(height: 4),
           Text('para',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                   size: 10,
-                  color: ReadLogColors.cream.withValues(alpha: 0.4))),
+                  color: LumenColors.cream.withValues(alpha: 0.4))),
           const SizedBox(height: 2),
           Text(eventName,
               style:
-                  ReadLogType.mono(size: 12, color: ReadLogColors.brassLight),
+                  LumenType.mono(size: 12, color: LumenColors.brassLight),
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 4),
@@ -858,10 +858,10 @@ class _WidgetCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: ReadLogColors.ink,
+          color: LumenColors.ink,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-              color: ReadLogColors.cream.withValues(alpha: 0.12)),
+              color: LumenColors.cream.withValues(alpha: 0.12)),
         ),
         child: child,
       ),
@@ -879,13 +879,13 @@ class _WidgetHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: ReadLogColors.brassLight),
+        Icon(icon, size: 14, color: LumenColors.brassLight),
         const SizedBox(width: 6),
         Text(label,
-            style: ReadLogType.mono(
+            style: LumenType.mono(
                 size: 11,
                 weight: FontWeight.w600,
-                color: ReadLogColors.brassLight)),
+                color: LumenColors.brassLight)),
       ],
     );
   }
@@ -909,18 +909,18 @@ class _ActionButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: ReadLogColors.brass.withValues(alpha: 0.15),
+          color: LumenColors.brass.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(3),
           border:
-              Border.all(color: ReadLogColors.brass.withValues(alpha: 0.3)),
+              Border.all(color: LumenColors.brass.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: ReadLogColors.brass),
+            Icon(icon, size: 14, color: LumenColors.brass),
             const SizedBox(width: 6),
             Text(label,
-                style: ReadLogType.mono(size: 11, color: ReadLogColors.brass)),
+                style: LumenType.mono(size: 11, color: LumenColors.brass)),
           ],
         ),
       ),

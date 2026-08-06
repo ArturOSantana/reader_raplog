@@ -40,11 +40,11 @@ class ClubFeedScreen extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Feed', style: ReadLogType.bookTitle(size: 16)),
+            Text('Feed', style: LumenType.bookTitle(size: 16)),
             Text(
               clubName,
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkMuted, size: 12),
+              style: LumenType.authorName(
+                  color: LumenColors.inkMuted, size: 12),
             ),
           ],
         ),
@@ -124,12 +124,12 @@ class _EmptyFeed extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Nenhuma atividade ainda.',
-                style: ReadLogType.bookTitle(size: 18),
+                style: LumenType.bookTitle(size: 18),
                 textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(
               'Quando alguém ler, terminar um livro\nou entrar no clube, vai aparecer aqui.',
-              style: ReadLogType.authorName(color: ReadLogColors.inkMuted),
+              style: LumenType.authorName(color: LumenColors.inkMuted),
               textAlign: TextAlign.center,
             ),
           ],
@@ -165,7 +165,7 @@ class _FeedItemWithCheerState extends ConsumerState<_FeedItemWithCheer> {
   @override
   Widget build(BuildContext context) {
     final cheerColor =
-        _cheeredByMe || _cheering ? ReadLogColors.progress : ReadLogColors.inkMuted;
+        _cheeredByMe || _cheering ? LumenColors.progress : LumenColors.inkMuted;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +203,7 @@ class _FeedItemWithCheerState extends ConsumerState<_FeedItemWithCheer> {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
                 _cheeredByMe ? 'Torcendo 👏' : 'Torcer',
-                style: ReadLogType.kicker(
+                style: LumenType.kicker(
                     color: cheerColor, size: 11),
               ),
             ),

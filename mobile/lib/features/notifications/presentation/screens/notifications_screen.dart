@@ -31,14 +31,14 @@ class NotificationsScreen extends ConsumerWidget {
 
     return LumenTexturedBackground(
       child: Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : ReadLogColors.surface,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : LumenColors.surface,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : ReadLogColors.surface,
-        foregroundColor: ReadLogColors.charcoal,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : LumenColors.surface,
+        foregroundColor: LumenColors.charcoal,
         automaticallyImplyLeading: false,
         title: Text(
           'Notificações',
-          style: ReadLogType.display(size: 19, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
+          style: LumenType.display(size: 19, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : LumenColors.charcoal),
         ),
         actions: [
           if (inboxState.unreadCount > 0)
@@ -47,9 +47,9 @@ class NotificationsScreen extends ConsumerWidget {
                   ref.read(notificationInboxProvider.notifier).markAllRead(),
               child: Text(
                 'Marcar tudo',
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 12,
-                  color: ReadLogColors.brass,
+                  color: LumenColors.brass,
                 ),
               ),
             ),
@@ -67,7 +67,7 @@ class NotificationsScreen extends ConsumerWidget {
             child: inboxState.loading
                 ? const Center(
                     child: CircularProgressIndicator(
-                        color: ReadLogColors.brass),
+                        color: LumenColors.brass),
                   )
                 : inboxState.error != null
                     ? _ErrorView(
@@ -78,7 +78,7 @@ class NotificationsScreen extends ConsumerWidget {
                     : items.isEmpty
                         ? _EmptyView(hasFilter: filter != null)
                         : RefreshIndicator(
-                            color: ReadLogColors.brass,
+                            color: LumenColors.brass,
                             onRefresh: () => ref
                                 .read(notificationInboxProvider.notifier)
                                 .load(),
@@ -136,7 +136,7 @@ class _CategoryFilterBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: isDark ? LumenColors.canvas : ReadLogColors.paperAlt,
+      color: isDark ? LumenColors.canvas : LumenColors.paperAlt,
       child: SizedBox(
         height: 46,
         child: ListView(
@@ -203,7 +203,7 @@ class _FilterChip extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               label.toUpperCase(),
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 10,
                 color: selected
                     ? paperColor
@@ -234,7 +234,7 @@ class _DateGroup extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
             label.toUpperCase(),
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 9.5,
               color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
             ).copyWith(letterSpacing: 0.8),
@@ -329,7 +329,7 @@ class _EmptyView extends StatelessWidget {
               hasFilter
                   ? 'Nenhuma notificação nessa categoria'
                   : 'Nenhuma notificação ainda',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 13,
                 color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
               ),
@@ -355,7 +355,7 @@ class _ErrorView extends StatelessWidget {
         children: [
           Text(
             'Erro ao carregar notificações',
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 13,
               color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
             ),

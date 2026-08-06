@@ -109,8 +109,8 @@ class HomeScreen extends ConsumerWidget {
         'Leitor';
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg     = isDark ? ReadLogColors.canvas   : ReadLogColors.surface;
-    final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
+    final bg     = isDark ? LumenColors.canvas   : LumenColors.surface;
+    final fgMut  = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
 
     return Scaffold(
       backgroundColor: bg,
@@ -147,7 +147,7 @@ class HomeScreen extends ConsumerWidget {
           final otherBooks    = reading.length > 1 ? reading.sublist(1, reading.length > 4 ? 4 : reading.length) : <Book>[];
 
           return RefreshIndicator(
-            color: isDark ? ReadLogColors.readLight : ReadLogColors.read,
+            color: isDark ? LumenColors.readLight : LumenColors.read,
             backgroundColor: bg,
             onRefresh: () async {
               ref.invalidate(_homeDataProvider);
@@ -247,9 +247,9 @@ class _HomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark  = Theme.of(context).brightness == Brightness.dark;
-    final fg      = isDark ? ReadLogColors.inkInverse       : ReadLogColors.ink;
-    final fgMut   = isDark ? ReadLogColors.inkMutedInverse  : ReadLogColors.inkMuted;
-    final fgSec   = isDark ? ReadLogColors.inkSecondaryInverse : ReadLogColors.inkSecondary;
+    final fg      = isDark ? LumenColors.inkInverse       : LumenColors.ink;
+    final fgMut   = isDark ? LumenColors.inkMutedInverse  : LumenColors.inkMuted;
+    final fgSec   = isDark ? LumenColors.inkSecondaryInverse : LumenColors.inkSecondary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 20, 24),
@@ -292,7 +292,7 @@ class _HomeHeader extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             userName,
-            style: ReadLogType.bookTitle(
+            style: LumenType.bookTitle(
               size: 30,
               color: fg,
               weight: FontWeight.w500,
@@ -303,7 +303,7 @@ class _HomeHeader extends StatelessWidget {
             // Streak — número grande Fraunces + legenda mono abaixo
             Text(
               '$streak',
-              style: ReadLogType.display(
+              style: LumenType.display(
                 size: 42,
                 color: fg,
                 weight: FontWeight.w400,
@@ -331,9 +331,9 @@ class _UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark   = Theme.of(context).brightness == Brightness.dark;
-    final fgBg     = isDark ? ReadLogColors.canvasVariant   : ReadLogColors.surfaceVariant;
-    final fgBorder = isDark ? ReadLogColors.hairlineDark    : ReadLogColors.hairline;
-    final fg       = isDark ? ReadLogColors.ink             : ReadLogColors.inkInverse;
+    final fgBg     = isDark ? LumenColors.canvasVariant   : LumenColors.surfaceVariant;
+    final fgBorder = isDark ? LumenColors.hairlineDark    : LumenColors.hairline;
+    final fg       = isDark ? LumenColors.ink             : LumenColors.inkInverse;
 
     final user     = ref.watch(currentUserProvider);
     final fullName = user?.userMetadata?['full_name'] as String?;
@@ -388,10 +388,10 @@ class _CurrentBookHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark   = Theme.of(context).brightness == Brightness.dark;
-    final fg       = isDark ? ReadLogColors.inkInverse      : ReadLogColors.ink;
-    final fgMut    = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
-    final divColor = isDark ? ReadLogColors.hairlineDark    : ReadLogColors.hairline;
-    final trackBg  = isDark ? ReadLogColors.canvasVariant   : ReadLogColors.surfaceSubtle;
+    final fg       = isDark ? LumenColors.inkInverse      : LumenColors.ink;
+    final fgMut    = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
+    final divColor = isDark ? LumenColors.hairlineDark    : LumenColors.hairline;
+    final trackBg  = isDark ? LumenColors.canvasVariant   : LumenColors.surfaceSubtle;
 
     final progress = (book.totalPages != null && book.totalPages! > 0)
         ? ((book.currentPage ?? 0) / book.totalPages!).clamp(0.0, 1.0)
@@ -439,9 +439,9 @@ class _CurrentBookHero extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(pageLabel,
-                    style: ReadLogType.mono(size: 10.5, color: fgMut)),
+                    style: LumenType.mono(size: 10.5, color: fgMut)),
                 Text('$pct%',
-                    style: ReadLogType.mono(size: 10.5, color: fgMut)),
+                    style: LumenType.mono(size: 10.5, color: fgMut)),
               ],
             ),
 
@@ -465,7 +465,7 @@ class _CurrentBookHero extends StatelessWidget {
                       fontFamily: 'Inter',
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: missionDone ? ReadLogColors.read : fg,
+                      color: missionDone ? LumenColors.read : fg,
                     ),
                   ),
                 ],
@@ -473,7 +473,7 @@ class _CurrentBookHero extends StatelessWidget {
               const SizedBox(height: 8),
               _ProgressTrack(
                 value: missionProgress,
-                color: ReadLogColors.read,
+                color: LumenColors.read,
                 trackColor: trackBg,
               ),
             ],
@@ -499,7 +499,7 @@ class _BookHeroBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark  = Theme.of(context).brightness == Brightness.dark;
-    final bgHero  = isDark ? ReadLogColors.canvasElevated : const Color(0xFF3A322C);
+    final bgHero  = isDark ? LumenColors.canvasElevated : const Color(0xFF3A322C);
 
     return Container(
       height: 180,
@@ -525,7 +525,7 @@ class _BookHeroBanner extends StatelessWidget {
         children: [
           Text(
             book.title,
-            style: ReadLogType.bookTitle(
+            style: LumenType.bookTitle(
               size: 20,
               color: const Color(0xFFFAF8F4),
               weight: FontWeight.w500,
@@ -625,8 +625,8 @@ class _ReadCTA extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg     = isDark ? ReadLogColors.inkInverse : ReadLogColors.ink;
-    final fg     = isDark ? ReadLogColors.ink        : ReadLogColors.inkInverse;
+    final bg     = isDark ? LumenColors.inkInverse : LumenColors.ink;
+    final fg     = isDark ? LumenColors.ink        : LumenColors.inkInverse;
 
     return GestureDetector(
       onTap: () => context.push('/session?bookId=$bookId'),
@@ -674,7 +674,7 @@ class _ClubPresenceRow extends ConsumerWidget {
 
         final clubName = clubPresences.first.club.name;
         final isDark   = Theme.of(context).brightness == Brightness.dark;
-        final fgMut    = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
+        final fgMut    = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 4),
@@ -682,13 +682,13 @@ class _ClubPresenceRow extends ConsumerWidget {
             children: [
               _PresenceDot(
                 isActive: true,
-                color: ReadLogColors.read,
-                activeColor: ReadLogColors.readLight,
+                color: LumenColors.read,
+                activeColor: LumenColors.readLight,
               ),
               const SizedBox(width: 8),
               Text(
                 '$clubName · $totalOnline ${totalOnline == 1 ? 'lendo agora' : 'lendo agora'}',
-                style: ReadLogType.mono(size: 11, color: fgMut),
+                style: LumenType.mono(size: 11, color: fgMut),
               ),
             ],
           ),
@@ -725,9 +725,9 @@ class _SocialActivityRow extends ConsumerWidget {
         if (recent == null) return const SizedBox.shrink();
 
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final fg     = isDark ? ReadLogColors.inkInverse      : ReadLogColors.ink;
-        final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
-        final divColor = isDark ? ReadLogColors.hairlineDark  : ReadLogColors.hairline;
+        final fg     = isDark ? LumenColors.inkInverse      : LumenColors.ink;
+        final fgMut  = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
+        final divColor = isDark ? LumenColors.hairlineDark  : LumenColors.hairline;
 
         final name     = recent.userName ?? 'Alguém';
         final elapsed  = recent.presenceLabel;
@@ -777,10 +777,10 @@ class _ShelfRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg     = isDark ? ReadLogColors.inkInverse      : ReadLogColors.ink;
-    final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
-    final bgCover = isDark ? ReadLogColors.canvasVariant  : ReadLogColors.surfaceSubtle;
-    final divColor = isDark ? ReadLogColors.hairlineDark  : ReadLogColors.hairline;
+    final fg     = isDark ? LumenColors.inkInverse      : LumenColors.ink;
+    final fgMut  = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
+    final bgCover = isDark ? LumenColors.canvasVariant  : LumenColors.surfaceSubtle;
+    final divColor = isDark ? LumenColors.hairlineDark  : LumenColors.hairline;
 
     final progress = (book.totalPages != null && book.totalPages! > 0)
         ? ((book.currentPage ?? 0) / book.totalPages!).clamp(0.0, 1.0)
@@ -823,7 +823,7 @@ class _ShelfRow extends StatelessWidget {
                 children: [
                   Text(
                     book.title,
-                    style: ReadLogType.bookTitle(size: 14, color: fg),
+                    style: LumenType.bookTitle(size: 14, color: fg),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -845,7 +845,7 @@ class _ShelfRow extends StatelessWidget {
             // Percentual
             Text(
               pctLabel,
-              style: ReadLogType.mono(size: 10.5, color: fgMut),
+              style: LumenType.mono(size: 10.5, color: fgMut),
             ),
           ],
         ),
@@ -863,11 +863,11 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
+    final fgMut  = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
 
     return Text(
       label,
-      style: ReadLogType.kicker(size: 10, color: fgMut),
+      style: LumenType.kicker(size: 10, color: fgMut),
     );
   }
 }
@@ -884,9 +884,9 @@ class _ActiveSessionBanner extends ConsumerWidget {
     if (!session.hasActiveSession) return const SizedBox.shrink();
 
     final isDark        = Theme.of(context).brightness == Brightness.dark;
-    final bg            = isDark ? ReadLogColors.canvasVariant : ReadLogColors.surfaceVariant;
-    final dotColor      = session.isPaused ? ReadLogColors.idle : ReadLogColors.read;
-    final dotColorLight = session.isPaused ? ReadLogColors.idle : ReadLogColors.readLight;
+    final bg            = isDark ? LumenColors.canvasVariant : LumenColors.surfaceVariant;
+    final dotColor      = session.isPaused ? LumenColors.idle : LumenColors.read;
+    final dotColorLight = session.isPaused ? LumenColors.idle : LumenColors.readLight;
 
     final elapsed  = session.elapsedSeconds;
     final h = elapsed ~/ 3600;
@@ -897,8 +897,8 @@ class _ActiveSessionBanner extends ConsumerWidget {
         : '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
 
     final statusLabel = session.isPaused ? 'pausada' : 'em leitura';
-    final fg     = isDark ? ReadLogColors.ink : ReadLogColors.ink;
-    final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
+    final fg     = isDark ? LumenColors.ink : LumenColors.ink;
+    final fgMut  = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
@@ -915,7 +915,7 @@ class _ActiveSessionBanner extends ConsumerWidget {
             color: bg,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: session.isPaused ? ReadLogColors.idle : ReadLogColors.read,
+              color: session.isPaused ? LumenColors.idle : LumenColors.read,
             ),
           ),
           child: Row(
@@ -948,8 +948,8 @@ class _ActiveSessionBanner extends ConsumerWidget {
                         fontFamily: 'Inter',
                         fontSize: 11,
                         color: session.isPaused
-                            ? ReadLogColors.idle
-                            : (isDark ? ReadLogColors.readLight : ReadLogColors.read),
+                            ? LumenColors.idle
+                            : (isDark ? LumenColors.readLight : LumenColors.read),
                       ),
                     ),
                   ],
@@ -957,12 +957,12 @@ class _ActiveSessionBanner extends ConsumerWidget {
               ),
               Text(
                 timeStr,
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 15,
                   weight: FontWeight.w500,
                   color: session.isPaused
                       ? fgMut
-                      : (isDark ? ReadLogColors.readLight : ReadLogColors.read),
+                      : (isDark ? LumenColors.readLight : LumenColors.read),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1044,8 +1044,8 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg     = isDark ? ReadLogColors.inkInverse  : ReadLogColors.ink;
-    final fgMut  = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
+    final fg     = isDark ? LumenColors.inkInverse  : LumenColors.ink;
+    final fgMut  = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
@@ -1054,7 +1054,7 @@ class _EmptyState extends StatelessWidget {
         children: [
           Text(
             'Nenhum livro\nem leitura.',
-            style: ReadLogType.bookTitle(size: 24, color: fg),
+            style: LumenType.bookTitle(size: 24, color: fg),
           ),
           const SizedBox(height: 12),
           Text(
@@ -1075,7 +1075,7 @@ class _EmptyState extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: isDark ? ReadLogColors.readLight : ReadLogColors.read,
+                color: isDark ? LumenColors.readLight : LumenColors.read,
               ),
             ),
           ),

@@ -51,7 +51,7 @@ class _StatsBody extends StatelessWidget {
       children: [
         Text(
           'VOCÊS JÁ LERAM JUNTOS',
-          style: ReadLogType.mono(
+          style: LumenType.mono(
             size: 10,
             color: ghostColor,
           ).copyWith(letterSpacing: 1.4),
@@ -61,7 +61,7 @@ class _StatsBody extends StatelessWidget {
         // Número grande de páginas
         Text(
           stats.pagesFormatted,
-          style: ReadLogType.display(
+          style: LumenType.display(
             size: 36,
             color: inkColor,
             weight: FontWeight.w400,
@@ -69,7 +69,7 @@ class _StatsBody extends StatelessWidget {
         ),
         Text(
           'páginas',
-          style: ReadLogType.mono(size: 11, color: mutedColor),
+          style: LumenType.mono(size: 11, color: mutedColor),
         ),
         const SizedBox(height: 16),
 
@@ -127,11 +127,11 @@ class _StatRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: ReadLogType.mono(size: 12, color: mutedColor),
+            style: LumenType.mono(size: 12, color: mutedColor),
           ),
           Text(
             value,
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 12,
               color: highlightValue ? LumenColors.read : inkColor,
               weight: FontWeight.w600,

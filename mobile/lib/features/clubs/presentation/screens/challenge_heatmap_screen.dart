@@ -39,21 +39,21 @@ class ChallengeHeatmapScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
+        iconTheme: const IconThemeData(color: LumenColors.ink, size: 20),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               challenge.title,
-              style: ReadLogType.display(
+              style: LumenType.display(
                 size: 15,
-                color: ReadLogColors.ink,
+                color: LumenColors.ink,
                 weight: FontWeight.w600,
               ),
             ),
             Text(
               'Leitura diária',
-              style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+              style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
             ),
           ],
         ),
@@ -62,7 +62,7 @@ class ChallengeHeatmapScreen extends ConsumerWidget {
         onRefresh: () async => ref.invalidate(_heatmapProvider(challenge.id)),
         child: heatmapAsync.when(
           loading: () => const Center(
-            child: CircularProgressIndicator(color: ReadLogColors.progress),
+            child: LumenGrainLoader(),
           ),
           error: (e, _) => Center(child: Text('Erro: $e')),
           data: (heatmap) => _HeatmapBody(
@@ -104,23 +104,23 @@ class _HeatmapBody extends StatelessWidget {
         // ── Resumo do desafio ─────────────────────────────────────────────
         Text(
           fmt.format(totalPages),
-          style: ReadLogType.display(
+          style: LumenType.display(
             size: 42,
-            color: ReadLogColors.ink,
+            color: LumenColors.ink,
             weight: FontWeight.w400,
           ),
         ),
         Text(
           '${challenge.goalType.unit} lidos no total',
-          style: ReadLogType.mono(
+          style: LumenType.mono(
             size: 11,
-            color: ReadLogColors.inkMuted,
+            color: LumenColors.inkMuted,
           ).copyWith(letterSpacing: 0.6),
         ),
         const SizedBox(height: 8),
         Text(
           '$activeDays de ${days.length} dias com leitura',
-          style: ReadLogType.mono(size: 12, color: ReadLogColors.inkGhost),
+          style: LumenType.mono(size: 12, color: LumenColors.inkGhost),
         ),
         const SizedBox(height: 36),
 
@@ -128,14 +128,14 @@ class _HeatmapBody extends StatelessWidget {
         if (top.isEmpty)
           Text(
             'Nenhum dia com leitura registrada.',
-            style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+            style: LumenType.mono(size: 13, color: LumenColors.inkMuted),
           )
         else ...[
           Text(
             'DIAS MAIS ATIVOS',
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 10,
-              color: ReadLogColors.inkGhost,
+              color: LumenColors.inkGhost,
             ).copyWith(letterSpacing: 1.4),
           ),
           const SizedBox(height: 12),
@@ -146,7 +146,7 @@ class _HeatmapBody extends StatelessWidget {
                   unit: challenge.goalType.unit,
                   maxValue: heatmap[_key(top.first)] ?? 1,
                 ),
-                const Divider(height: 1, color: ReadLogColors.hairline),
+                const Divider(height: 1, color: LumenColors.hairline),
               ]),
         ],
       ],
@@ -197,7 +197,7 @@ class _DayRow extends StatelessWidget {
             width: 80,
             child: Text(
               fmtDate.format(date),
-              style: ReadLogType.mono(size: 12, color: ReadLogColors.inkMuted),
+              style: LumenType.mono(size: 12, color: LumenColors.inkMuted),
             ),
           ),
           // Barra monocromática proporcional
@@ -207,12 +207,12 @@ class _DayRow extends StatelessWidget {
                 children: [
                   Container(
                     height: 2,
-                    color: ReadLogColors.hairline,
+                    color: LumenColors.hairline,
                   ),
                   Container(
                     height: 2,
                     width: constraints.maxWidth * barWidth,
-                    color: ReadLogColors.ink,
+                    color: LumenColors.ink,
                   ),
                 ],
               );
@@ -222,9 +222,9 @@ class _DayRow extends StatelessWidget {
           // Valor
           Text(
             '${fmtNum.format(value)} $unit',
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 12,
-              color: ReadLogColors.ink,
+              color: LumenColors.ink,
               weight: FontWeight.w600,
             ),
           ),

@@ -65,14 +65,14 @@ class BookClubsScreen extends ConsumerWidget {
                 showMenuButton: true,
                 actions: [
                   IconButton(
-                    icon: LumenIcon('search', size: 20, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
+                    icon: LumenIcon('search', size: 20, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : LumenColors.charcoal),
                     onPressed: () {},
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   ),
                   // Ação de criar/entrar — ícone + no topo, sem FAB
                   IconButton(
-                    icon: LumenIcon('add', size: 22, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
+                    icon: LumenIcon('add', size: 22, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : LumenColors.charcoal),
                     onPressed: () {},
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -148,7 +148,7 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Buscar clube…',
-                  hintStyle: ReadLogType.authorName(
+                  hintStyle: LumenType.authorName(
                       color: ghostColor, size: 14),
                   prefixIcon: Icon(Icons.search,
                       size: 18, color: ghostColor),
@@ -174,7 +174,7 @@ class _BookClubsBodyState extends ConsumerState<BookClubsBody> {
                             children: [
                               Text(
                                 f.label,
-                                style: ReadLogType.authorName(
+                                style: LumenType.authorName(
                                   size: 13,
                                   color: _activeFilter == f
                                       ? activeColor
@@ -283,14 +283,14 @@ class _ClubRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(club.name, style: ReadLogType.bookTitle(size: 15)),
+                  Text(club.name, style: LumenType.bookTitle(size: 15)),
                   const SizedBox(height: 2),
                   Text(
                     club.currentBookTitle != null
                         ? '${club.currentBookTitle}'
                         : 'Sem livro definido',
-                    style: ReadLogType.authorName(
-                        color: ReadLogColors.inkMuted, size: 13),
+                    style: LumenType.authorName(
+                        color: LumenColors.inkMuted, size: 13),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -302,15 +302,15 @@ class _ClubRow extends StatelessWidget {
                       if (club.isOwner) 'proprietário',
                       if (club.isAdmin && !club.isOwner) 'admin',
                     ].join(' · '),
-                    style: ReadLogType.mono(
-                        size: 11, color: ReadLogColors.inkGhost),
+                    style: LumenType.mono(
+                        size: 11, color: LumenColors.inkGhost),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 12),
             Icon(Icons.chevron_right,
-                size: 18, color: ReadLogColors.inkGhost),
+                size: 18, color: LumenColors.inkGhost),
           ],
         ),
       ),
@@ -343,7 +343,7 @@ class _EmptyState extends StatelessWidget {
               hasClubs
                   ? 'Nenhum clube encontrado.'
                   : 'Você ainda não\nestá em nenhum clube.',
-              style: ReadLogType.bookTitle(size: 18),
+              style: LumenType.bookTitle(size: 18),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -351,8 +351,8 @@ class _EmptyState extends StatelessWidget {
               hasClubs
                   ? 'Tente ajustar os filtros ou a busca.'
                   : 'Crie um clube, convide amigos\ne leiam juntos.',
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkMuted, size: 14),
+              style: LumenType.authorName(
+                  color: LumenColors.inkMuted, size: 14),
               textAlign: TextAlign.center,
             ),
             if (!hasClubs) ...[
@@ -360,13 +360,13 @@ class _EmptyState extends StatelessWidget {
               TextButton(
                 onPressed: onCreate,
                 child: Text('Criar clube',
-                    style: ReadLogType.authorName(size: 14)),
+                    style: LumenType.authorName(size: 14)),
               ),
               const SizedBox(height: 4),
               TextButton(
                 onPressed: onJoin,
                 child: Text('Entrar com código',
-                    style: ReadLogType.authorName(size: 14)),
+                    style: LumenType.authorName(size: 14)),
               ),
             ],
           ],
@@ -443,7 +443,7 @@ class _CreateClubSheetState extends ConsumerState<_CreateClubSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Novo clube', style: ReadLogType.bookTitle(size: 20)),
+            Text('Novo clube', style: LumenType.bookTitle(size: 20)),
             const SizedBox(height: 20),
             TextFormField(
               controller: _nameController,
@@ -473,8 +473,8 @@ class _CreateClubSheetState extends ConsumerState<_CreateClubSheet> {
             Row(
               children: [
                 Text('Visibilidade:',
-                    style: ReadLogType.authorName(
-                        color: ReadLogColors.inkMuted, size: 13)),
+                    style: LumenType.authorName(
+                        color: LumenColors.inkMuted, size: 13)),
                 const SizedBox(width: 12),
                 _VisibilityToggle(
                   value: _visibility,
@@ -533,9 +533,9 @@ class _VisibilityToggle extends StatelessWidget {
         children: [
           Text(
             label,
-            style: ReadLogType.authorName(
+            style: LumenType.authorName(
               size: 13,
-              color: active ? ReadLogColors.ink : ReadLogColors.inkMuted,
+              color: active ? LumenColors.ink : LumenColors.inkMuted,
             ),
           ),
           const SizedBox(height: 3),
@@ -543,7 +543,7 @@ class _VisibilityToggle extends StatelessWidget {
             duration: const Duration(milliseconds: 150),
             height: 1.5,
             width: 24,
-            color: active ? ReadLogColors.ink : Colors.transparent,
+            color: active ? LumenColors.ink : Colors.transparent,
           ),
         ],
       ),
@@ -618,12 +618,12 @@ class _JoinClubSheetState extends ConsumerState<_JoinClubSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Entrar em um clube', style: ReadLogType.bookTitle(size: 20)),
+          Text('Entrar em um clube', style: LumenType.bookTitle(size: 20)),
           const SizedBox(height: 8),
           Text(
             'Peça o código de convite ao dono ou admin do clube.',
-            style: ReadLogType.authorName(
-                color: ReadLogColors.inkMuted, size: 13),
+            style: LumenType.authorName(
+                color: LumenColors.inkMuted, size: 13),
           ),
           const SizedBox(height: 20),
           TextField(

@@ -43,16 +43,16 @@ class _PresenceStripBody extends StatelessWidget {
         // Kicker
         Text(
           'LENDO AGORA',
-          style: ReadLogType.mono(
+          style: LumenType.mono(
             size: 10,
-            color: ReadLogColors.inkMuted,
+            color: LumenColors.inkMuted,
           ).copyWith(letterSpacing: 1.4),
         ),
         const SizedBox(height: 10),
         // Lista de membros ativos — nome + tempo, sem avatar
         ...active.map((m) => _PresenceRow(member: m)),
         if (active.isNotEmpty && recent.isNotEmpty)
-          const Divider(height: 16, color: ReadLogColors.hairline),
+          const Divider(height: 16, color: LumenColors.hairline),
         ...recent.take(3).map((m) => _PresenceRow(member: m)),
       ],
     );
@@ -79,19 +79,19 @@ class _PresenceRow extends StatelessWidget {
                 height: 5,
                 decoration: BoxDecoration(
                   color: member.isActive
-                      ? ReadLogColors.progress
-                      : ReadLogColors.inkGhost,
+                      ? LumenColors.progress
+                      : LumenColors.inkGhost,
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 member.userName ?? 'Leitor',
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 13,
                   color: member.isActive
-                      ? ReadLogColors.ink
-                      : ReadLogColors.inkMuted,
+                      ? LumenColors.ink
+                      : LumenColors.inkMuted,
                   weight: FontWeight.w500,
                 ),
               ),
@@ -100,9 +100,9 @@ class _PresenceRow extends StatelessWidget {
           // Tempo
           Text(
             member.presenceLabel,
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 11,
-              color: ReadLogColors.inkGhost,
+              color: LumenColors.inkGhost,
             ),
           ),
         ],

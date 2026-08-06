@@ -45,28 +45,28 @@ class ClubSealsScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
+        iconTheme: const IconThemeData(color: LumenColors.ink, size: 20),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Reconhecimentos',
-              style: ReadLogType.display(
+              style: LumenType.display(
                 size: 15,
-                color: ReadLogColors.ink,
+                color: LumenColors.ink,
                 weight: FontWeight.w600,
               ),
             ),
             Text(
               clubName,
-              style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+              style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
             ),
           ],
         ),
         actions: [
           if (isManager)
             IconButton(
-              icon: LumenIcon('add', size: 20, color: ReadLogColors.ink),
+              icon: LumenIcon('add', size: 20, color: LumenColors.ink),
               tooltip: 'Atribuir reconhecimento',
               onPressed: () => _showAwardSheet(context, ref),
             ),
@@ -74,14 +74,14 @@ class ClubSealsScreen extends ConsumerWidget {
       ),
       body: sealsAsync.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: ReadLogColors.progress),
+          child: LumenGrainLoader(),
         ),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
               'Não foi possível carregar os reconhecimentos.',
-              style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+              style: LumenType.mono(size: 13, color: LumenColors.inkMuted),
               textAlign: TextAlign.center,
             ),
           ),
@@ -95,9 +95,9 @@ class ClubSealsScreen extends ConsumerWidget {
                   isManager
                       ? 'Nenhum reconhecimento ainda.\nToque em + para conceder o primeiro.'
                       : 'Nenhum reconhecimento ainda.\nOs selos são concedidos pelo admin do clube.',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 13,
-                    color: ReadLogColors.inkMuted,
+                    color: LumenColors.inkMuted,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -120,7 +120,7 @@ class ClubSealsScreen extends ConsumerWidget {
                         ref.invalidate(_clubSealsProvider(clubId));
                       },
                     ),
-                    const Divider(height: 1, color: ReadLogColors.hairline),
+                    const Divider(height: 1, color: LumenColors.hairline),
                   ]).toList(),
             ),
           );
@@ -134,7 +134,7 @@ class ClubSealsScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: LumenColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
@@ -175,26 +175,26 @@ class _SealRow extends StatelessWidget {
               children: [
                 Text(
                   seal.displayTitle,
-                  style: ReadLogType.display(
+                  style: LumenType.display(
                     size: 14,
-                    color: ReadLogColors.ink,
+                    color: LumenColors.ink,
                     weight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   '${seal.awardedToName ?? 'Membro'} · concedido por ${seal.awardedByName ?? 'admin'}',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 11,
-                    color: ReadLogColors.inkMuted,
+                    color: LumenColors.inkMuted,
                   ),
                 ),
                 const SizedBox(height: 1),
                 Text(
                   fmt.format(seal.awardedAt.toLocal()),
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 10,
-                    color: ReadLogColors.inkGhost,
+                    color: LumenColors.inkGhost,
                   ),
                 ),
               ],
@@ -208,7 +208,7 @@ class _SealRow extends StatelessWidget {
                 child: Icon(
                   Icons.close_rounded,
                   size: 16,
-                  color: ReadLogColors.inkGhost,
+                  color: LumenColors.inkGhost,
                 ),
               ),
             ),
@@ -232,7 +232,7 @@ class _SealRow extends StatelessWidget {
           ),
           TextButton(
             style: TextButton.styleFrom(
-              foregroundColor: ReadLogColors.danger,
+              foregroundColor: LumenColors.danger,
             ),
             onPressed: () {
               Navigator.of(ctx).pop();
@@ -303,9 +303,9 @@ class _AwardSealSheetState extends ConsumerState<_AwardSealSheet> {
           children: [
             Text(
               'Atribuir reconhecimento',
-              style: ReadLogType.display(
+              style: LumenType.display(
                 size: 18,
-                color: ReadLogColors.ink,
+                color: LumenColors.ink,
                 weight: FontWeight.w500,
               ),
             ),
@@ -314,28 +314,28 @@ class _AwardSealSheetState extends ConsumerState<_AwardSealSheet> {
             // Para quem?
             Text(
               'MEMBRO',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 10,
-                color: ReadLogColors.inkGhost,
+                color: LumenColors.inkGhost,
               ).copyWith(letterSpacing: 1.4),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<ClubMemberSummary>(
               hint: Text(
                 'Selecionar membro',
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 13,
-                  color: ReadLogColors.inkMuted,
+                  color: LumenColors.inkMuted,
                 ),
               ),
               decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(color: ReadLogColors.divider),
+                  borderSide: const BorderSide(color: LumenColors.divider),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(color: ReadLogColors.divider),
+                  borderSide: const BorderSide(color: LumenColors.divider),
                 ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -345,9 +345,9 @@ class _AwardSealSheetState extends ConsumerState<_AwardSealSheet> {
                         value: m,
                         child: Text(
                           m.name,
-                          style: ReadLogType.mono(
+                          style: LumenType.mono(
                             size: 13,
-                            color: ReadLogColors.ink,
+                            color: LumenColors.ink,
                           ),
                         ),
                       ))
@@ -359,9 +359,9 @@ class _AwardSealSheetState extends ConsumerState<_AwardSealSheet> {
             // Tipo
             Text(
               'TIPO',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 10,
-                color: ReadLogColors.inkGhost,
+                color: LumenColors.inkGhost,
               ).copyWith(letterSpacing: 1.4),
             ),
             const SizedBox(height: 8),
@@ -375,11 +375,11 @@ class _AwardSealSheetState extends ConsumerState<_AwardSealSheet> {
                       Expanded(
                         child: Text(
                           t.label,
-                          style: ReadLogType.mono(
+                          style: LumenType.mono(
                             size: 13,
                             color: _selectedType == t
-                                ? ReadLogColors.ink
-                                : ReadLogColors.inkMuted,
+                                ? LumenColors.ink
+                                : LumenColors.inkMuted,
                             weight: _selectedType == t
                                 ? FontWeight.w600
                                 : FontWeight.w400,
@@ -390,7 +390,7 @@ class _AwardSealSheetState extends ConsumerState<_AwardSealSheet> {
                         const Icon(
                           Icons.check,
                           size: 16,
-                          color: ReadLogColors.ink,
+                          color: LumenColors.ink,
                         ),
                     ],
                   ),

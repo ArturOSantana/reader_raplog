@@ -54,10 +54,10 @@ class ClubAdvancedStatsScreen extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Estatísticas', style: ReadLogType.bookTitle(size: 16)),
+            Text('Estatísticas', style: LumenType.bookTitle(size: 16)),
             Text(clubName,
-                style: ReadLogType.authorName(
-                    color: ReadLogColors.inkMuted, size: 12)),
+                style: LumenType.authorName(
+                    color: LumenColors.inkMuted, size: 12)),
           ],
         ),
       ),
@@ -154,7 +154,7 @@ class _StatsBlock extends StatelessWidget {
       children: [
         Text(
           title.toUpperCase(),
-          style: ReadLogType.kicker(color: ReadLogColors.inkMuted, size: 11),
+          style: LumenType.kicker(color: LumenColors.inkMuted, size: 11),
         ),
         const SizedBox(height: 8),
         provider.when(
@@ -163,14 +163,14 @@ class _StatsBlock extends StatelessWidget {
             child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           ),
           error: (e, _) => Text('Erro ao carregar',
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkMuted, size: 13)),
+              style: LumenType.authorName(
+                  color: LumenColors.inkMuted, size: 13)),
           data: (items) {
             if (items.isEmpty) {
               return Text(
                 emptyMessage ?? 'Sem dados suficientes ainda.',
-                style: ReadLogType.authorName(
-                    color: ReadLogColors.inkMuted, size: 13),
+                style: LumenType.authorName(
+                    color: LumenColors.inkMuted, size: 13),
               );
             }
             return Column(
@@ -217,13 +217,13 @@ class _DataRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(primary,
-                  style: ReadLogType.authorName(size: 14),
+                  style: LumenType.authorName(size: 14),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis),
               if (secondary != null)
                 Text(secondary!,
-                    style: ReadLogType.authorName(
-                        color: ReadLogColors.inkMuted, size: 12),
+                    style: LumenType.authorName(
+                        color: LumenColors.inkMuted, size: 12),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis),
             ],
@@ -234,12 +234,12 @@ class _DataRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(value,
-                style: ReadLogType.mono(
-                    size: 12, color: ReadLogColors.ink)),
+                style: LumenType.mono(
+                    size: 12, color: LumenColors.ink)),
             if (detail != null)
               Text(detail!,
-                  style: ReadLogType.mono(
-                      size: 10, color: ReadLogColors.inkGhost)),
+                  style: LumenType.mono(
+                      size: 10, color: LumenColors.inkGhost)),
           ],
         ),
       ],

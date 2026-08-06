@@ -156,6 +156,12 @@ final notificationPrefsProvider = StateNotifierProvider<
 /// exibir o progresso atualizado sem precisar de pull-to-refresh manual.
 final clubSessionRefreshProvider = StateProvider<int>((ref) => 0);
 
+// ── Dashboard session refresh ─────────────────────────────────────────────
+
+/// Incrementado toda vez que o usuário finaliza uma sessão de leitura.
+/// O dashboard observa este valor para recarregar os dados automaticamente.
+final dashboardRefreshTriggerProvider = StateProvider<int>((ref) => 0);
+
 // ── Inspiração do Dia ─────────────────────────────────────────────────────
 
 final dailyInspirationServiceProvider = Provider<DailyInspirationService>(

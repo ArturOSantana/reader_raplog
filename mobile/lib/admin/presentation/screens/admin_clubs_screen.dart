@@ -13,13 +13,13 @@ class AdminClubsScreen extends ConsumerWidget {
     final clubsAsync = ref.watch(adminClubsProvider);
 
     return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: LumenColors.surface,
       body: clubsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text(
             'Erro ao carregar clubes',
-            style: ReadLogType.mono(size: 13, color: ReadLogColors.danger),
+            style: LumenType.mono(size: 13, color: LumenColors.danger),
           ),
         ),
         data: (clubs) => Column(
@@ -32,24 +32,24 @@ class AdminClubsScreen extends ConsumerWidget {
                 children: [
                   Text(
                     'Clubes',
-                    style: ReadLogType.display(
-                        size: 26, color: ReadLogColors.ink),
+                    style: LumenType.display(
+                        size: 26, color: LumenColors.ink),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${clubs.length} clubes',
-                    style: ReadLogType.mono(
-                        size: 12, color: ReadLogColors.inkMuted),
+                    style: LumenType.mono(
+                        size: 12, color: LumenColors.inkMuted),
                   ),
                 ],
               ),
             ),
-            Divider(color: ReadLogColors.divider, height: 1),
+            Divider(color: LumenColors.divider, height: 1),
             Expanded(
               child: ListView.separated(
                 itemCount: clubs.length,
                 separatorBuilder: (_, __) =>
-                    Divider(color: ReadLogColors.hairline, height: 1),
+                    Divider(color: LumenColors.hairline, height: 1),
                 itemBuilder: (context, index) =>
                     _ClubRow(club: clubs[index]),
               ),
@@ -78,15 +78,15 @@ class _ClubRow extends StatelessWidget {
               children: [
                 Text(
                   club.name,
-                  style: ReadLogType.mono(size: 14, color: ReadLogColors.ink),
+                  style: LumenType.mono(size: 14, color: LumenColors.ink),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${club.memberCount} membros · criado em ${fmt.format(club.createdAt)}',
-                  style: ReadLogType.mono(
-                      size: 11, color: ReadLogColors.inkMuted),
+                  style: LumenType.mono(
+                      size: 11, color: LumenColors.inkMuted),
                 ),
               ],
             ),
@@ -95,17 +95,17 @@ class _ClubRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: club.isActive
-                  ? ReadLogColors.progressSubtle
-                  : ReadLogColors.surfaceSubtle,
+                  ? LumenColors.progressSubtle
+                  : LumenColors.surfaceSubtle,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               club.isActive ? 'Ativo' : 'Inativo',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 10,
                 color: club.isActive
-                    ? ReadLogColors.progress
-                    : ReadLogColors.inkMuted,
+                    ? LumenColors.progress
+                    : LumenColors.inkMuted,
               ),
             ),
           ),

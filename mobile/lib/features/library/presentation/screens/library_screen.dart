@@ -27,7 +27,7 @@ class LibraryScreen extends ConsumerWidget {
 
     return LumenTexturedBackground(
       child: Scaffold(
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? ReadLogColors.canvas : ReadLogColors.surface,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? LumenColors.canvas : LumenColors.surface,
       body: Column(
         children: [
           ReadLogPageHeader(
@@ -42,7 +42,7 @@ class LibraryScreen extends ConsumerWidget {
                       ? Icons.view_list_outlined
                       : Icons.grid_view_outlined,
                   size: 20,
-                  color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal,
+                  color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : LumenColors.charcoal,
                 ),
                 tooltip: genreView ? 'Visão em lista' : 'Visão por gênero',
                 onPressed: () =>
@@ -50,13 +50,13 @@ class LibraryScreen extends ConsumerWidget {
               ),
               IconButton(
                 icon: Icon(Icons.qr_code_scanner_outlined,
-                    size: 20, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
+                    size: 20, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : LumenColors.charcoal),
                 tooltip: 'Escanear ISBN',
                 onPressed: () {},
               ),
               IconButton(
                 icon: Icon(Icons.add,
-                    size: 20, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal),
+                    size: 20, color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : LumenColors.charcoal),
                 tooltip: 'Adicionar livro',
                 onPressed: () => context.push('/library/add'),
               ),
@@ -76,13 +76,13 @@ class LibraryScreen extends ConsumerWidget {
                         Icon(Icons.library_books_outlined,
                             size: 48,
                             color:
-                                ReadLogColors.charcoal.withValues(alpha: 0.3)),
+                                LumenColors.charcoal.withValues(alpha: 0.3)),
                         const SizedBox(height: 12),
                         Text(
                           'Nenhum livro aqui ainda',
-                          style: ReadLogType.mono(
+                          style: LumenType.mono(
                               size: 13,
-                              color: ReadLogColors.charcoal
+                              color: LumenColors.charcoal
                                   ),
                         ),
                       ],
@@ -92,14 +92,14 @@ class LibraryScreen extends ConsumerWidget {
 
                 if (genreView) {
                   return RefreshIndicator(
-                    color: ReadLogColors.brass,
+                    color: LumenColors.brass,
                     onRefresh: () => ref.refresh(_booksProvider.future),
                     child: _GenreView(books: list),
                   );
                 }
 
                 return RefreshIndicator(
-                  color: ReadLogColors.brass,
+                  color: LumenColors.brass,
                   onRefresh: () => ref.refresh(_booksProvider.future),
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
@@ -137,7 +137,7 @@ class _StatusFilterBar extends ConsumerWidget {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: isDark ? LumenColors.canvas : ReadLogColors.paperAlt,
+      color: isDark ? LumenColors.canvas : LumenColors.paperAlt,
       child: SizedBox(
         height: 46,
         child: ListView(
@@ -274,9 +274,9 @@ class _GenreHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = isDark ? ReadLogColors.inkInverse : ReadLogColors.ink;
-    final fgMut = isDark ? ReadLogColors.inkMutedInverse : ReadLogColors.inkMuted;
-    final divider = isDark ? ReadLogColors.hairlineDark : ReadLogColors.hairline;
+    final fg = isDark ? LumenColors.inkInverse : LumenColors.ink;
+    final fgMut = isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
+    final divider = isDark ? LumenColors.hairlineDark : LumenColors.hairline;
 
     return InkWell(
       onTap: onTap,
@@ -303,7 +303,7 @@ class _GenreHeader extends StatelessWidget {
             Expanded(
               child: Text(
                 genre,
-                style: ReadLogType.kicker(size: 11, color: fgMut),
+                style: LumenType.kicker(size: 11, color: fgMut),
               ),
             ),
             // Badge com contagem
@@ -315,7 +315,7 @@ class _GenreHeader extends StatelessWidget {
               ),
               child: Text(
                 '$count',
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 11,
                   weight: FontWeight.w600,
                   color: fgMut,
@@ -334,13 +334,13 @@ class _GenreHeader extends StatelessWidget {
 Color _tabColorForStatus(BookStatus status) {
   switch (status) {
     case BookStatus.reading:
-      return ReadLogColors.brass;
+      return LumenColors.brass;
     case BookStatus.wantToRead:
-      return ReadLogColors.sage;
+      return LumenColors.sage;
     case BookStatus.read:
-      return ReadLogColors.stamp;
+      return LumenColors.stamp;
     case BookStatus.abandoned:
-      return ReadLogColors.charcoal.withValues(alpha: 0.3);
+      return LumenColors.charcoal.withValues(alpha: 0.3);
   }
 }
 

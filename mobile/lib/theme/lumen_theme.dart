@@ -950,82 +950,92 @@ class LumenReadingProgress extends StatelessWidget {
   /// Progresso de 0.0 a 1.0
   final double progress;
   final String? label;
+  /// Cor da barra e do ponto. Padrão: LumenColors.ink / LumenColors.inkInverse.
+  final Color? color;
 
   const LumenReadingProgress({
     super.key,
     required this.progress,
     this.label,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final trackColor = isDark ? LumenColors.hairlineDark : LumenColors.hairline;
-    final fillColor  = isDark ? LumenColors.inkInverse : LumenColors.ink;
-    final p          = progress.clamp(0.0, 1.0);
+    final fillColor  = color ?? (isDark ? LumenColors.inkInverse : LumenColors.ink);
+    final target     = progress.clamp(0.0, 1.0);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        LayoutBuilder(builder: (context, constraints) {
-          final w = constraints.maxWidth;
-          return SizedBox(
-            height: 12,
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.centerLeft,
-              children: [
-                // trilha
-                Positioned.fill(
-                  top: 5,
-                  bottom: 5,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: trackColor,
-                      borderRadius: BorderRadius.circular(1),
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: target),
+      duration: LumenMotion.duration,
+      curve: LumenMotion.curve,
+      builder: (context, p, _) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            LayoutBuilder(builder: (context, constraints) {
+              final w = constraints.maxWidth;
+              return SizedBox(
+                height: 12,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    // trilha
+                    Positioned.fill(
+                      top: 5,
+                      bottom: 5,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: trackColor,
+                          borderRadius: BorderRadius.circular(1),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                // preenchimento
-                Positioned(
-                  left: 0,
-                  top: 5,
-                  bottom: 5,
-                  width: w * p,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: fillColor,
-                      borderRadius: BorderRadius.circular(1),
+                    // preenchimento animado
+                    Positioned(
+                      left: 0,
+                      top: 5,
+                      bottom: 5,
+                      width: w * p,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: fillColor,
+                          borderRadius: BorderRadius.circular(1),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                // ponto
-                Positioned(
-                  left: (w * p - 3).clamp(0, w - 6),
-                  child: Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: fillColor,
-                      shape: BoxShape.circle,
+                    // ponto animado
+                    Positioned(
+                      left: (w * p - 3).clamp(0, w - 6),
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: fillColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        }),
-        if (label != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            label!,
-            style: LumenType.mono(
-              size: 10,
-              color: isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
-            ),
-          ),
-        ],
-      ],
+              );
+            }),
+            if (label != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                label!,
+                style: LumenType.mono(
+                  size: 10,
+                  color: isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }

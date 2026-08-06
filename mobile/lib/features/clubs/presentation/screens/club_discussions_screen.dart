@@ -71,11 +71,11 @@ class _ClubDiscussionsScreenState
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Discussões', style: ReadLogType.bookTitle(size: 16)),
+            Text('Discussões', style: LumenType.bookTitle(size: 16)),
             Text(
               widget.clubName,
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkMuted, size: 12),
+              style: LumenType.authorName(
+                  color: LumenColors.inkMuted, size: 12),
             ),
           ],
         ),
@@ -218,8 +218,8 @@ class _TopicsTabState extends ConsumerState<_TopicsTab> {
                 child: Text(
                   'Não foi possível carregar os tópicos.\n$e',
                   textAlign: TextAlign.center,
-                  style: ReadLogType.authorName(
-                      color: ReadLogColors.inkMuted),
+                  style: LumenType.authorName(
+                      color: LumenColors.inkMuted),
                 ),
               ),
             ),
@@ -232,13 +232,13 @@ class _TopicsTabState extends ConsumerState<_TopicsTab> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text('Nenhum tópico ainda.',
-                            style: ReadLogType.bookTitle(size: 18)),
+                            style: LumenType.bookTitle(size: 18)),
                         const SizedBox(height: 6),
                         Text(
                           'Seja o primeiro a iniciar uma discussão.',
                           textAlign: TextAlign.center,
-                          style: ReadLogType.authorName(
-                              color: ReadLogColors.inkMuted),
+                          style: LumenType.authorName(
+                              color: LumenColors.inkMuted),
                         ),
                       ],
                     ),
@@ -369,25 +369,25 @@ class _TopicTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   topic.createdByName ?? 'Membro',
-                  style: ReadLogType.authorName(size: 13),
+                  style: LumenType.authorName(size: 13),
                 ),
               ),
               Text(
                 _timeAgo(topic.createdAt),
-                style: ReadLogType.mono(
-                    size: 10, color: ReadLogColors.inkGhost),
+                style: LumenType.mono(
+                    size: 10, color: LumenColors.inkGhost),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          Text(topic.content, style: ReadLogType.authorName(size: 14)),
+          Text(topic.content, style: LumenType.authorName(size: 14)),
           const SizedBox(height: 6),
           GestureDetector(
             onTap: onReply,
             child: Text(
               'Responder',
               style:
-                  ReadLogType.kicker(color: ReadLogColors.inkMuted, size: 11),
+                  LumenType.kicker(color: LumenColors.inkMuted, size: 11),
             ),
           ),
           if (!isReply) const Divider(height: 16),
@@ -428,7 +428,7 @@ class _TopicComposer extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           border: Border(
-              top: BorderSide(color: ReadLogColors.divider, width: 1)),
+              top: BorderSide(color: LumenColors.divider, width: 1)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -551,7 +551,7 @@ class _ReplySheetState extends ConsumerState<_ReplySheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Responder', style: ReadLogType.bookTitle(size: 18)),
+            Text('Responder', style: LumenType.bookTitle(size: 18)),
             const SizedBox(height: 12),
             TextField(
               controller: _ctrl,
@@ -645,8 +645,8 @@ class _TheoriesTabState extends ConsumerState<_TheoriesTab> {
                   child: Text(
                     'Não foi possível carregar as teorias.\n$e',
                     textAlign: TextAlign.center,
-                    style: ReadLogType.authorName(
-                        color: ReadLogColors.inkMuted),
+                    style: LumenType.authorName(
+                        color: LumenColors.inkMuted),
                   ),
                 ),
               ),
@@ -659,13 +659,13 @@ class _TheoriesTabState extends ConsumerState<_TheoriesTab> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text('Nenhuma teoria ainda.',
-                              style: ReadLogType.bookTitle(size: 18)),
+                              style: LumenType.bookTitle(size: 18)),
                           const SizedBox(height: 6),
                           Text(
                             'Adicione a primeira e veja quem acerta!',
                             textAlign: TextAlign.center,
-                            style: ReadLogType.authorName(
-                                color: ReadLogColors.inkMuted),
+                            style: LumenType.authorName(
+                                color: LumenColors.inkMuted),
                           ),
                         ],
                       ),
@@ -779,24 +779,24 @@ class _TheoryTileState extends ConsumerState<_TheoryTile> {
                               : Icons.arrow_upward_outlined,
                           size: 20,
                           color: t.votedByMe
-                              ? ReadLogColors.ink
-                              : ReadLogColors.inkGhost,
+                              ? LumenColors.ink
+                              : LumenColors.inkGhost,
                         ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${t.voteCount}',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 13,
                     color: t.voteCount > 0
-                        ? ReadLogColors.ink
-                        : ReadLogColors.inkGhost,
+                        ? LumenColors.ink
+                        : LumenColors.inkGhost,
                   ),
                 ),
                 Text(
                   t.voteCount == 1 ? 'voto' : 'votos',
-                  style: ReadLogType.mono(
-                      size: 10, color: ReadLogColors.inkGhost),
+                  style: LumenType.mono(
+                      size: 10, color: LumenColors.inkGhost),
                 ),
               ],
             ),
@@ -820,7 +820,7 @@ class _TheoryTileState extends ConsumerState<_TheoryTile> {
                       ),
                       child: Text(
                         t.status.label,
-                        style: ReadLogType.kicker(
+                        style: LumenType.kicker(
                             size: 10, color: statusColor),
                       ),
                     ),
@@ -828,27 +828,27 @@ class _TheoryTileState extends ConsumerState<_TheoryTile> {
                       const SizedBox(width: 6),
                       Text(
                         '· marco',
-                        style: ReadLogType.mono(
-                            size: 10, color: ReadLogColors.inkGhost),
+                        style: LumenType.mono(
+                            size: 10, color: LumenColors.inkGhost),
                       ),
                     ],
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(t.content, style: ReadLogType.authorName(size: 14)),
+                Text(t.content, style: LumenType.authorName(size: 14)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Text(
                       t.createdByName ?? 'Membro',
-                      style: ReadLogType.authorName(
-                          size: 12, color: ReadLogColors.inkMuted),
+                      style: LumenType.authorName(
+                          size: 12, color: LumenColors.inkMuted),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       '· ${_timeAgo(t.createdAt)}',
-                      style: ReadLogType.mono(
-                          size: 10, color: ReadLogColors.inkGhost),
+                      style: LumenType.mono(
+                          size: 10, color: LumenColors.inkGhost),
                     ),
                   ],
                 ),
@@ -860,7 +860,7 @@ class _TheoryTileState extends ConsumerState<_TheoryTile> {
           if (widget.canManage)
             PopupMenuButton<String>(
               icon: Icon(Icons.more_vert,
-                  size: 18, color: ReadLogColors.inkGhost),
+                  size: 18, color: LumenColors.inkGhost),
               onSelected: _onManagerAction,
               itemBuilder: (_) => [
                 const PopupMenuItem(
@@ -886,11 +886,11 @@ class _TheoryTileState extends ConsumerState<_TheoryTile> {
   Color _statusColor(TheoryStatus status) {
     switch (status) {
       case TheoryStatus.open:
-        return ReadLogColors.inkMuted;
+        return LumenColors.inkMuted;
       case TheoryStatus.confirmed:
-        return ReadLogColors.progress;
+        return LumenColors.progress;
       case TheoryStatus.wrong:
-        return ReadLogColors.danger;
+        return LumenColors.danger;
     }
   }
 
@@ -983,12 +983,12 @@ class _AddTheorySheetState extends ConsumerState<_AddTheorySheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Nova teoria', style: ReadLogType.bookTitle(size: 18)),
+            Text('Nova teoria', style: LumenType.bookTitle(size: 18)),
             const SizedBox(height: 4),
             Text(
               'Sem spoiler — teorias são sobre o que ainda pode acontecer.',
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkMuted, size: 13),
+              style: LumenType.authorName(
+                  color: LumenColors.inkMuted, size: 13),
             ),
             const SizedBox(height: 12),
             TextField(

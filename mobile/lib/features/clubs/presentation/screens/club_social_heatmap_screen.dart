@@ -32,33 +32,33 @@ class ClubSocialHeatmapScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
+        iconTheme: const IconThemeData(color: LumenColors.ink, size: 20),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Atividade do clube',
-              style: ReadLogType.display(
+              style: LumenType.display(
                 size: 15,
-                color: ReadLogColors.ink,
+                color: LumenColors.ink,
                 weight: FontWeight.w600,
               ),
             ),
             Text(
               clubName,
-              style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+              style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
             ),
           ],
         ),
       ),
       body: heatmapAsync.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: ReadLogColors.progress),
+          child: LumenGrainLoader(),
         ),
         error: (e, _) => Center(
           child: Text(
             'Não foi possível carregar os dados.',
-            style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+            style: LumenType.mono(size: 13, color: LumenColors.inkMuted),
           ),
         ),
         data: (days) => RefreshIndicator(
@@ -97,17 +97,17 @@ class _HeatmapBody extends StatelessWidget {
         // ── Resumo do período ─────────────────────────────────────────────
         Text(
           fmt.format(totalPages),
-          style: ReadLogType.display(
+          style: LumenType.display(
             size: 42,
-            color: ReadLogColors.ink,
+            color: LumenColors.ink,
             weight: FontWeight.w400,
           ),
         ),
         Text(
           'páginas nos últimos 30 dias',
-          style: ReadLogType.mono(
+          style: LumenType.mono(
             size: 11,
-            color: ReadLogColors.inkMuted,
+            color: LumenColors.inkMuted,
           ).copyWith(letterSpacing: 0.6),
         ),
         const SizedBox(height: 8),
@@ -115,22 +115,22 @@ class _HeatmapBody extends StatelessWidget {
           children: [
             Text(
               '${totalMinutes ~/ 60}h',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 12,
-                color: ReadLogColors.inkMuted,
+                color: LumenColors.inkMuted,
                 weight: FontWeight.w600,
               ),
             ),
             Text(
               '  ·  ',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 12,
-                color: ReadLogColors.inkGhost,
+                color: LumenColors.inkGhost,
               ),
             ),
             Text(
               '$activeDays ${activeDays == 1 ? 'dia ativo' : 'dias ativos'} de ${days.length}',
-              style: ReadLogType.mono(size: 12, color: ReadLogColors.inkGhost),
+              style: LumenType.mono(size: 12, color: LumenColors.inkGhost),
             ),
           ],
         ),
@@ -140,20 +140,20 @@ class _HeatmapBody extends StatelessWidget {
         if (top.isEmpty)
           Text(
             'Nenhum dia com leitura registrada ainda.',
-            style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+            style: LumenType.mono(size: 13, color: LumenColors.inkMuted),
           )
         else ...[
           Text(
             'DIAS MAIS ATIVOS',
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 10,
-              color: ReadLogColors.inkGhost,
+              color: LumenColors.inkGhost,
             ).copyWith(letterSpacing: 1.4),
           ),
           const SizedBox(height: 12),
           ...top.expand((d) => [
                 _TopDayRow(day: d),
-                const Divider(height: 1, color: ReadLogColors.hairline),
+                const Divider(height: 1, color: LumenColors.hairline),
               ]),
         ],
       ],
@@ -179,24 +179,24 @@ class _TopDayRow extends StatelessWidget {
         children: [
           Text(
             fmtDate.format(day.day),
-            style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+            style: LumenType.mono(size: 13, color: LumenColors.inkMuted),
           ),
           Row(
             children: [
               Text(
                 '${day.totalPages} pág',
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 12,
-                  color: ReadLogColors.progress,
+                  color: LumenColors.progress,
                   weight: FontWeight.w600,
                 ),
               ),
               const SizedBox(width: 12),
               Text(
                 '${day.activeMembers} ${day.activeMembers == 1 ? 'leitor' : 'leitores'}',
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 11,
-                  color: ReadLogColors.inkGhost,
+                  color: LumenColors.inkGhost,
                 ),
               ),
             ],

@@ -42,7 +42,7 @@ class ClubBookReviewsScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text('Resenhas',
-            style: ReadLogType.bookTitle(size: 16)),
+            style: LumenType.bookTitle(size: 16)),
           actions: [
             TextButton(
               onPressed: () async {
@@ -63,7 +63,7 @@ class ClubBookReviewsScreen extends ConsumerWidget {
               },
               child: Text(
                 myReviewAsync.valueOrNull != null ? 'Editar' : 'Escrever',
-                style: ReadLogType.kicker(color: ReadLogColors.ink, size: 12),
+                style: LumenType.kicker(color: LumenColors.ink, size: 12),
               ),
             ),
           ],
@@ -80,13 +80,13 @@ class ClubBookReviewsScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Nenhuma resenha ainda.',
-                        style: ReadLogType.bookTitle(size: 18)),
+                        style: LumenType.bookTitle(size: 18)),
                     const SizedBox(height: 8),
                     Text(
                       'Seja o primeiro a compartilhar o que achou de "$bookTitle".',
                       textAlign: TextAlign.center,
-                      style: ReadLogType.authorName(
-                          color: ReadLogColors.inkMuted),
+                      style: LumenType.authorName(
+                          color: LumenColors.inkMuted),
                     ),
                   ],
                 ),
@@ -145,17 +145,17 @@ class _AverageLine extends StatelessWidget {
         children: [
           Text(
             avgDisplay,
-            style: ReadLogType.bookTitle(size: 28),
+            style: LumenType.bookTitle(size: 28),
           ),
           const SizedBox(width: 6),
           Text(' / 5',
-              style: ReadLogType.mono(
-                  size: 13, color: ReadLogColors.inkMuted)),
+              style: LumenType.mono(
+                  size: 13, color: LumenColors.inkMuted)),
           const SizedBox(width: 12),
           Text(
             '$count ${count == 1 ? 'resenha' : 'resenhas'}',
-            style: ReadLogType.mono(
-                size: 12, color: ReadLogColors.inkMuted),
+            style: LumenType.mono(
+                size: 12, color: LumenColors.inkMuted),
           ),
         ],
       ),
@@ -196,13 +196,13 @@ class _ReviewEntryState extends State<_ReviewEntry> {
                   Expanded(
                     child: Text(
                       r.userName ?? 'Membro',
-                      style: ReadLogType.authorName(size: 14),
+                      style: LumenType.authorName(size: 14),
                     ),
                   ),
                   Text(
                     fmt.format(r.createdAt.toLocal()),
-                    style: ReadLogType.mono(
-                        size: 11, color: ReadLogColors.inkGhost),
+                    style: LumenType.mono(
+                        size: 11, color: LumenColors.inkGhost),
                   ),
                 ],
               ),
@@ -210,8 +210,8 @@ class _ReviewEntryState extends State<_ReviewEntry> {
               // Nota numérica + recomendação em texto
               Text(
                 '${r.rating}/5 · ${r.wouldRecommend.label.toLowerCase()}',
-                style: ReadLogType.mono(
-                    size: 11, color: ReadLogColors.inkMuted),
+                style: LumenType.mono(
+                    size: 11, color: LumenColors.inkMuted),
               ),
               // O que funcionou
               if (r.whatWorked != null && r.whatWorked!.isNotEmpty) ...[
@@ -267,8 +267,8 @@ class _ReviewSection extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: ReadLogType.kicker(
-              color: ReadLogColors.inkMuted, size: 10),
+          style: LumenType.kicker(
+              color: LumenColors.inkMuted, size: 10),
         ),
         const SizedBox(height: 4),
         if (blurred)
@@ -279,12 +279,12 @@ class _ReviewSection extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(
                     left: BorderSide(
-                        color: ReadLogColors.divider, width: 2)),
+                        color: LumenColors.divider, width: 2)),
               ),
               child: Text(
                 '${spoilerLabel ?? 'Spoiler'} · Toque para revelar',
-                style: ReadLogType.mono(
-                    size: 12, color: ReadLogColors.inkMuted),
+                style: LumenType.mono(
+                    size: 12, color: LumenColors.inkMuted),
               ),
             ),
           )
@@ -294,10 +294,10 @@ class _ReviewSection extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(
                   left:
-                      BorderSide(color: ReadLogColors.divider, width: 2)),
+                      BorderSide(color: LumenColors.divider, width: 2)),
             ),
             child: Text(text,
-                style: ReadLogType.authorName(size: 14)),
+                style: LumenType.authorName(size: 14)),
           ),
       ],
     );

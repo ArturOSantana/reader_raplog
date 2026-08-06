@@ -15,7 +15,7 @@ class AdminShell extends StatelessWidget {
 
     if (isDesktop) {
       return Scaffold(
-        backgroundColor: ReadLogColors.surface,
+        backgroundColor: LumenColors.surface,
         body: Row(
           children: [
             _AdminNavRail(currentLocation: location),
@@ -27,7 +27,7 @@ class AdminShell extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: LumenColors.surface,
       appBar: _AdminAppBar(location: location),
       drawer: _AdminDrawer(currentLocation: location),
       body: child,
@@ -55,15 +55,15 @@ class _AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: ReadLogColors.ink,
-      foregroundColor: ReadLogColors.inkInverse,
+      backgroundColor: LumenColors.ink,
+      foregroundColor: LumenColors.inkInverse,
       elevation: 0,
       title: Text(
         'ADMIN · ${_title().toUpperCase()}',
-        style: ReadLogType.mono(
+        style: LumenType.mono(
           size: 12,
           weight: FontWeight.w600,
-          color: ReadLogColors.inkInverse,
+          color: LumenColors.inkInverse,
         ).copyWith(letterSpacing: 2),
       ),
     );
@@ -85,7 +85,7 @@ class _AdminNavRail extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 220,
-      color: ReadLogColors.ink,
+      color: LumenColors.ink,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -97,23 +97,23 @@ class _AdminNavRail extends StatelessWidget {
               children: [
                 Text(
                   'LUMEN',
-                  style: ReadLogType.display(
+                  style: LumenType.display(
                     size: 20,
-                    color: ReadLogColors.inkInverse,
+                    color: LumenColors.inkInverse,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'ADMIN PANEL',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 9,
-                    color: ReadLogColors.progress,
+                    color: LumenColors.progress,
                   ).copyWith(letterSpacing: 3),
                 ),
               ],
             ),
           ),
-          Divider(color: ReadLogColors.hairlineDark, height: 1),
+          Divider(color: LumenColors.hairlineDark, height: 1),
           const SizedBox(height: 8),
           // Nav items
           Expanded(
@@ -123,7 +123,7 @@ class _AdminNavRail extends StatelessWidget {
             ),
           ),
           // Voltar ao app
-          Divider(color: ReadLogColors.hairlineDark, height: 1),
+          Divider(color: LumenColors.hairlineDark, height: 1),
           _NavItem(
             icon: Icons.arrow_back_outlined,
             label: 'Voltar ao App',
@@ -187,7 +187,7 @@ class _AdminDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: ReadLogColors.ink,
+      backgroundColor: LumenColors.ink,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -199,23 +199,23 @@ class _AdminDrawer extends StatelessWidget {
                 children: [
                   Text(
                     'LUMEN',
-                    style: ReadLogType.display(
+                    style: LumenType.display(
                       size: 20,
-                      color: ReadLogColors.inkInverse,
+                      color: LumenColors.inkInverse,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'ADMIN PANEL',
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                       size: 9,
-                      color: ReadLogColors.progress,
+                      color: LumenColors.progress,
                     ).copyWith(letterSpacing: 3),
                   ),
                 ],
               ),
             ),
-            Divider(color: ReadLogColors.hairlineDark, height: 1),
+            Divider(color: LumenColors.hairlineDark, height: 1),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -277,7 +277,7 @@ class _AdminDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            Divider(color: ReadLogColors.hairlineDark, height: 1),
+            Divider(color: LumenColors.hairlineDark, height: 1),
             _NavItem(
               icon: Icons.arrow_back_outlined,
               label: 'Voltar ao App',
@@ -324,12 +324,12 @@ class _NavItem extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(
-                color: active ? ReadLogColors.progress : Colors.transparent,
+                color: active ? LumenColors.progress : Colors.transparent,
                 width: 3,
               ),
             ),
             color: active
-                ? ReadLogColors.inkInverse.withValues(alpha: 0.06)
+                ? LumenColors.inkInverse.withValues(alpha: 0.06)
                 : Colors.transparent,
           ),
           child: Row(
@@ -338,17 +338,17 @@ class _NavItem extends StatelessWidget {
                 icon,
                 size: 18,
                 color: active
-                    ? ReadLogColors.inkInverse
-                    : ReadLogColors.inkInverse.withValues(alpha: 0.5),
+                    ? LumenColors.inkInverse
+                    : LumenColors.inkInverse.withValues(alpha: 0.5),
               ),
               const SizedBox(width: 12),
               Text(
                 label,
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 13,
                   color: active
-                      ? ReadLogColors.inkInverse
-                      : ReadLogColors.inkInverse.withValues(alpha: 0.6),
+                      ? LumenColors.inkInverse
+                      : LumenColors.inkInverse.withValues(alpha: 0.6),
                 ),
               ),
             ],

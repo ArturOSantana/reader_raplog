@@ -181,8 +181,8 @@ class ClubCalendarScreen extends ConsumerWidget {
             const SizedBox(height: 10),
             if (upcoming.isEmpty)
               Text('Admins podem adicionar encontros, cronograma e desafios.',
-                  style: ReadLogType.authorName(
-                      color: ReadLogColors.inkMuted, size: 13))
+                  style: LumenType.authorName(
+                      color: LumenColors.inkMuted, size: 13))
             else
               ...upcoming.map((e) => _EventRow(event: e, isPast: false)),
 
@@ -206,10 +206,10 @@ class ClubCalendarScreen extends ConsumerWidget {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Calendário', style: ReadLogType.bookTitle(size: 16)),
+          Text('Calendário', style: LumenType.bookTitle(size: 16)),
           Text(clubName,
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkMuted, size: 12)),
+              style: LumenType.authorName(
+                  color: LumenColors.inkMuted, size: 12)),
         ],
       ),
     );
@@ -226,7 +226,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
-      style: ReadLogType.kicker(color: ReadLogColors.inkMuted, size: 11),
+      style: LumenType.kicker(color: LumenColors.inkMuted, size: 11),
     );
   }
 }
@@ -259,18 +259,18 @@ class _EventRow extends StatelessWidget {
                   children: [
                     Text(
                       event.title,
-                      style: ReadLogType.authorName(
+                      style: LumenType.authorName(
                         size: 14,
                         color: isPast
-                            ? ReadLogColors.inkMuted
-                            : ReadLogColors.ink,
+                            ? LumenColors.inkMuted
+                            : LumenColors.ink,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       event.subtitle,
-                      style: ReadLogType.authorName(
-                          color: ReadLogColors.inkMuted, size: 12),
+                      style: LumenType.authorName(
+                          color: LumenColors.inkMuted, size: 12),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -283,11 +283,11 @@ class _EventRow extends StatelessWidget {
                 children: [
                   Text(
                     isToday ? 'hoje' : fmt.format(event.date),
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                       size: 11,
                       color: isToday
-                          ? ReadLogColors.progress
-                          : ReadLogColors.inkGhost,
+                          ? LumenColors.progress
+                          : LumenColors.inkGhost,
                     ),
                     textAlign: TextAlign.right,
                   ),
@@ -297,8 +297,8 @@ class _EventRow extends StatelessWidget {
                       onTap: () => _addToGoogleCalendar(event),
                       child: Text(
                         '+ agenda',
-                        style: ReadLogType.mono(
-                            size: 10, color: ReadLogColors.inkGhost),
+                        style: LumenType.mono(
+                            size: 10, color: LumenColors.inkGhost),
                       ),
                     ),
                   ],
@@ -353,29 +353,29 @@ class _MilestonesList extends StatelessWidget {
                   children: [
                     Text(
                       '${m.milestonePct}%',
-                      style: ReadLogType.mono(
+                      style: LumenType.mono(
                         size: 13,
                         color: locked
-                            ? ReadLogColors.inkGhost
-                            : ReadLogColors.progress,
+                            ? LumenColors.inkGhost
+                            : LumenColors.progress,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         m.label,
-                        style: ReadLogType.authorName(
+                        style: LumenType.authorName(
                           size: 13,
                           color: locked
-                              ? ReadLogColors.inkGhost
-                              : ReadLogColors.ink,
+                              ? LumenColors.inkGhost
+                              : LumenColors.ink,
                         ),
                       ),
                     ),
                     if (!locked)
                       Text('ver',
-                          style: ReadLogType.kicker(
-                              color: ReadLogColors.inkGhost, size: 10)),
+                          style: LumenType.kicker(
+                              color: LumenColors.inkGhost, size: 10)),
                   ],
                 ),
               ),

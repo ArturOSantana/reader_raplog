@@ -42,7 +42,7 @@ class GoalAchievementCard extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // ── Fundo ink ───────────────────────────────────────────
-          Container(color: ReadLogColors.ink),
+          Container(color: LumenColors.ink),
 
           // ── Faixa lateral — cor sage para metas ──────────────────
           Positioned(
@@ -51,7 +51,7 @@ class GoalAchievementCard extends StatelessWidget {
             bottom: 0,
             child: Container(
               width: 8,
-              color: ReadLogColors.sage,
+              color: LumenColors.sage,
             ),
           ),
 
@@ -61,7 +61,7 @@ class GoalAchievementCard extends StatelessWidget {
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: ReadLogColors.cream.withValues(alpha: 0.06),
+                  color: LumenColors.cream.withValues(alpha: 0.06),
                   width: 1,
                 ),
               ),
@@ -83,15 +83,15 @@ class GoalAchievementCard extends StatelessWidget {
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         border: Border.all(
-                            color: ReadLogColors.sage.withValues(alpha: 0.7)),
+                            color: LumenColors.sage.withValues(alpha: 0.7)),
                         borderRadius: BorderRadius.circular(2),
                       ),
                       child: Text(
                         'MISSÃO CONCLUÍDA',
-                        style: ReadLogType.mono(
+                        style: LumenType.mono(
                           size: 9,
                           weight: FontWeight.w600,
-                          color: ReadLogColors.sage,
+                          color: LumenColors.sage,
                         ).copyWith(letterSpacing: 1.4),
                       ),
                     ),
@@ -103,16 +103,16 @@ class GoalAchievementCard extends StatelessWidget {
                         children: [
                           Text(
                             'ReadLog',
-                            style: ReadLogType.display(
+                            style: LumenType.display(
                               size: 11,
-                              color: ReadLogColors.brassLight
+                              color: LumenColors.brassLight
                                   .withValues(alpha: 0.6),
                             ).copyWith(letterSpacing: 1.6),
                           ),
                           Container(
                             width: 44,
                             height: 1,
-                            color: ReadLogColors.brassLight
+                            color: LumenColors.brassLight
                                 .withValues(alpha: 0.3),
                           ),
                         ],
@@ -126,9 +126,9 @@ class GoalAchievementCard extends StatelessWidget {
                 // Tipo de meta — mono pequeno
                 Text(
                   goal.type.label.toUpperCase(),
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 10,
-                    color: ReadLogColors.sage,
+                    color: LumenColors.sage,
                   ).copyWith(letterSpacing: 1.6),
                 ),
                 const SizedBox(height: 10),
@@ -136,18 +136,18 @@ class GoalAchievementCard extends StatelessWidget {
                 // Valor em destaque — Fraunces grande
                 Text(
                   '$currentValue',
-                  style: ReadLogType.display(
+                  style: LumenType.display(
                     size: 72,
                     weight: FontWeight.w600,
-                    color: ReadLogColors.cream,
+                    color: LumenColors.cream,
                   ).copyWith(height: 0.9),
                 ),
 
                 Text(
                   '${goal.type.unit} $_periodLabel',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 14,
-                    color: ReadLogColors.cream.withValues(alpha: 0.55),
+                    color: LumenColors.cream.withValues(alpha: 0.55),
                   ),
                 ),
 
@@ -160,8 +160,8 @@ class GoalAchievementCard extends StatelessWidget {
                     value: 1.0,
                     minHeight: 5,
                     backgroundColor:
-                        ReadLogColors.cream.withValues(alpha: 0.1),
-                    color: ReadLogColors.stamp,
+                        LumenColors.cream.withValues(alpha: 0.1),
+                    color: LumenColors.stamp,
                   ),
                 ),
 
@@ -172,17 +172,17 @@ class GoalAchievementCard extends StatelessWidget {
                   children: [
                     Text(
                       'Missão: ${goal.targetValue} ${goal.type.unit}',
-                      style: ReadLogType.mono(
+                      style: LumenType.mono(
                         size: 10,
-                        color: ReadLogColors.cream.withValues(alpha: 0.4),
+                        color: LumenColors.cream.withValues(alpha: 0.4),
                       ),
                     ),
                     Text(
                       '100%',
-                      style: ReadLogType.mono(
+                      style: LumenType.mono(
                         size: 10,
                         weight: FontWeight.w600,
-                        color: ReadLogColors.stamp,
+                        color: LumenColors.stamp,
                       ),
                     ),
                   ],
@@ -192,15 +192,15 @@ class GoalAchievementCard extends StatelessWidget {
 
                 // Divisória tracejada
                 _DashedDivider(
-                    color: ReadLogColors.cream.withValues(alpha: 0.15)),
+                    color: LumenColors.cream.withValues(alpha: 0.15)),
                 const SizedBox(height: 16),
 
                 // Data de conclusão
                 Text(
                   'Concluída em $_dateLabel',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 10,
-                    color: ReadLogColors.cream.withValues(alpha: 0.35),
+                    color: LumenColors.cream.withValues(alpha: 0.35),
                   ),
                 ),
               ],

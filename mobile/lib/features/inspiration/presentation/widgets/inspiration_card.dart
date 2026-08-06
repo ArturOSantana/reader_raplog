@@ -36,7 +36,7 @@ class InspirationCard extends StatelessWidget {
     return Container(
       constraints: const BoxConstraints(maxWidth: 400),
       decoration: BoxDecoration(
-        color: ReadLogColors.ink,
+        color: LumenColors.ink,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Stack(
@@ -49,7 +49,7 @@ class InspirationCard extends StatelessWidget {
             child: Container(
               width: 6,
               decoration: const BoxDecoration(
-                color: ReadLogColors.brass,
+                color: LumenColors.brass,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(4),
                   bottomLeft: Radius.circular(4),
@@ -67,10 +67,10 @@ class InspirationCard extends StatelessWidget {
                 // ── Título ────────────────────────────────────────────────
                 Text(
                   title,
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 11,
                     weight: FontWeight.w600,
-                    color: ReadLogColors.brass,
+                    color: LumenColors.brass,
                   ).copyWith(letterSpacing: 1.2),
                 ),
 
@@ -78,10 +78,10 @@ class InspirationCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle!,
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                       size: 13,
                       weight: FontWeight.w600,
-                      color: ReadLogColors.cream,
+                      color: LumenColors.cream,
                     ),
                   ),
                 ],
@@ -89,18 +89,18 @@ class InspirationCard extends StatelessWidget {
                 const SizedBox(height: 14),
 
                 // ── Divisória ─────────────────────────────────────────────
-                _DashedLine(color: ReadLogColors.cream.withValues(alpha: 0.15)),
+                _DashedLine(color: LumenColors.cream.withValues(alpha: 0.15)),
 
                 const SizedBox(height: 16),
 
                 // ── Frase ─────────────────────────────────────────────────
                 Text(
                   '\u201c${quote.quote}\u201d',
-                  style: ReadLogType.display(
+                  style: LumenType.display(
                     size: 15,
                     weight: FontWeight.w400,
                     italic: true,
-                    color: ReadLogColors.cream,
+                    color: LumenColors.cream,
                   ).copyWith(height: 1.55),
                 ),
 
@@ -108,9 +108,9 @@ class InspirationCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   Text(
                     '— ${quote.author}',
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                       size: 11,
-                      color: ReadLogColors.cream.withValues(alpha: 0.5),
+                      color: LumenColors.cream.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -118,15 +118,15 @@ class InspirationCard extends StatelessWidget {
                 const SizedBox(height: 14),
 
                 // ── Divisória ─────────────────────────────────────────────
-                _DashedLine(color: ReadLogColors.cream.withValues(alpha: 0.15)),
+                _DashedLine(color: LumenColors.cream.withValues(alpha: 0.15)),
 
                 if (closing != null) ...[
                   const SizedBox(height: 14),
                   Text(
                     closing!,
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                       size: 11,
-                      color: ReadLogColors.brassLight,
+                      color: LumenColors.brassLight,
                     ).copyWith(letterSpacing: 0.6),
                   ),
                 ],
@@ -166,7 +166,7 @@ class InspirationBottomSheet extends StatelessWidget {
   }) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: LumenColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -193,7 +193,7 @@ class InspirationBottomSheet extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 18),
               decoration: BoxDecoration(
-                color: ReadLogColors.cream.withValues(alpha: 0.2),
+                color: LumenColors.cream.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -212,15 +212,15 @@ class InspirationBottomSheet extends StatelessWidget {
               child: TextButton(
                 onPressed: () => Navigator.pop(context),
                 style: TextButton.styleFrom(
-                  foregroundColor: ReadLogColors.brassLight,
+                  foregroundColor: LumenColors.brassLight,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: Text(
                   'Continuar lendo',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 13,
                     weight: FontWeight.w600,
-                    color: ReadLogColors.brassLight,
+                    color: LumenColors.brassLight,
                   ),
                 ),
               ),

@@ -41,19 +41,19 @@ class WidgetsPreviewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ReadLogColors.inkAlt,
+      backgroundColor: LumenColors.inkAlt,
       appBar: AppBar(
-        backgroundColor: ReadLogColors.ink,
-        foregroundColor: ReadLogColors.cream,
+        backgroundColor: LumenColors.ink,
+        foregroundColor: LumenColors.cream,
         title: Text(
           'Widgets',
-          style: ReadLogType.display(size: 18, color: ReadLogColors.brassLight),
+          style: LumenType.display(size: 18, color: LumenColors.brassLight),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
               height: 1,
-              color: ReadLogColors.cream.withValues(alpha: 0.1)),
+              color: LumenColors.cream.withValues(alpha: 0.1)),
         ),
       ),
       body: LumenTexturedBackground(
@@ -204,10 +204,10 @@ class _Section extends StatelessWidget {
           Expanded(
             child: Text(
               label.toUpperCase(),
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                   size: 10,
                   weight: FontWeight.w600,
-                  color: ReadLogColors.cream.withValues(alpha: 0.4)),
+                  color: LumenColors.cream.withValues(alpha: 0.4)),
             ),
           ),
           if (tag != null)
@@ -215,17 +215,17 @@ class _Section extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: ReadLogColors.brass.withValues(alpha: 0.2),
+                color: LumenColors.brass.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(3),
                 border: Border.all(
-                    color: ReadLogColors.brass.withValues(alpha: 0.4)),
+                    color: LumenColors.brass.withValues(alpha: 0.4)),
               ),
               child: Text(
                 tag!.toUpperCase(),
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                     size: 9,
                     weight: FontWeight.w600,
-                    color: ReadLogColors.brassLight),
+                    color: LumenColors.brassLight),
               ),
             ),
         ],

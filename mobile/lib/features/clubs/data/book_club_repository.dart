@@ -133,25 +133,16 @@ class BookClubRepository {
     String? coverUrl,
     ClubVisibility visibility = ClubVisibility.private,
   }) async {
-    final clubData = await _client
-        .from('book_clubs')
-        .insert({
-          'admin_id': _userId,
-          'name': name,
-          'description': description,
-          'cover_url': coverUrl,
-          'visibility': visibility.dbValue,
-        })
-        .select()
-        .single();
-
-    // Criador entra como owner
-    await _client.from('book_club_members').insert({
-      'club_id': clubData['id'],
-      'user_id': _userId,
-      'role': 'owner',
+    // INSERT direto em book_clubs foi revogado (sec_fix_restrict_grants).
+    // Usa a RPC SECURITY DEFINER que faz o insert + adiciona o owner.
+    final rows = await _client.rpc('create_club', params: {
+      'p_name': name,
+      'p_description': description,
+      'p_cover_url': coverUrl,
+      'p_visibility': visibility.dbValue,
     });
 
+    final clubData = (rows as List).first as Map<String, dynamic>;
     return BookClub.fromMap({
       ...clubData,
       'member_count': 1,

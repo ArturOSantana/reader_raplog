@@ -43,10 +43,10 @@ class ReaderPanelWidget extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: ReadLogColors.ink,
+          color: LumenColors.ink,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: ReadLogColors.brass.withValues(alpha: 0.35),
+            color: LumenColors.brass.withValues(alpha: 0.35),
           ),
         ),
         padding: const EdgeInsets.all(18),
@@ -57,13 +57,13 @@ class ReaderPanelWidget extends StatelessWidget {
             Row(
               children: [
                 const Icon(Icons.menu_book_outlined,
-                    size: 16, color: ReadLogColors.brassLight),
+                    size: 16, color: LumenColors.brassLight),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     bookTitle,
-                    style: ReadLogType.display(
-                        size: 15, color: ReadLogColors.cream),
+                    style: LumenType.display(
+                        size: 15, color: LumenColors.cream),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -75,7 +75,7 @@ class ReaderPanelWidget extends StatelessWidget {
               child: Text(
                 bookAuthor,
                 style:
-                    ReadLogType.mono(size: 11, color: ReadLogColors.brassLight),
+                    LumenType.mono(size: 11, color: LumenColors.brassLight),
               ),
             ),
             const SizedBox(height: 10),
@@ -85,16 +85,16 @@ class ReaderPanelWidget extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: _progress,
                 minHeight: 5,
-                backgroundColor: ReadLogColors.cream.withValues(alpha: 0.1),
-                color: ReadLogColors.brass,
+                backgroundColor: LumenColors.cream.withValues(alpha: 0.1),
+                color: LumenColors.brass,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'p. $currentPage / $totalPages · $_pct%',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                   size: 10,
-                  color: ReadLogColors.cream.withValues(alpha: 0.55)),
+                  color: LumenColors.cream.withValues(alpha: 0.55)),
             ),
             const SizedBox(height: 14),
             // ── Stats row ──────────────────────────────────────────────
@@ -132,7 +132,7 @@ class ReaderPanelWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(
                   left: BorderSide(
-                      color: ReadLogColors.brass.withValues(alpha: 0.5),
+                      color: LumenColors.brass.withValues(alpha: 0.5),
                       width: 2),
                 ),
               ),
@@ -141,18 +141,18 @@ class ReaderPanelWidget extends StatelessWidget {
                 children: [
                   Text(
                     '"$quote"',
-                    style: ReadLogType.display(
+                    style: LumenType.display(
                       size: 12,
-                      color: ReadLogColors.cream.withValues(alpha: 0.8),
+                      color: LumenColors.cream.withValues(alpha: 0.8),
                       italic: true,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '— $quoteAuthor',
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                         size: 10,
-                        color: ReadLogColors.brassLight
+                        color: LumenColors.brassLight
                             .withValues(alpha: 0.7)),
                   ),
                 ],
@@ -184,13 +184,13 @@ class _StatChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: ReadLogColors.sage),
+          Icon(icon, size: 13, color: LumenColors.sage),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
               compact ? value : '$value\n$unit',
-              style: ReadLogType.mono(
-                  size: 10, color: ReadLogColors.cream.withValues(alpha: 0.8)),
+              style: LumenType.mono(
+                  size: 10, color: LumenColors.cream.withValues(alpha: 0.8)),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -208,7 +208,7 @@ class _VDivider extends StatelessWidget {
     return Container(
       width: 1,
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      color: ReadLogColors.cream.withValues(alpha: 0.12),
+      color: LumenColors.cream.withValues(alpha: 0.12),
     );
   }
 }

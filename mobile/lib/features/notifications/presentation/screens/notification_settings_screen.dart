@@ -20,8 +20,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
         leading: const BackButton(),
       ),
       body: prefsAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(color: AppColors.forestGreen)),
+        loading: () => const Center(child: LumenGrainLoader()),
         error: (e, _) => Center(child: Text('Erro: $e')),
         data: (prefs) => ListView(
           padding: const EdgeInsets.all(16),

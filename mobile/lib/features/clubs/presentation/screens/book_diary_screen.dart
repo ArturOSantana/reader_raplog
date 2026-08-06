@@ -39,11 +39,11 @@ class BookDiaryScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Diário de leitura',
-                  style: ReadLogType.bookTitle(size: 16)),
+                  style: LumenType.bookTitle(size: 16)),
               Text(
                 bookTitle,
-                style: ReadLogType.authorName(
-                    color: ReadLogColors.inkMuted, size: 12),
+                style: LumenType.authorName(
+                    color: LumenColors.inkMuted, size: 12),
                 overflow: TextOverflow.ellipsis,
               ),
             ],
@@ -57,7 +57,7 @@ class BookDiaryScreen extends ConsumerWidget {
             child: Text(
               'Não foi possível carregar o diário.\n$e',
               textAlign: TextAlign.center,
-              style: ReadLogType.authorName(color: ReadLogColors.inkMuted),
+              style: LumenType.authorName(color: LumenColors.inkMuted),
             ),
           ),
         ),
@@ -70,13 +70,13 @@ class BookDiaryScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Diário vazio.',
-                        style: ReadLogType.bookTitle(size: 18)),
+                        style: LumenType.bookTitle(size: 18)),
                     const SizedBox(height: 8),
                     Text(
                       'Ao finalizar sessões, você pode registrar\nseu humor e uma impressão rápida.',
                       textAlign: TextAlign.center,
-                      style: ReadLogType.authorName(
-                          color: ReadLogColors.inkMuted),
+                      style: LumenType.authorName(
+                          color: LumenColors.inkMuted),
                     ),
                   ],
                 ),
@@ -138,7 +138,7 @@ class _DiaryHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: ReadLogColors.divider)),
+        border: Border(bottom: BorderSide(color: LumenColors.divider)),
       ),
       child: Row(
         children: [
@@ -148,15 +148,15 @@ class _DiaryHeader extends StatelessWidget {
                 '$totalEntries ${totalEntries == 1 ? "entrada" : "entradas"}',
                 if (totalPages > 0) '$totalPages páginas',
               ].join(' · '),
-              style: ReadLogType.mono(
-                  size: 12, color: ReadLogColors.inkMuted),
+              style: LumenType.mono(
+                  size: 12, color: LumenColors.inkMuted),
             ),
           ),
           if (dominantMood != null)
             Text(
               '${dominantMood.label} dominante',
-              style: ReadLogType.mono(
-                  size: 11, color: ReadLogColors.inkGhost),
+              style: LumenType.mono(
+                  size: 11, color: LumenColors.inkGhost),
             ),
         ],
       ),
@@ -197,15 +197,15 @@ class _DiaryEntry extends StatelessWidget {
                       children: [
                         Text(
                           fmtDate.format(session.startedAt.toLocal()),
-                          style: ReadLogType.authorName(size: 13),
+                          style: LumenType.authorName(size: 13),
                         ),
                         Text(
                           [
                             fmtTime.format(session.startedAt.toLocal()),
                             if (hasMood) session.mood!.label,
                           ].join(' · '),
-                          style: ReadLogType.mono(
-                              size: 11, color: ReadLogColors.inkMuted),
+                          style: LumenType.mono(
+                              size: 11, color: LumenColors.inkMuted),
                         ),
                       ],
                     ),
@@ -218,15 +218,15 @@ class _DiaryEntry extends StatelessWidget {
                           session.pagesRead! > 0)
                         Text(
                           '${session.pagesRead} pág.',
-                          style: ReadLogType.mono(
-                              size: 12, color: ReadLogColors.ink),
+                          style: LumenType.mono(
+                              size: 12, color: LumenColors.ink),
                         ),
                       if (session.durationMinutes != null &&
                           session.durationMinutes! > 0)
                         Text(
                           _fmtDuration(session.durationMinutes!),
-                          style: ReadLogType.mono(
-                              size: 11, color: ReadLogColors.inkGhost),
+                          style: LumenType.mono(
+                              size: 11, color: LumenColors.inkGhost),
                         ),
                     ],
                   ),
@@ -240,11 +240,11 @@ class _DiaryEntry extends StatelessWidget {
                   decoration: const BoxDecoration(
                     border: Border(
                         left: BorderSide(
-                            color: ReadLogColors.divider, width: 2)),
+                            color: LumenColors.divider, width: 2)),
                   ),
                   child: Text(
                     '"${session.miniReview!}"',
-                    style: ReadLogType.quote(size: 13),
+                    style: LumenType.quote(size: 13),
                   ),
                 ),
               ],
@@ -253,8 +253,8 @@ class _DiaryEntry extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   'Pág. ${session.startPage} → ${session.endPage}',
-                  style: ReadLogType.mono(
-                      size: 11, color: ReadLogColors.inkGhost),
+                  style: LumenType.mono(
+                      size: 11, color: LumenColors.inkGhost),
                 ),
               ],
             ],

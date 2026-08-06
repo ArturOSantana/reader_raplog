@@ -13,13 +13,13 @@ class BookShareCard extends StatelessWidget {
   Color get _tabColor {
     switch (book.status) {
       case BookStatus.reading:
-        return ReadLogColors.brass;
+        return LumenColors.brass;
       case BookStatus.wantToRead:
-        return ReadLogColors.sage;
+        return LumenColors.sage;
       case BookStatus.read:
-        return ReadLogColors.stamp;
+        return LumenColors.stamp;
       case BookStatus.abandoned:
-        return ReadLogColors.charcoal.withValues(alpha: 0.4);
+        return LumenColors.charcoal.withValues(alpha: 0.4);
     }
   }
 
@@ -38,7 +38,7 @@ class BookShareCard extends StatelessWidget {
             // ── Fundo paper ─────────────────────────────────────────
             Container(
               decoration: const BoxDecoration(
-                color: ReadLogColors.paper,
+                color: LumenColors.paper,
               ),
             ),
 
@@ -80,7 +80,7 @@ class BookShareCard extends StatelessWidget {
                               ),
                               child: Text(
                                 book.status.label.toUpperCase(),
-                                style: ReadLogType.mono(
+                                style: LumenType.mono(
                                   size: 8,
                                   weight: FontWeight.w600,
                                   color: _tabColor,
@@ -92,10 +92,10 @@ class BookShareCard extends StatelessWidget {
                             // Título
                             Text(
                               book.title,
-                              style: ReadLogType.display(
+                              style: LumenType.display(
                                 size: 17,
                                 weight: FontWeight.w600,
-                                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : ReadLogColors.charcoal,
+                                color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkInverse : LumenColors.charcoal,
                               ).copyWith(height: 1.25),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
@@ -105,9 +105,9 @@ class BookShareCard extends StatelessWidget {
                               const SizedBox(height: 5),
                               Text(
                                 book.author!,
-                                style: ReadLogType.mono(
+                                style: LumenType.mono(
                                   size: 11,
-                                  color: ReadLogColors.charcoal
+                                  color: LumenColors.charcoal
                                       .withValues(alpha: 0.5),
                                 ),
                                 maxLines: 2,
@@ -129,8 +129,8 @@ class BookShareCard extends StatelessWidget {
                                           : Icons.star_outline_rounded,
                                       size: 15,
                                       color: filled
-                                          ? ReadLogColors.brass
-                                          : ReadLogColors.charcoal
+                                          ? LumenColors.brass
+                                          : LumenColors.charcoal
                                               .withValues(alpha: 0.2),
                                     ),
                                   );
@@ -156,7 +156,7 @@ class BookShareCard extends StatelessWidget {
                   // Rodapé
                   const SizedBox(height: 18),
                   _DashedDivider(
-                      color: ReadLogColors.charcoal.withValues(alpha: 0.15)),
+                      color: LumenColors.charcoal.withValues(alpha: 0.15)),
                   const SizedBox(height: 10),
 
                   Row(
@@ -164,16 +164,16 @@ class BookShareCard extends StatelessWidget {
                     children: [
                       Text(
                         'ReadLog',
-                        style: ReadLogType.display(
+                        style: LumenType.display(
                           size: 12,
-                          color: ReadLogColors.brass,
+                          color: LumenColors.brass,
                         ).copyWith(letterSpacing: 1.4),
                       ),
                       Text(
                         _today(),
-                        style: ReadLogType.mono(
+                        style: LumenType.mono(
                           size: 10,
-                          color: ReadLogColors.charcoal
+                          color: LumenColors.charcoal
                               .withValues(alpha: 0.35),
                         ),
                       ),
@@ -205,10 +205,10 @@ class _CoverBox extends StatelessWidget {
       width: 72,
       height: 100,
       decoration: BoxDecoration(
-        color: ReadLogColors.paperDeep,
+        color: LumenColors.paperDeep,
         borderRadius: BorderRadius.circular(2),
         border: Border.all(
-            color: ReadLogColors.charcoal.withValues(alpha: 0.12)),
+            color: LumenColors.charcoal.withValues(alpha: 0.12)),
       ),
       child: book.coverUrl != null && book.coverUrl!.isNotEmpty
           ? ClipRRect(
@@ -232,7 +232,7 @@ class _FallbackCover extends StatelessWidget {
     return Center(
       child: Icon(
         Icons.menu_book_outlined,
-        color: ReadLogColors.charcoal.withValues(alpha: 0.3),
+        color: LumenColors.charcoal.withValues(alpha: 0.3),
         size: 28,
       ),
     );
@@ -262,9 +262,9 @@ class _ProgressSection extends StatelessWidget {
           children: [
             Text(
               'Progresso',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 10,
-                color: ReadLogColors.charcoal.withValues(alpha: 0.5),
+                color: LumenColors.charcoal.withValues(alpha: 0.5),
               ),
             ),
             const SizedBox(width: 6),
@@ -273,7 +273,7 @@ class _ProgressSection extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 3),
                 child: CustomPaint(
                   painter: _DotsPainter(
-                      color: ReadLogColors.charcoal.withValues(alpha: 0.18)),
+                      color: LumenColors.charcoal.withValues(alpha: 0.18)),
                   size: const Size(double.infinity, 1),
                 ),
               ),
@@ -281,10 +281,10 @@ class _ProgressSection extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               '$current / $total · $percent%',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 11,
                 weight: FontWeight.w600,
-                color: ReadLogColors.charcoal.withValues(alpha: 0.75),
+                color: LumenColors.charcoal.withValues(alpha: 0.75),
               ),
             ),
           ],
@@ -295,8 +295,8 @@ class _ProgressSection extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 4,
-            backgroundColor: ReadLogColors.paperDeep,
-            color: ReadLogColors.stamp,
+            backgroundColor: LumenColors.paperDeep,
+            color: LumenColors.stamp,
           ),
         ),
       ],

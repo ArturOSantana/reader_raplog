@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/reading_session.dart';
 import '../../../../shared/providers/providers.dart';
@@ -60,6 +61,8 @@ class _ClubCheckinScreenState extends ConsumerState<ClubCheckinScreen> {
           if (hasReview) 'mini_review': _reviewController.text.trim(),
         }).eq('id', widget.latestSessionId!);
       }
+      // Haptic de conclusão de check-in — único lugar aprovado pela spec.
+      await HapticFeedback.lightImpact();
       setState(() {
         _loading = false;
         _done = true;
@@ -80,7 +83,7 @@ class _ClubCheckinScreenState extends ConsumerState<ClubCheckinScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text('Impressão de leitura',
-              style: ReadLogType.bookTitle(size: 16)),
+              style: LumenType.bookTitle(size: 16)),
         ),
         body: _done
             ? const _SuccessView()
@@ -122,22 +125,22 @@ class _CheckinForm extends StatelessWidget {
         children: [
           // ── Cabeçalho ──────────────────────────────────────────────────
           Text('Como foi a sessão?',
-              style: ReadLogType.bookTitle(size: 22)),
+              style: LumenType.bookTitle(size: 22)),
           const SizedBox(height: 6),
           Text(
             'Seu check-in já foi registrado automaticamente.\nAdicione uma impressão se quiser compartilhar.',
-            style: ReadLogType.authorName(color: ReadLogColors.inkMuted),
+            style: LumenType.authorName(color: LumenColors.inkMuted),
           ),
           const Divider(height: 40),
 
           // ── Mood (opcional) ────────────────────────────────────────────
           Text('Humor da sessão',
-              style: ReadLogType.kicker(
-                  color: ReadLogColors.inkMuted, size: 11)),
+              style: LumenType.kicker(
+                  color: LumenColors.inkMuted, size: 11)),
           const SizedBox(height: 2),
           Text('Opcional',
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkGhost, size: 12)),
+              style: LumenType.authorName(
+                  color: LumenColors.inkGhost, size: 12)),
           const SizedBox(height: 16),
           // Seleção por palavra — sem emoji nem card colorido
           Wrap(
@@ -154,17 +157,17 @@ class _CheckinForm extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border.all(
                       color: selected
-                          ? ReadLogColors.ink
-                          : ReadLogColors.inkGhost,
+                          ? LumenColors.ink
+                          : LumenColors.inkGhost,
                     ),
                     borderRadius: BorderRadius.circular(3),
                   ),
                   child: Text(
                     m.label,
-                    style: ReadLogType.authorName(
+                    style: LumenType.authorName(
                       color: selected
-                          ? ReadLogColors.ink
-                          : ReadLogColors.inkMuted,
+                          ? LumenColors.ink
+                          : LumenColors.inkMuted,
                       size: 13,
                     ),
                   ),
@@ -176,26 +179,26 @@ class _CheckinForm extends StatelessWidget {
 
           // ── Mini resenha (opcional) ────────────────────────────────────
           Text('Impressão rápida',
-              style: ReadLogType.kicker(
-                  color: ReadLogColors.inkMuted, size: 11)),
+              style: LumenType.kicker(
+                  color: LumenColors.inkMuted, size: 11)),
           const SizedBox(height: 2),
           Text('Opcional — máx. 500 caracteres',
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkGhost, size: 12)),
+              style: LumenType.authorName(
+                  color: LumenColors.inkGhost, size: 12)),
           const SizedBox(height: 12),
           TextField(
             controller: reviewController,
             maxLines: 4,
             maxLength: 500,
-            style: ReadLogType.authorName(size: 14),
+            style: LumenType.authorName(size: 14),
             decoration: InputDecoration(
               hintText:
                   '"Hoje finalmente entendi a motivação do personagem."',
-              hintStyle: ReadLogType.authorName(
-                  color: ReadLogColors.inkGhost, size: 13),
+              hintStyle: LumenType.authorName(
+                  color: LumenColors.inkGhost, size: 13),
               contentPadding: const EdgeInsets.all(14),
-              counterStyle: ReadLogType.mono(
-                  size: 11, color: ReadLogColors.inkGhost),
+              counterStyle: LumenType.mono(
+                  size: 11, color: LumenColors.inkGhost),
             ),
           ),
           const SizedBox(height: 32),
@@ -221,8 +224,8 @@ class _CheckinForm extends StatelessWidget {
               onPressed: loading ? null : onConfirm,
               child: Text(
                 'Pular',
-                style: ReadLogType.authorName(
-                    color: ReadLogColors.inkMuted, size: 13),
+                style: LumenType.authorName(
+                    color: LumenColors.inkMuted, size: 13),
               ),
             ),
           ),
@@ -246,18 +249,18 @@ class _SuccessView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Impressão salva.',
-                style: ReadLogType.bookTitle(size: 22)),
+                style: LumenType.bookTitle(size: 22)),
             const SizedBox(height: 8),
             Text(
               'Sua sessão e impressão foram registradas.',
               textAlign: TextAlign.center,
-              style: ReadLogType.authorName(color: ReadLogColors.inkMuted),
+              style: LumenType.authorName(color: LumenColors.inkMuted),
             ),
             const SizedBox(height: 32),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text('Voltar ao clube',
-                  style: ReadLogType.authorName(size: 14)),
+                  style: LumenType.authorName(size: 14)),
             ),
           ],
         ),

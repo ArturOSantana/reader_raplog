@@ -21,7 +21,7 @@ Future<void> showShareStatsSheet({
 }) {
   return showModalBottomSheet(
     context: context,
-    backgroundColor: ReadLogColors.surface,
+    backgroundColor: LumenColors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -116,14 +116,14 @@ class _ShareStatsContentState extends State<_ShareStatsContent> {
             height: 4,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-              color: ReadLogColors.brassLight.withValues(alpha: 0.3),
+              color: LumenColors.brassLight.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
 
           Text(
             'Compartilhar estatísticas',
-            style: ReadLogType.display(size: 20, color: ReadLogColors.cream),
+            style: LumenType.display(size: 20, color: LumenColors.cream),
           ),
           const SizedBox(height: 20),
 
@@ -153,7 +153,7 @@ class _ShareStatsContentState extends State<_ShareStatsContent> {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          color: ReadLogColors.cream, strokeWidth: 2),
+                          color: LumenColors.cream, strokeWidth: 2),
                     )
                   : const Icon(Icons.share_rounded),
               label: Text(_sharing ? 'Preparando…' : 'Compartilhar'),

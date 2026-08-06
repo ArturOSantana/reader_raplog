@@ -76,22 +76,22 @@ class ChallengeDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
+        iconTheme: const IconThemeData(color: LumenColors.ink, size: 20),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               challengeTitle,
-              style: ReadLogType.display(
+              style: LumenType.display(
                 size: 15,
-                color: ReadLogColors.ink,
+                color: LumenColors.ink,
                 weight: FontWeight.w600,
               ),
             ),
             Text(
               'Desafio',
               style:
-                  ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+                  LumenType.mono(size: 11, color: LumenColors.inkMuted),
             ),
           ],
         ),
@@ -102,7 +102,7 @@ class ChallengeDetailScreen extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
               tooltip: 'Ver resultado',
-              color: ReadLogColors.inkMuted,
+              color: LumenColors.inkMuted,
               onPressed: () => context.push(
                 '/clubs/$clubId/challenges/$challengeId/result',
                 extra: {'challenge': challenge},
@@ -121,7 +121,7 @@ class ChallengeDetailScreen extends ConsumerWidget {
           },
           child: progressAsync.when(
             loading: () => const Center(
-              child: CircularProgressIndicator(color: ReadLogColors.progress),
+              child: LumenGrainLoader(),
             ),
             error: (e, _) => Center(child: Text('Erro: $e')),
             data: (collective) => _ChallengeBody(
@@ -183,14 +183,14 @@ class _ChallengeBody extends ConsumerWidget {
               if (totalMembers > 0) ...[
                 Text(
                   'Todos os $totalMembers membros participam automaticamente',
-                  style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+                  style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
               ],
               Text(
                 'Nenhum progresso ainda.\nComece a ler para aparecer aqui.',
-                style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+                style: LumenType.mono(size: 13, color: LumenColors.inkMuted),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -210,7 +210,7 @@ class _ChallengeBody extends ConsumerWidget {
         if (effectiveTotalMembers > 0) ...[
           Text(
             'Todos os $effectiveTotalMembers membros participam automaticamente',
-            style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+            style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
           ),
           const SizedBox(height: 20),
         ],
@@ -218,9 +218,9 @@ class _ChallengeBody extends ConsumerWidget {
         // ── Bloco coletivo — progresso do clube ───────────────────────────
         Text(
           'Meta do clube',
-          style: ReadLogType.mono(
+          style: LumenType.mono(
             size: 10,
-            color: ReadLogColors.inkGhost,
+            color: LumenColors.inkGhost,
           ).copyWith(letterSpacing: 1.4),
         ),
         const SizedBox(height: 12),
@@ -236,7 +236,7 @@ class _ChallengeBody extends ConsumerWidget {
                 Container(
                   height: 2,
                   decoration: BoxDecoration(
-                    color: ReadLogColors.hairline,
+                    color: LumenColors.hairline,
                     borderRadius: BorderRadius.circular(1),
                   ),
                 ),
@@ -244,7 +244,7 @@ class _ChallengeBody extends ConsumerWidget {
                   height: 2,
                   width: filled,
                   decoration: BoxDecoration(
-                    color: ReadLogColors.ink,
+                    color: LumenColors.ink,
                     borderRadius: BorderRadius.circular(1),
                   ),
                 ),
@@ -255,7 +255,7 @@ class _ChallengeBody extends ConsumerWidget {
                     width: 6,
                     height: 6,
                     decoration: const BoxDecoration(
-                      color: ReadLogColors.ink,
+                      color: LumenColors.ink,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -271,7 +271,7 @@ class _ChallengeBody extends ConsumerWidget {
           '${c.pctComplete.toStringAsFixed(0)}% · '
           '${fmt.format(c.currentValue)} de ${fmt.format(c.targetValue)}'
           '${challenge != null ? ' ${challenge!.goalType.unit}' : ''}',
-          style: ReadLogType.mono(size: 12, color: ReadLogColors.inkMuted),
+          style: LumenType.mono(size: 12, color: LumenColors.inkMuted),
         ),
         const SizedBox(height: 4),
 
@@ -282,7 +282,7 @@ class _ChallengeBody extends ConsumerWidget {
               : c.daysLeft == 0
                   ? 'Último dia!'
                   : '${c.daysLeft} dias restantes',
-          style: ReadLogType.mono(size: 11, color: ReadLogColors.inkGhost),
+          style: LumenType.mono(size: 11, color: LumenColors.inkGhost),
         ),
 
         // Contribuição pessoal — linha discreta, só para o próprio membro
@@ -291,11 +291,11 @@ class _ChallengeBody extends ConsumerWidget {
           Text(
             'Sua contribuição: ${myPct.toStringAsFixed(0)}% do total',
             style:
-                ReadLogType.mono(size: 11, color: ReadLogColors.inkGhost),
+                LumenType.mono(size: 11, color: LumenColors.inkGhost),
           ),
         ],
 
-        const Divider(height: 36, color: ReadLogColors.hairline),
+        const Divider(height: 36, color: LumenColors.hairline),
 
         // ── Rest Days — dado pessoal, não social ─────────────────────────
         if (challenge != null && challenge!.isOngoing) ...[
@@ -304,21 +304,21 @@ class _ChallengeBody extends ConsumerWidget {
             daysLeft: restDaysLeft,
             ref: ref,
           ),
-          const Divider(height: 28, color: ReadLogColors.hairline),
+          const Divider(height: 28, color: LumenColors.hairline),
         ],
 
         // ── Participação ──────────────────────────────────────────────────
         Text(
           '${c.activeMembers} de $effectiveTotalMembers membros contribuíram',
-          style: ReadLogType.mono(size: 12, color: ReadLogColors.inkMuted),
+          style: LumenType.mono(size: 12, color: LumenColors.inkMuted),
         ),
 
         // ── Já leram hoje — fileira de fotos, reforço social ──────────────
         if (todayContributors.isNotEmpty) ...[
-          const Divider(height: 28, color: ReadLogColors.hairline),
+          const Divider(height: 28, color: LumenColors.hairline),
           Text(
             'já leram hoje',
-            style: ReadLogType.mono(size: 10, color: ReadLogColors.inkGhost)
+            style: LumenType.mono(size: 10, color: LumenColors.inkGhost)
                 .copyWith(letterSpacing: 1.2),
           ),
           const SizedBox(height: 10),
@@ -413,7 +413,7 @@ class _RestDaysRowState extends State<_RestDaysRow> {
           widget.daysLeft > 0
               ? '${widget.daysLeft} ${widget.daysLeft == 1 ? 'dia' : 'dias'} de descanso disponíveis'
               : 'Nenhum dia de descanso disponível',
-          style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+          style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
         ),
         if (widget.daysLeft > 0)
           _loading
@@ -422,16 +422,16 @@ class _RestDaysRowState extends State<_RestDaysRow> {
                   height: 14,
                   child: CircularProgressIndicator(
                     strokeWidth: 1.5,
-                    color: ReadLogColors.ink,
+                    color: LumenColors.ink,
                   ),
                 )
               : GestureDetector(
                   onTap: _useRestDay,
                   child: Text(
                     'Usar hoje',
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                       size: 12,
-                      color: ReadLogColors.ink,
+                      color: LumenColors.ink,
                       weight: FontWeight.w600,
                     ),
                   ),

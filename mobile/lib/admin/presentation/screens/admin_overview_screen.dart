@@ -11,13 +11,13 @@ class AdminOverviewScreen extends ConsumerWidget {
     final overviewAsync = ref.watch(adminOverviewProvider);
 
     return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: LumenColors.surface,
       body: overviewAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text(
             'Erro ao carregar dados',
-            style: ReadLogType.mono(size: 13, color: ReadLogColors.danger),
+            style: LumenType.mono(size: 13, color: LumenColors.danger),
           ),
         ),
         data: (overview) => SingleChildScrollView(
@@ -27,12 +27,12 @@ class AdminOverviewScreen extends ConsumerWidget {
             children: [
               Text(
                 'Overview',
-                style: ReadLogType.display(size: 26, color: ReadLogColors.ink),
+                style: LumenType.display(size: 26, color: LumenColors.ink),
               ),
               const SizedBox(height: 4),
               Text(
                 'Visão geral da plataforma',
-                style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+                style: LumenType.mono(size: 13, color: LumenColors.inkMuted),
               ),
               const SizedBox(height: 32),
               Wrap(
@@ -43,39 +43,39 @@ class AdminOverviewScreen extends ConsumerWidget {
                     icon: Icons.people_outline,
                     label: 'Usuários',
                     value: overview.totalUsers.toString(),
-                    color: ReadLogColors.progress,
+                    color: LumenColors.progress,
                   ),
                   _StatCard(
                     icon: Icons.groups_2_outlined,
                     label: 'Clubes',
                     value: overview.totalClubs.toString(),
-                    color: ReadLogColors.ink,
+                    color: LumenColors.ink,
                   ),
                   _StatCard(
                     icon: Icons.menu_book_outlined,
                     label: 'Livros',
                     value: overview.totalBooks.toString(),
-                    color: ReadLogColors.ink,
+                    color: LumenColors.ink,
                   ),
                   _StatCard(
                     icon: Icons.play_circle_outline,
                     label: 'Sessões',
                     value: overview.totalSessions.toString(),
-                    color: ReadLogColors.ink,
+                    color: LumenColors.ink,
                   ),
                   _StatCard(
                     icon: Icons.flag_outlined,
                     label: 'Denúncias Abertas',
                     value: overview.openReports.toString(),
                     color: overview.openReports > 0
-                        ? ReadLogColors.danger
-                        : ReadLogColors.ink,
+                        ? LumenColors.danger
+                        : LumenColors.ink,
                   ),
                   _StatCard(
                     icon: Icons.card_membership_outlined,
                     label: 'Assinaturas Ativas',
                     value: overview.activeSubscriptions.toString(),
-                    color: ReadLogColors.progress,
+                    color: LumenColors.progress,
                   ),
                 ],
               ),
@@ -106,8 +106,8 @@ class _StatCard extends StatelessWidget {
       width: 160,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: ReadLogColors.surfaceVariant,
-        border: Border.all(color: ReadLogColors.divider),
+        color: LumenColors.surfaceVariant,
+        border: Border.all(color: LumenColors.divider),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -117,18 +117,18 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             value,
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 28,
               weight: FontWeight.w700,
-              color: ReadLogColors.ink,
+              color: LumenColors.ink,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 11,
-              color: ReadLogColors.inkMuted,
+              color: LumenColors.inkMuted,
             ),
           ),
         ],

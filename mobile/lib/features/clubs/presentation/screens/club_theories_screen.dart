@@ -50,21 +50,21 @@ class _ClubTheoriesScreenState extends ConsumerState<ClubTheoriesScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
+        iconTheme: const IconThemeData(color: LumenColors.ink, size: 20),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Teorias',
-              style: ReadLogType.display(
+              style: LumenType.display(
                 size: 15,
-                color: ReadLogColors.ink,
+                color: LumenColors.ink,
                 weight: FontWeight.w600,
               ),
             ),
             Text(
               widget.clubName,
-              style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+              style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
             ),
           ],
         ),
@@ -78,14 +78,14 @@ class _ClubTheoriesScreenState extends ConsumerState<ClubTheoriesScreen> {
       ),
       body: theoriesAsync.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: ReadLogColors.progress),
+          child: LumenGrainLoader(),
         ),
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
               'Não foi possível carregar as teorias.',
-              style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+              style: LumenType.mono(size: 13, color: LumenColors.inkMuted),
               textAlign: TextAlign.center,
             ),
           ),
@@ -101,13 +101,13 @@ class _ClubTheoriesScreenState extends ConsumerState<ClubTheoriesScreen> {
                     Text(
                       'Nenhuma teoria ainda.',
                       style:
-                          ReadLogType.bookTitle(size: 18, color: ReadLogColors.ink),
+                          LumenType.bookTitle(size: 18, color: LumenColors.ink),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Compartilhe o que você acha que vai acontecer.',
                       textAlign: TextAlign.center,
-                      style: ReadLogType.authorName(color: ReadLogColors.inkMuted),
+                      style: LumenType.authorName(color: LumenColors.inkMuted),
                     ),
                   ],
                 ),
@@ -122,7 +122,7 @@ class _ClubTheoriesScreenState extends ConsumerState<ClubTheoriesScreen> {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
               itemCount: theories.length,
               separatorBuilder: (_, __) =>
-                  const Divider(height: 1, color: ReadLogColors.hairline),
+                  const Divider(height: 1, color: LumenColors.hairline),
               itemBuilder: (context, i) => _TheoryTile(
                 theory: theories[i],
                 canManage: widget.canManage,
@@ -156,7 +156,7 @@ class _ClubTheoriesScreenState extends ConsumerState<ClubTheoriesScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: LumenColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
@@ -212,18 +212,18 @@ class _TheoryTile extends StatelessWidget {
                 Text(
                   theory.createdByName ?? 'Membro',
                   style:
-                      ReadLogType.mono(size: 10, color: ReadLogColors.inkGhost),
+                      LumenType.mono(size: 10, color: LumenColors.inkGhost),
                 ),
                 // Voto — texto link, sem coração preenchido
                 GestureDetector(
                   onTap: onVote,
                   child: Text(
                     theory.votedByMe ? 'votado' : 'votar',
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                       size: 10,
                       color: theory.votedByMe
-                          ? ReadLogColors.inkMuted
-                          : ReadLogColors.ink,
+                          ? LumenColors.inkMuted
+                          : LumenColors.ink,
                       weight: FontWeight.w500,
                     ),
                   ),
@@ -239,7 +239,7 @@ class _TheoryTile extends StatelessWidget {
   void _showStatusMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: LumenColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
@@ -252,8 +252,8 @@ class _TheoryTile extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
               child: Text(
                 'Atualizar status',
-                style: ReadLogType.kicker(
-                    size: 10, color: ReadLogColors.inkGhost)
+                style: LumenType.kicker(
+                    size: 10, color: LumenColors.inkGhost)
                     .copyWith(letterSpacing: 1.2),
               ),
             ),
@@ -264,8 +264,8 @@ class _TheoryTile extends StatelessWidget {
             ])
               ListTile(
                 title: Text(label,
-                    style: ReadLogType.authorName(
-                        size: 14, color: ReadLogColors.ink)),
+                    style: LumenType.authorName(
+                        size: 14, color: LumenColors.ink)),
                 onTap: () {
                   Navigator.pop(context);
                   onSetStatus?.call(value);
@@ -336,17 +336,17 @@ class _AddTheorySheetState extends ConsumerState<_AddTheorySheet> {
           children: [
             Text(
               'Nova teoria',
-              style: ReadLogType.display(
+              style: LumenType.display(
                 size: 18,
-                color: ReadLogColors.ink,
+                color: LumenColors.ink,
                 weight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'O que você acha que vai acontecer no livro?',
-              style: ReadLogType.authorName(
-                  size: 13, color: ReadLogColors.inkMuted),
+              style: LumenType.authorName(
+                  size: 13, color: LumenColors.inkMuted),
             ),
             const SizedBox(height: 20),
             TextField(

@@ -11,13 +11,13 @@ class AdminMetricsScreen extends ConsumerWidget {
     final overviewAsync = ref.watch(adminOverviewProvider);
 
     return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: LumenColors.surface,
       body: overviewAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text(
             'Erro ao carregar métricas',
-            style: ReadLogType.mono(size: 13, color: ReadLogColors.danger),
+            style: LumenType.mono(size: 13, color: LumenColors.danger),
           ),
         ),
         data: (ov) => SingleChildScrollView(
@@ -27,12 +27,12 @@ class AdminMetricsScreen extends ConsumerWidget {
             children: [
               Text(
                 'Métricas',
-                style: ReadLogType.display(size: 26, color: ReadLogColors.ink),
+                style: LumenType.display(size: 26, color: LumenColors.ink),
               ),
               const SizedBox(height: 4),
               Text(
                 'Indicadores de crescimento e uso',
-                style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+                style: LumenType.mono(size: 13, color: LumenColors.inkMuted),
               ),
               const SizedBox(height: 32),
               _MetricSection(
@@ -65,22 +65,22 @@ class AdminMetricsScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: ReadLogColors.surfaceVariant,
-                  border: Border.all(color: ReadLogColors.divider),
+                  color: LumenColors.surfaceVariant,
+                  border: Border.all(color: LumenColors.divider),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.info_outline,
-                        size: 16, color: ReadLogColors.inkMuted),
+                        size: 16, color: LumenColors.inkMuted),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'Métricas de retenção, DAU/MAU e funil de conversão '
                         'serão exibidas aqui conforme as tabelas de analytics '
                         'forem configuradas no Supabase.',
-                        style: ReadLogType.mono(
-                            size: 11, color: ReadLogColors.inkMuted),
+                        style: LumenType.mono(
+                            size: 11, color: LumenColors.inkMuted),
                       ),
                     ),
                   ],
@@ -107,15 +107,15 @@ class _MetricSection extends StatelessWidget {
       children: [
         Text(
           title,
-          style: ReadLogType.mono(
+          style: LumenType.mono(
             size: 10,
-            color: ReadLogColors.progress,
+            color: LumenColors.progress,
           ).copyWith(letterSpacing: 2),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: ReadLogColors.divider),
+            border: Border.all(color: LumenColors.divider),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
@@ -126,7 +126,7 @@ class _MetricSection extends StatelessWidget {
                   entry.value,
                   if (!isLast)
                     Divider(
-                        color: ReadLogColors.hairline,
+                        color: LumenColors.hairline,
                         height: 1,
                         indent: 16,
                         endIndent: 16),
@@ -156,14 +156,14 @@ class _MetricRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: ReadLogType.mono(size: 14, color: ReadLogColors.ink),
+            style: LumenType.mono(size: 14, color: LumenColors.ink),
           ),
           Text(
             value,
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 16,
               weight: FontWeight.w600,
-              color: warning ? ReadLogColors.danger : ReadLogColors.ink,
+              color: warning ? LumenColors.danger : LumenColors.ink,
             ),
           ),
         ],

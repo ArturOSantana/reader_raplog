@@ -32,7 +32,7 @@ class ShareStatsCard extends StatelessWidget {
       width: 340,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: ReadLogColors.ink,
+        color: LumenColors.ink,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
@@ -46,11 +46,11 @@ class ShareStatsCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: ReadLogColors.brass,
+                  color: LumenColors.brass,
                   borderRadius: BorderRadius.circular(3),
                 ),
                 child: const Center(
-                  child: Icon(Icons.menu_book_rounded, size: 18, color: ReadLogColors.paper),
+                  child: Icon(Icons.menu_book_rounded, size: 18, color: LumenColors.paper),
                 ),
               ),
               const SizedBox(width: 10),
@@ -60,16 +60,16 @@ class ShareStatsCard extends StatelessWidget {
                   children: [
                     Text(
                       userName.isNotEmpty ? userName : 'Leitor',
-                      style: ReadLogType.display(
-                          size: 14, color: ReadLogColors.cream),
+                      style: LumenType.display(
+                          size: 14, color: LumenColors.cream),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       'Minhas estatísticas · ReadLog',
-                      style: ReadLogType.mono(
+                      style: LumenType.mono(
                           size: 10,
-                          color: ReadLogColors.cream.withValues(alpha: 0.55)),
+                          color: LumenColors.cream.withValues(alpha: 0.55)),
                     ),
                   ],
                 ),
@@ -116,20 +116,20 @@ class ShareStatsCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: ReadLogColors.cream.withValues(alpha: 0.07),
+              color: LumenColors.cream.withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(3),
               border: Border.all(
-                  color: ReadLogColors.cream.withValues(alpha: 0.15)),
+                  color: LumenColors.cream.withValues(alpha: 0.15)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   '$totalBooks ${totalBooks == 1 ? 'livro lido' : 'livros lidos'} no total',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                       size: 13,
                       weight: FontWeight.w600,
-                      color: ReadLogColors.cream),
+                      color: LumenColors.cream),
                 ),
               ],
             ),
@@ -157,9 +157,9 @@ class _StreakBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: ReadLogColors.brass.withValues(alpha: 0.18),
+        color: LumenColors.brass.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: ReadLogColors.brass.withValues(alpha: 0.5)),
+        border: Border.all(color: LumenColors.brass.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -167,8 +167,8 @@ class _StreakBanner extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             '$streak ${streak == 1 ? 'dia' : 'dias'} de sequência',
-            style: ReadLogType.display(
-                size: 17, color: ReadLogColors.brassLight),
+            style: LumenType.display(
+                size: 17, color: LumenColors.brassLight),
           ),
         ],
       ),
@@ -187,7 +187,7 @@ class _StatBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: ReadLogColors.cream.withValues(alpha: 0.07),
+        color: LumenColors.cream.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(3),
       ),
       child: Column(
@@ -195,9 +195,9 @@ class _StatBlock extends StatelessWidget {
         children: [
           Text(
             label,
-            style: ReadLogType.mono(
+            style: LumenType.mono(
                 size: 10,
-                color: ReadLogColors.cream.withValues(alpha: 0.55)),
+                color: LumenColors.cream.withValues(alpha: 0.55)),
           ),
           const SizedBox(height: 8),
           ...rows.map((r) => Padding(
@@ -224,10 +224,10 @@ class _StatRow extends StatelessWidget {
         Flexible(
           child: Text(
             text,
-            style: ReadLogType.mono(
+            style: LumenType.mono(
                 size: 13,
                 weight: FontWeight.w500,
-                color: ReadLogColors.cream),
+                color: LumenColors.cream),
             overflow: TextOverflow.ellipsis,
           ),
         ),

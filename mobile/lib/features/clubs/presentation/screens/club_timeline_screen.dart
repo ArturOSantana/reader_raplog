@@ -76,10 +76,10 @@ class ClubTimelineScreen extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Linha do tempo', style: ReadLogType.bookTitle(size: 16)),
+            Text('Linha do tempo', style: LumenType.bookTitle(size: 16)),
             Text(clubName,
-                style: ReadLogType.authorName(
-                    color: ReadLogColors.inkMuted, size: 12)),
+                style: LumenType.authorName(
+                    color: LumenColors.inkMuted, size: 12)),
           ],
         ),
       ),
@@ -156,12 +156,12 @@ class ClubTimelineScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Nenhum histórico ainda.',
-                  style: ReadLogType.bookTitle(size: 18)),
+                  style: LumenType.bookTitle(size: 18)),
               const SizedBox(height: 6),
               Text(
                 'A linha do tempo aparecerá conforme o clube evolui.',
                 textAlign: TextAlign.center,
-                style: ReadLogType.authorName(color: ReadLogColors.inkMuted),
+                style: LumenType.authorName(color: LumenColors.inkMuted),
               ),
             ],
           ),
@@ -212,14 +212,14 @@ class _TLEventRow extends StatelessWidget {
                   children: [
                     Text(
                       fmt.format(event.date.toLocal()),
-                      style: ReadLogType.mono(
-                          size: 10, color: ReadLogColors.inkGhost),
+                      style: LumenType.mono(
+                          size: 10, color: LumenColors.inkGhost),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       _typeLabel,
-                      style: ReadLogType.kicker(
-                          color: ReadLogColors.inkGhost, size: 9),
+                      style: LumenType.kicker(
+                          color: LumenColors.inkGhost, size: 9),
                     ),
                   ],
                 ),
@@ -230,18 +230,18 @@ class _TLEventRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(event.title,
-                        style: ReadLogType.authorName(size: 14)),
+                        style: LumenType.authorName(size: 14)),
                     if (event.subtitle != null) ...[
                       const SizedBox(height: 2),
                       Text(event.subtitle!,
-                          style: ReadLogType.authorName(
-                              color: ReadLogColors.inkMuted, size: 12)),
+                          style: LumenType.authorName(
+                              color: LumenColors.inkMuted, size: 12)),
                     ],
                     if (event.detail != null) ...[
                       const SizedBox(height: 3),
                       Text(event.detail!,
-                          style: ReadLogType.mono(
-                              size: 11, color: ReadLogColors.inkGhost)),
+                          style: LumenType.mono(
+                              size: 11, color: LumenColors.inkGhost)),
                     ],
                   ],
                 ),

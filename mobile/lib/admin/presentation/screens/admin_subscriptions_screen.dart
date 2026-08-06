@@ -13,13 +13,13 @@ class AdminSubscriptionsScreen extends ConsumerWidget {
     final subsAsync = ref.watch(adminSubscriptionsProvider);
 
     return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: LumenColors.surface,
       body: subsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text(
             'Erro ao carregar assinaturas',
-            style: ReadLogType.mono(size: 13, color: ReadLogColors.danger),
+            style: LumenType.mono(size: 13, color: LumenColors.danger),
           ),
         ),
         data: (subs) {
@@ -37,8 +37,8 @@ class AdminSubscriptionsScreen extends ConsumerWidget {
                   children: [
                     Text(
                       'Assinaturas',
-                      style: ReadLogType.display(
-                          size: 26, color: ReadLogColors.ink),
+                      style: LumenType.display(
+                          size: 26, color: LumenColors.ink),
                     ),
                     const SizedBox(height: 12),
                     // Resumo
@@ -46,26 +46,26 @@ class AdminSubscriptionsScreen extends ConsumerWidget {
                       children: [
                         _Badge(
                             label: '$active ativas',
-                            color: ReadLogColors.progress),
+                            color: LumenColors.progress),
                         const SizedBox(width: 8),
                         _Badge(
                             label: '$canceled canceladas',
-                            color: ReadLogColors.inkMuted),
+                            color: LumenColors.inkMuted),
                         const SizedBox(width: 8),
                         _Badge(
                             label: '$pastDue em atraso',
-                            color: ReadLogColors.warning),
+                            color: LumenColors.warning),
                       ],
                     ),
                   ],
                 ),
               ),
-              Divider(color: ReadLogColors.divider, height: 1),
+              Divider(color: LumenColors.divider, height: 1),
               Expanded(
                 child: ListView.separated(
                   itemCount: subs.length,
                   separatorBuilder: (_, __) =>
-                      Divider(color: ReadLogColors.hairline, height: 1),
+                      Divider(color: LumenColors.hairline, height: 1),
                   itemBuilder: (context, i) =>
                       _SubscriptionRow(sub: subs[i]),
                 ),
@@ -92,7 +92,7 @@ class _Badge extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(label,
-          style: ReadLogType.mono(size: 11, color: color)),
+          style: LumenType.mono(size: 11, color: color)),
     );
   }
 }
@@ -102,9 +102,9 @@ class _SubscriptionRow extends StatelessWidget {
   const _SubscriptionRow({required this.sub});
 
   Color _statusColor() => switch (sub.status) {
-        'active' => ReadLogColors.progress,
-        'past_due' => ReadLogColors.warning,
-        _ => ReadLogColors.inkMuted,
+        'active' => LumenColors.progress,
+        'past_due' => LumenColors.warning,
+        _ => LumenColors.inkMuted,
       };
 
   @override
@@ -120,23 +120,23 @@ class _SubscriptionRow extends StatelessWidget {
               children: [
                 Text(
                   sub.plan.toUpperCase(),
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 13,
                     weight: FontWeight.w600,
-                    color: ReadLogColors.ink,
+                    color: LumenColors.ink,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'user: ${sub.userId.substring(0, 8)}… · desde ${fmt.format(sub.startedAt)}',
-                  style: ReadLogType.mono(
-                      size: 11, color: ReadLogColors.inkMuted),
+                  style: LumenType.mono(
+                      size: 11, color: LumenColors.inkMuted),
                 ),
                 if (sub.expiresAt != null)
                   Text(
                     'expira em ${fmt.format(sub.expiresAt!)}',
-                    style: ReadLogType.mono(
-                        size: 11, color: ReadLogColors.inkMuted),
+                    style: LumenType.mono(
+                        size: 11, color: LumenColors.inkMuted),
                   ),
               ],
             ),
@@ -150,7 +150,7 @@ class _SubscriptionRow extends StatelessWidget {
             ),
             child: Text(
               sub.status,
-              style: ReadLogType.mono(size: 10, color: _statusColor()),
+              style: LumenType.mono(size: 10, color: _statusColor()),
             ),
           ),
         ],

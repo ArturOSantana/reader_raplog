@@ -21,7 +21,7 @@ class AdminReportsScreen extends ConsumerWidget {
     ];
 
     return Scaffold(
-      backgroundColor: ReadLogColors.surface,
+      backgroundColor: LumenColors.surface,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -33,7 +33,7 @@ class AdminReportsScreen extends ConsumerWidget {
                 Text(
                   'Denúncias',
                   style:
-                      ReadLogType.display(size: 26, color: ReadLogColors.ink),
+                      LumenType.display(size: 26, color: LumenColors.ink),
                 ),
                 const SizedBox(height: 12),
                 // Filtros
@@ -53,22 +53,22 @@ class AdminReportsScreen extends ConsumerWidget {
                                 horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: active
-                                  ? ReadLogColors.ink
-                                  : ReadLogColors.surfaceVariant,
+                                  ? LumenColors.ink
+                                  : LumenColors.surfaceVariant,
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
                                 color: active
-                                    ? ReadLogColors.ink
-                                    : ReadLogColors.divider,
+                                    ? LumenColors.ink
+                                    : LumenColors.divider,
                               ),
                             ),
                             child: Text(
                               f.label,
-                              style: ReadLogType.mono(
+                              style: LumenType.mono(
                                 size: 11,
                                 color: active
-                                    ? ReadLogColors.inkInverse
-                                    : ReadLogColors.inkMuted,
+                                    ? LumenColors.inkInverse
+                                    : LumenColors.inkMuted,
                               ),
                             ),
                           ),
@@ -80,7 +80,7 @@ class AdminReportsScreen extends ConsumerWidget {
               ],
             ),
           ),
-          Divider(color: ReadLogColors.divider, height: 1),
+          Divider(color: LumenColors.divider, height: 1),
           Expanded(
             child: reportsAsync.when(
               loading: () =>
@@ -88,21 +88,21 @@ class AdminReportsScreen extends ConsumerWidget {
               error: (e, _) => Center(
                 child: Text(
                   'Erro ao carregar denúncias',
-                  style: ReadLogType.mono(size: 13, color: ReadLogColors.danger),
+                  style: LumenType.mono(size: 13, color: LumenColors.danger),
                 ),
               ),
               data: (reports) => reports.isEmpty
                   ? Center(
                       child: Text(
                         'Nenhuma denúncia encontrada',
-                        style: ReadLogType.mono(
-                            size: 13, color: ReadLogColors.inkMuted),
+                        style: LumenType.mono(
+                            size: 13, color: LumenColors.inkMuted),
                       ),
                     )
                   : ListView.separated(
                       itemCount: reports.length,
                       separatorBuilder: (_, __) =>
-                          Divider(color: ReadLogColors.hairline, height: 1),
+                          Divider(color: LumenColors.hairline, height: 1),
                       itemBuilder: (context, i) => _ReportRow(
                         report: reports[i],
                         onResolve: () async {
@@ -140,9 +140,9 @@ class _ReportRow extends StatelessWidget {
 
   Color _statusColor() {
     return switch (report.status) {
-      'open' => ReadLogColors.danger,
-      'resolved' => ReadLogColors.progress,
-      _ => ReadLogColors.inkMuted,
+      'open' => LumenColors.danger,
+      'resolved' => LumenColors.progress,
+      _ => LumenColors.inkMuted,
     };
   }
 
@@ -159,7 +159,7 @@ class _ReportRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   report.reason.isEmpty ? '(sem motivo)' : report.reason,
-                  style: ReadLogType.mono(size: 14, color: ReadLogColors.ink),
+                  style: LumenType.mono(size: 14, color: LumenColors.ink),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -174,7 +174,7 @@ class _ReportRow extends StatelessWidget {
                 ),
                 child: Text(
                   report.status,
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                       size: 10, color: _statusColor()),
                 ),
               ),
@@ -183,7 +183,7 @@ class _ReportRow extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${report.targetType} · ${fmt.format(report.createdAt)}',
-            style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+            style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
           ),
           if (report.status == 'open') ...[
             const SizedBox(height: 10),
@@ -191,13 +191,13 @@ class _ReportRow extends StatelessWidget {
               children: [
                 _ActionButton(
                   label: 'Resolver',
-                  color: ReadLogColors.progress,
+                  color: LumenColors.progress,
                   onTap: onResolve,
                 ),
                 const SizedBox(width: 8),
                 _ActionButton(
                   label: 'Ignorar',
-                  color: ReadLogColors.inkMuted,
+                  color: LumenColors.inkMuted,
                   onTap: onDismiss,
                 ),
               ],
@@ -232,7 +232,7 @@ class _ActionButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: ReadLogType.mono(size: 11, color: color),
+          style: LumenType.mono(size: 11, color: color),
         ),
       ),
     );

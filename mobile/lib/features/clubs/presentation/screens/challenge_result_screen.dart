@@ -37,19 +37,19 @@ class ChallengeResultScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
+        iconTheme: const IconThemeData(color: LumenColors.ink, size: 20),
         title: Text(
           'Resultado',
-          style: ReadLogType.display(
+          style: LumenType.display(
             size: 15,
-            color: ReadLogColors.ink,
+            color: LumenColors.ink,
             weight: FontWeight.w600,
           ),
         ),
       ),
       body: resultAsync.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: ReadLogColors.progress),
+          child: LumenGrainLoader(),
         ),
         error: (e, _) => Center(child: Text('Erro: $e')),
         data: (result) => _ResultBody(
@@ -111,21 +111,21 @@ class _ResultBody extends StatelessWidget {
         // ── Frase de encerramento ─────────────────────────────────────────
         Text(
           closingHeadline,
-          style: ReadLogType.display(
+          style: LumenType.display(
             size: 28,
-            color: ReadLogColors.ink,
+            color: LumenColors.ink,
             weight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           closingBody,
-          style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+          style: LumenType.mono(size: 13, color: LumenColors.inkMuted),
         ),
         const SizedBox(height: 4),
         Text(
           '${fmt.format(challenge.startsAt)} – ${fmt.format(challenge.endsAt)}',
-          style: ReadLogType.mono(size: 11, color: ReadLogColors.inkGhost),
+          style: LumenType.mono(size: 11, color: LumenColors.inkGhost),
         ),
         const SizedBox(height: 40),
 
@@ -135,7 +135,7 @@ class _ResultBody extends StatelessWidget {
             value: fmtNum.format(totalValue),
             label: '${challenge.goalType.unit} lidos no total',
           ),
-          const Divider(height: 32, color: ReadLogColors.hairline),
+          const Divider(height: 32, color: LumenColors.hairline),
         ],
         // Contagem de participação — nunca lista ordenada por volume
         _StatLine(
@@ -162,18 +162,18 @@ class _StatLine extends StatelessWidget {
       children: [
         Text(
           value,
-          style: ReadLogType.display(
+          style: LumenType.display(
             size: 42,
-            color: ReadLogColors.ink,
+            color: LumenColors.ink,
             weight: FontWeight.w400,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label.toUpperCase(),
-          style: ReadLogType.mono(
+          style: LumenType.mono(
             size: 11,
-            color: ReadLogColors.inkMuted,
+            color: LumenColors.inkMuted,
           ).copyWith(letterSpacing: 0.8),
         ),
       ],

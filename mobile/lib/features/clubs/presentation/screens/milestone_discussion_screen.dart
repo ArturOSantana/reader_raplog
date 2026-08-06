@@ -82,10 +82,10 @@ class _MilestoneDiscussionScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(widget.milestone.label,
-                style: ReadLogType.bookTitle(size: 16)),
+                style: LumenType.bookTitle(size: 16)),
             Text(widget.clubName,
-                style: ReadLogType.authorName(
-                    color: ReadLogColors.inkMuted, size: 12)),
+                style: LumenType.authorName(
+                    color: LumenColors.inkMuted, size: 12)),
           ],
         ),
       ),
@@ -104,8 +104,8 @@ class _MilestoneDiscussionScreenState
                 else
                   Text(
                     'Marco ${widget.milestone.milestonePct}%',
-                    style: ReadLogType.kicker(
-                        size: 11, color: ReadLogColors.inkMuted),
+                    style: LumenType.kicker(
+                        size: 11, color: LumenColors.inkMuted),
                   ),
                 if (isUnlocked && widget.milestone.unlockedAt != null) ...[
                   const SizedBox(height: 4),
@@ -121,7 +121,7 @@ class _MilestoneDiscussionScreenState
                   ),
                 ],
                 const SizedBox(height: 14),
-                const Divider(height: 1, color: ReadLogColors.hairline),
+                const Divider(height: 1, color: LumenColors.hairline),
               ],
             ),
           ),
@@ -137,7 +137,7 @@ class _MilestoneDiscussionScreenState
                     'Não foi possível carregar as discussões.\n$e',
                     textAlign: TextAlign.center,
                     style:
-                        ReadLogType.authorName(color: ReadLogColors.inkMuted),
+                        LumenType.authorName(color: LumenColors.inkMuted),
                   ),
                 ),
               ),
@@ -150,13 +150,13 @@ class _MilestoneDiscussionScreenState
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text('Nenhuma discussão ainda.',
-                              style: ReadLogType.bookTitle(size: 18)),
+                              style: LumenType.bookTitle(size: 18)),
                           const SizedBox(height: 6),
                           Text(
                             'Seja o primeiro a compartilhar sua impressão.',
                             textAlign: TextAlign.center,
-                            style: ReadLogType.authorName(
-                                color: ReadLogColors.inkMuted),
+                            style: LumenType.authorName(
+                                color: LumenColors.inkMuted),
                           ),
                         ],
                       ),
@@ -289,7 +289,7 @@ class _TopicTile extends StatelessWidget {
                   children: [
                     Text(
                       topic.userName ?? 'Membro',
-                      style: ReadLogType.authorName(size: 13),
+                      style: LumenType.authorName(size: 13),
                     ),
                     if (topic.hasSpoiler) ...[
                       const SizedBox(width: 6),
@@ -297,8 +297,8 @@ class _TopicTile extends StatelessWidget {
                         topic.spoilerLevel == 'full'
                             ? '· spoiler'
                             : '· parcial',
-                        style: ReadLogType.mono(
-                            size: 10, color: ReadLogColors.inkMuted),
+                        style: LumenType.mono(
+                            size: 10, color: LumenColors.inkMuted),
                       ),
                     ],
                   ],
@@ -306,21 +306,21 @@ class _TopicTile extends StatelessWidget {
               ),
               Text(
                 _timeAgo(topic.createdAt),
-                style: ReadLogType.mono(
-                    size: 10, color: ReadLogColors.inkGhost),
+                style: LumenType.mono(
+                    size: 10, color: LumenColors.inkGhost),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(topic.content,
-              style: ReadLogType.authorName(size: 14)),
+              style: LumenType.authorName(size: 14)),
           const SizedBox(height: 6),
           GestureDetector(
             onTap: onReply,
             child: Text(
               'Responder',
-              style: ReadLogType.kicker(
-                  color: ReadLogColors.inkMuted, size: 11),
+              style: LumenType.kicker(
+                  color: LumenColors.inkMuted, size: 11),
             ),
           ),
           if (!isReply) const Divider(height: 16),
@@ -365,7 +365,7 @@ class _ComposerBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           border: Border(
-              top: BorderSide(color: ReadLogColors.divider, width: 1)),
+              top: BorderSide(color: LumenColors.divider, width: 1)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -374,8 +374,8 @@ class _ComposerBar extends StatelessWidget {
             Row(
               children: [
                 Text('Spoiler:',
-                    style: ReadLogType.mono(
-                        size: 11, color: ReadLogColors.inkMuted)),
+                    style: LumenType.mono(
+                        size: 11, color: LumenColors.inkMuted)),
                 const SizedBox(width: 8),
                 _SpoilerTab(
                     label: 'Nenhum',
@@ -457,9 +457,9 @@ class _SpoilerTab extends StatelessWidget {
       onTap: () => onTap(value),
       child: Text(
         label,
-        style: ReadLogType.mono(
+        style: LumenType.mono(
           size: 11,
-          color: selected ? ReadLogColors.ink : ReadLogColors.inkGhost,
+          color: selected ? LumenColors.ink : LumenColors.inkGhost,
         ),
       ),
     );
@@ -529,7 +529,7 @@ class _ReplySheetState extends ConsumerState<_ReplySheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Responder',
-                style: ReadLogType.bookTitle(size: 18)),
+                style: LumenType.bookTitle(size: 18)),
             const SizedBox(height: 12),
             TextField(
               controller: _ctrl,

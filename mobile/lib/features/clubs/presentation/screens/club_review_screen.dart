@@ -100,7 +100,7 @@ class _ClubReviewScreenState extends ConsumerState<ClubReviewScreen> {
         appBar: AppBar(
           title: Text(
             widget.existing != null ? 'Editar resenha' : 'Escrever resenha',
-            style: ReadLogType.bookTitle(size: 16),
+            style: LumenType.bookTitle(size: 16),
           ),
           actions: [
             if (_loading)
@@ -127,16 +127,16 @@ class _ClubReviewScreenState extends ConsumerState<ClubReviewScreen> {
           // ── Livro ─────────────────────────────────────────────────────
           Text(
             widget.bookTitle,
-            style: ReadLogType.authorName(
-                color: ReadLogColors.inkMuted, size: 14),
+            style: LumenType.authorName(
+                color: LumenColors.inkMuted, size: 14),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
           const Divider(height: 32),
 
           // ── Passo 1: Nota ─────────────────────────────────────────────
-          Text('Nota', style: ReadLogType.kicker(
-              color: ReadLogColors.inkMuted, size: 11)),
+          Text('Nota', style: LumenType.kicker(
+              color: LumenColors.inkMuted, size: 11)),
           const SizedBox(height: 12),
           _RatingSelector(
             value: _rating,
@@ -146,11 +146,11 @@ class _ClubReviewScreenState extends ConsumerState<ClubReviewScreen> {
 
           // ── Passo 2: O que funcionou ──────────────────────────────────
           Text('O que funcionou?',
-              style: ReadLogType.kicker(
-                  color: ReadLogColors.inkMuted, size: 11)),
+              style: LumenType.kicker(
+                  color: LumenColors.inkMuted, size: 11)),
           Text('Opcional — ex: ritmo, personagem, final…',
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkGhost, size: 12)),
+              style: LumenType.authorName(
+                  color: LumenColors.inkGhost, size: 12)),
           const SizedBox(height: 10),
           TextField(
             controller: _workedCtrl,
@@ -165,11 +165,11 @@ class _ClubReviewScreenState extends ConsumerState<ClubReviewScreen> {
 
           // ── Passo 3: O que não funcionou ──────────────────────────────
           Text('O que não funcionou?',
-              style: ReadLogType.kicker(
-                  color: ReadLogColors.inkMuted, size: 11)),
+              style: LumenType.kicker(
+                  color: LumenColors.inkMuted, size: 11)),
           Text('Opcional — ex: ritmo lento, final previsível…',
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkGhost, size: 12)),
+              style: LumenType.authorName(
+                  color: LumenColors.inkGhost, size: 12)),
           const SizedBox(height: 10),
           TextField(
             controller: _didntCtrl,
@@ -184,8 +184,8 @@ class _ClubReviewScreenState extends ConsumerState<ClubReviewScreen> {
 
           // ── Passo 4: Recomendaria ─────────────────────────────────────
           Text('Recomendaria para o clube?',
-              style: ReadLogType.kicker(
-                  color: ReadLogColors.inkMuted, size: 11)),
+              style: LumenType.kicker(
+                  color: LumenColors.inkMuted, size: 11)),
           const SizedBox(height: 12),
           _RecommendSelector(
             value: _recommend,
@@ -195,11 +195,11 @@ class _ClubReviewScreenState extends ConsumerState<ClubReviewScreen> {
 
           // ── Passo 5: Spoiler ──────────────────────────────────────────
           Text('Nível de spoiler',
-              style: ReadLogType.kicker(
-                  color: ReadLogColors.inkMuted, size: 11)),
+              style: LumenType.kicker(
+                  color: LumenColors.inkMuted, size: 11)),
           Text('Se sua resenha revelar detalhes, avise os outros.',
-              style: ReadLogType.authorName(
-                  color: ReadLogColors.inkGhost, size: 12)),
+              style: LumenType.authorName(
+                  color: LumenColors.inkGhost, size: 12)),
           const SizedBox(height: 12),
           _SpoilerSelector(
             value: _spoiler,
@@ -228,8 +228,8 @@ class _ClubReviewScreenState extends ConsumerState<ClubReviewScreen> {
               child: Text(
                 'Selecione uma nota para continuar.',
                 textAlign: TextAlign.center,
-                style: ReadLogType.authorName(
-                    color: ReadLogColors.inkMuted, size: 12),
+                style: LumenType.authorName(
+                    color: LumenColors.inkMuted, size: 12),
               ),
             ),
           ],
@@ -258,9 +258,9 @@ class _RatingSelector extends StatelessWidget {
             padding: const EdgeInsets.only(right: 12),
             child: Text(
               '${i + 1}',
-              style: ReadLogType.bookTitle(
+              style: LumenType.bookTitle(
                 size: 22,
-                color: filled ? ReadLogColors.ink : ReadLogColors.inkGhost,
+                color: filled ? LumenColors.ink : LumenColors.inkGhost,
               ),
             ),
           ),
@@ -294,21 +294,21 @@ class _RecommendSelector extends StatelessWidget {
               children: [
                 Text(
                   isSelected ? '●' : '○',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 14,
                     color: isSelected
-                        ? ReadLogColors.ink
-                        : ReadLogColors.inkGhost,
+                        ? LumenColors.ink
+                        : LumenColors.inkGhost,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Text(
                   opt.label,
-                  style: ReadLogType.authorName(
+                  style: LumenType.authorName(
                     size: 14,
                     color: isSelected
-                        ? ReadLogColors.ink
-                        : ReadLogColors.inkMuted,
+                        ? LumenColors.ink
+                        : LumenColors.inkMuted,
                   ),
                 ),
               ],
@@ -344,21 +344,21 @@ class _SpoilerSelector extends StatelessWidget {
               children: [
                 Text(
                   isSelected ? '●' : '○',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 14,
                     color: isSelected
-                        ? ReadLogColors.ink
-                        : ReadLogColors.inkGhost,
+                        ? LumenColors.ink
+                        : LumenColors.inkGhost,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Text(
                   opt.label,
-                  style: ReadLogType.authorName(
+                  style: LumenType.authorName(
                     size: 14,
                     color: isSelected
-                        ? ReadLogColors.ink
-                        : ReadLogColors.inkMuted,
+                        ? LumenColors.ink
+                        : LumenColors.inkMuted,
                   ),
                 ),
               ],

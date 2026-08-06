@@ -65,12 +65,12 @@ class MemberProfileScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: ReadLogColors.ink, size: 20),
+        iconTheme: const IconThemeData(color: LumenColors.ink, size: 20),
         title: Text(
           userName,
-          style: ReadLogType.display(
+          style: LumenType.display(
             size: 15,
-            color: ReadLogColors.ink,
+            color: LumenColors.ink,
             weight: FontWeight.w600,
           ),
         ),
@@ -139,9 +139,9 @@ class _ProfileBody extends ConsumerWidget {
         // Nome + data de entrada
         Text(
           userName,
-          style: ReadLogType.display(
+          style: LumenType.display(
             size: 28,
-            color: ReadLogColors.ink,
+            color: LumenColors.ink,
             weight: FontWeight.w500,
           ),
         ),
@@ -149,7 +149,7 @@ class _ProfileBody extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             'Membro desde ${fmtMonth.format(joinedAt)}',
-            style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+            style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
           ),
         ],
         const SizedBox(height: 36),
@@ -159,22 +159,22 @@ class _ProfileBody extends ConsumerWidget {
           label: 'Desafios concluídos',
           value: '$totalChallenges',
         ),
-        const Divider(height: 24, color: ReadLogColors.hairline),
+        const Divider(height: 24, color: LumenColors.hairline),
         _StatDataRow(
           label: 'Total de páginas',
           value: fmt.format(totalPages),
         ),
-        const Divider(height: 24, color: ReadLogColors.hairline),
+        const Divider(height: 24, color: LumenColors.hairline),
         _StatDataRow(
           label: 'Sessões de leitura',
           value: fmt.format(totalSessions),
         ),
-        const Divider(height: 24, color: ReadLogColors.hairline),
+        const Divider(height: 24, color: LumenColors.hairline),
         _StatDataRow(
           label: 'Dias de leitura',
           value: '$totalDaysRead',
         ),
-        const Divider(height: 24, color: ReadLogColors.hairline),
+        const Divider(height: 24, color: LumenColors.hairline),
         _StatDataRow(
           label: 'Média pág./dia',
           value: fmt.format(avgPagesPerDay),
@@ -189,12 +189,12 @@ class _ProfileBody extends ConsumerWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Divider(height: 40, color: ReadLogColors.hairline),
+                const Divider(height: 40, color: LumenColors.hairline),
                 Text(
                   'RECONHECIMENTOS',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 10,
-                    color: ReadLogColors.inkGhost,
+                    color: LumenColors.inkGhost,
                   ).copyWith(letterSpacing: 1.4),
                 ),
                 const SizedBox(height: 12),
@@ -223,13 +223,13 @@ class _StatDataRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: ReadLogType.mono(size: 13, color: ReadLogColors.inkMuted),
+          style: LumenType.mono(size: 13, color: LumenColors.inkMuted),
         ),
         Text(
           value,
-          style: ReadLogType.mono(
+          style: LumenType.mono(
             size: 13,
-            color: ReadLogColors.ink,
+            color: LumenColors.ink,
             weight: FontWeight.w600,
           ),
         ),
@@ -251,7 +251,7 @@ class _SealTextRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         '· ${seal.displayTitle}',
-        style: ReadLogType.mono(size: 12, color: ReadLogColors.inkMuted),
+        style: LumenType.mono(size: 12, color: LumenColors.inkMuted),
       ),
     );
   }

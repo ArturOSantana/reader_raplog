@@ -212,7 +212,7 @@ class _ClubDetailBody extends ConsumerWidget {
             const SizedBox(height: 8),
             ClubPresenceStrip(clubId: clubId),
             const SizedBox(height: 24),
-            const Divider(height: 1, color: ReadLogColors.hairline),
+            const Divider(height: 1, color: LumenColors.hairline),
             const SizedBox(height: 24),
             ClubActivitySpotlight(
               clubId: clubId,
@@ -399,7 +399,7 @@ class _ClubDetailBody extends ConsumerWidget {
   void _showManageMenu(BuildContext context, WidgetRef ref, BookClub club) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: ReadLogColors.surfaceVariant,
+      backgroundColor: LumenColors.surfaceVariant,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -667,7 +667,7 @@ class _StatusBanner extends StatelessWidget {
         style: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 13,
-          color: ReadLogColors.inkMuted,
+          color: LumenColors.inkMuted,
         ),
       ),
     );
@@ -757,9 +757,9 @@ class _InviteCodeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryTextColor =
-        isDark ? LumenColors.inkInverse : ReadLogColors.ink;
+        isDark ? LumenColors.inkInverse : LumenColors.ink;
     final secondaryTextColor =
-        isDark ? LumenColors.inkMutedInverse : ReadLogColors.inkMuted;
+        isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
 
     // field-line: sem fundo, sem borda — label à esquerda, código à direita
     return Padding(
@@ -772,12 +772,12 @@ class _InviteCodeCard extends StatelessWidget {
               children: [
                 Text(
                   'Código de convite',
-                  style: ReadLogType.kicker(size: 10, color: secondaryTextColor),
+                  style: LumenType.kicker(size: 10, color: secondaryTextColor),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   inviteCode.toUpperCase(),
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 16,
                     color: primaryTextColor,
                     weight: FontWeight.w600,
@@ -854,7 +854,7 @@ class _ClubHeroHeader extends ConsumerWidget {
     return Container(
       height: 220,
       width: double.infinity,
-      color: ReadLogColors.ink,
+      color: LumenColors.ink,
       child: Stack(
         children: [
           // Overlay escuro
@@ -874,14 +874,14 @@ class _ClubHeroHeader extends ConsumerWidget {
                       GestureDetector(
                         onTap: () => Navigator.of(context).pop(),
                         child: LumenIcon('chevron',
-                            size: 20, color: ReadLogColors.inkInverse),
+                            size: 20, color: LumenColors.inkInverse),
                       ),
                       const Spacer(),
                       if (onMenu != null)
                         GestureDetector(
                           onTap: onMenu,
                           child: const Icon(Icons.more_horiz,
-                              size: 20, color: ReadLogColors.inkInverse),
+                              size: 20, color: LumenColors.inkInverse),
                         ),
                     ],
                   ),
@@ -890,9 +890,9 @@ class _ClubHeroHeader extends ConsumerWidget {
                   // Kicker — verde-musgo sobre fundo escuro (accent do sistema)
                   Text(
                     'CLUBE · ${club.inviteCode?.toUpperCase() ?? club.id.substring(0, 6).toUpperCase()}',
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                       size: 10,
-                      color: ReadLogColors.progress,
+                      color: LumenColors.progress,
                     ).copyWith(letterSpacing: 2),
                   ),
                   const SizedBox(height: 6),
@@ -900,8 +900,8 @@ class _ClubHeroHeader extends ConsumerWidget {
                   // Nome do clube
                   Text(
                     club.name,
-                    style: ReadLogType.display(
-                        size: 22, color: ReadLogColors.inkInverse),
+                    style: LumenType.display(
+                        size: 22, color: LumenColors.inkInverse),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -916,7 +916,7 @@ class _ClubHeroHeader extends ConsumerWidget {
                       '${club.memberCount} membros',
                       if (streak > 0) '$streak dias',
                     ].join(' · '),
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                       size: 10,
                       color: LumenColors.inkInverse,
                     ).copyWith(letterSpacing: 0.8),
@@ -1002,9 +1002,9 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
     final hasBook = club.currentBookTitle != null;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryTextColor =
-        isDark ? LumenColors.inkInverse : ReadLogColors.ink;
+        isDark ? LumenColors.inkInverse : LumenColors.ink;
     final secondaryTextColor =
-        isDark ? LumenColors.inkMutedInverse : ReadLogColors.inkMuted;
+        isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
 
     // Sem container bordado — conteúdo editorial direto
     return Column(
@@ -1013,7 +1013,7 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
         // Kicker
         Text(
           'EM LEITURA',
-          style: ReadLogType.kicker(
+          style: LumenType.kicker(
             size: 10,
             color: secondaryTextColor,
           ),
@@ -1022,7 +1022,7 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
         if (!hasBook)
           Text(
             'Nenhum livro definido.',
-            style: ReadLogType.bookTitle(
+            style: LumenType.bookTitle(
               size: 22,
               color: LumenColors.inkSecondary,
               italic: true,
@@ -1032,7 +1032,7 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
           // Título em display — Fraunces, protagonista
           Text(
             club.currentBookTitle!,
-            style: ReadLogType.bookTitle(
+            style: LumenType.bookTitle(
               size: 26,
               color: primaryTextColor,
             ),
@@ -1043,7 +1043,7 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
             const SizedBox(height: 4),
             Text(
               club.currentBookAuthor!,
-              style: ReadLogType.authorName(
+              style: LumenType.authorName(
                 size: 14,
                 color: secondaryTextColor,
               ),
@@ -1061,7 +1061,7 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
                 if (club.readingTargetEndDate != null)
                   'meta ${DateFormat('dd/MM/yyyy', 'pt_BR').format(club.readingTargetEndDate!)}',
               ].join(' · '),
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 11,
                 color: secondaryTextColor,
               ),
@@ -1092,7 +1092,7 @@ class _CurrentBookCardState extends ConsumerState<_CurrentBookCard> {
                 const SizedBox(width: 6),
                 Text(
                   'Adicionar à minha biblioteca',
-                  style: ReadLogType.authorName(
+                  style: LumenType.authorName(
                     size: 13,
                     color: secondaryTextColor,
                   ),
@@ -1184,7 +1184,7 @@ class _MemberTile extends ConsumerWidget {
                 if (roleText != null)
                   Text(
                     roleText,
-                    style: ReadLogType.kicker(
+                    style: LumenType.kicker(
                       size: 10,
                       color: mutedColor,
                     ),
@@ -1486,14 +1486,14 @@ class _BookHistoryList extends ConsumerWidget {
       loading: () =>
           const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       error: (e, _) => Text('Erro: $e',
-          style: ReadLogType.mono(size: 12, color: ReadLogColors.ink)),
+          style: LumenType.mono(size: 12, color: LumenColors.ink)),
       data: (history) {
         if (history.isEmpty) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
               'Nenhum livro no histórico ainda.',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 12,
                 color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
               ),
@@ -1530,7 +1530,7 @@ class _HistoryTile extends StatelessWidget {
               children: [
                 Text(
                   entry.bookTitle,
-                  style: ReadLogType.bookTitle(size: 15, color: ReadLogColors.ink),
+                  style: LumenType.bookTitle(size: 15, color: LumenColors.ink),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1541,7 +1541,7 @@ class _HistoryTile extends StatelessWidget {
                     period,
                     if (entry.meetingCount > 0) '${entry.meetingCount} encontros',
                   ].join(' · '),
-                  style: ReadLogType.authorName(size: 12, color: ReadLogColors.inkMuted),
+                  style: LumenType.authorName(size: 12, color: LumenColors.inkMuted),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1751,9 +1751,9 @@ class _ReadingProgressSection extends ConsumerWidget {
     final progressAsync = ref.watch(_clubReadingProgressProvider(clubId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryTextColor =
-        isDark ? LumenColors.inkInverse : ReadLogColors.ink;
+        isDark ? LumenColors.inkInverse : LumenColors.ink;
     final secondaryTextColor =
-        isDark ? LumenColors.inkMutedInverse : ReadLogColors.inkMuted;
+        isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted;
 
     return progressAsync.when(
       loading: () => const SizedBox.shrink(),
@@ -1768,7 +1768,7 @@ class _ReadingProgressSection extends ConsumerWidget {
             // Kicker
             Text(
               'PROGRESSO DO GRUPO',
-              style: ReadLogType.kicker(size: 10, color: secondaryTextColor),
+              style: LumenType.kicker(size: 10, color: secondaryTextColor),
             ),
             const SizedBox(height: 10),
             // Linha fina canônica — LumenReadingProgress
@@ -1829,12 +1829,12 @@ class _ProgressStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: ReadLogType.bookTitle(size: 22, color: primaryTextColor),
+          style: LumenType.bookTitle(size: 22, color: primaryTextColor),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: ReadLogType.kicker(size: 10, color: secondaryTextColor),
+          style: LumenType.kicker(size: 10, color: secondaryTextColor),
         ),
       ],
     );
@@ -1866,16 +1866,16 @@ class _ReadingNowSection extends ConsumerWidget {
                   width: 5,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: ReadLogColors.progress,
+                    color: LumenColors.progress,
                     shape: BoxShape.circle,
                   ),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   'lendo agora (${readers.length})',
-                  style: ReadLogType.kicker(
+                  style: LumenType.kicker(
                     size: 10,
-                    color: ReadLogColors.progress,
+                    color: LumenColors.progress,
                   ),
                 ),
               ],
@@ -1908,12 +1908,12 @@ class _ReaderRow extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: ReadLogColors.ink,
+              color: LumenColors.ink,
             ),
           ),
           Text(
             reader.elapsedLabel,
-            style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+            style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
           ),
         ],
       ),
@@ -1942,7 +1942,7 @@ class _HallOfFameSection extends ConsumerWidget {
           children: [
             Text(
               'Hall da Fama',
-              style: ReadLogType.mono(size: 12, color: ReadLogColors.inkMuted),
+              style: LumenType.mono(size: 12, color: LumenColors.inkMuted),
             ),
             const SizedBox(height: 12),
             ...entries.map((e) => _HofRow(entry: e)),
@@ -2006,13 +2006,13 @@ class _HofRow extends StatelessWidget {
                   children: [
                     Text(
                       entry.bookTitle,
-                      style: ReadLogType.bookTitle(size: 15, color: ReadLogColors.ink),
+                      style: LumenType.bookTitle(size: 15, color: LumenColors.ink),
                     ),
                     if (entry.bookAuthor != null) ...[
                       const SizedBox(height: 1),
                       Text(
                         entry.bookAuthor!,
-                        style: ReadLogType.authorName(size: 12, color: ReadLogColors.inkMuted),
+                        style: LumenType.authorName(size: 12, color: LumenColors.inkMuted),
                       ),
                     ],
                   ],
@@ -2021,7 +2021,7 @@ class _HofRow extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 fmt.format(entry.seasonEndedAt),
-                style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+                style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
               ),
             ],
           ),
@@ -2105,11 +2105,11 @@ class _HofStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return RichText(
       text: TextSpan(
-        style: ReadLogType.mono(size: 12, color: ReadLogColors.inkMuted),
+        style: LumenType.mono(size: 12, color: LumenColors.inkMuted),
         children: [
           TextSpan(
             text: value,
-            style: ReadLogType.mono(size: 12, color: ReadLogColors.ink),
+            style: LumenType.mono(size: 12, color: LumenColors.ink),
           ),
           TextSpan(text: ' $label'),
         ],
@@ -2136,11 +2136,11 @@ class _HofHighlight extends StatelessWidget {
       children: [
         Text(
           name,
-          style: ReadLogType.mono(size: 12, color: ReadLogColors.ink),
+          style: LumenType.mono(size: 12, color: LumenColors.ink),
         ),
         Text(
           ' · $label${detail != null ? ' ($detail)' : ''}',
-          style: ReadLogType.mono(size: 12, color: ReadLogColors.inkMuted),
+          style: LumenType.mono(size: 12, color: LumenColors.inkMuted),
         ),
       ],
     );
@@ -2187,13 +2187,13 @@ class _PollCardState extends ConsumerState<_PollCard> {
                   children: [
                     Text(
                       poll.title,
-                      style: ReadLogType.mono(size: 13, color: ReadLogColors.ink),
+                      style: LumenType.mono(size: 13, color: LumenColors.ink),
                     ),
                     if (poll.description != null) ...[
                       const SizedBox(height: 2),
                       Text(
                         poll.description!,
-                        style: ReadLogType.mono(
+                        style: LumenType.mono(
                           size: 10,
                           color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
                         ),
@@ -2204,9 +2204,9 @@ class _PollCardState extends ConsumerState<_PollCard> {
               ),
               Text(
                 poll.isOpen ? 'aberta' : 'encerrada',
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 10,
-                  color: poll.isOpen ? ReadLogColors.sage : LumenColors.inkSecondary,
+                  color: poll.isOpen ? LumenColors.sage : LumenColors.inkSecondary,
                 ),
               ),
               if (widget.club.canManage)
@@ -2255,10 +2255,10 @@ class _PollCardState extends ConsumerState<_PollCard> {
                       children: [
                         Text(
                           opt.bookTitle,
-                          style: ReadLogType.mono(
+                          style: LumenType.mono(
                             size: 12,
                             color: isMyVote
-                                ? ReadLogColors.ink
+                                ? LumenColors.ink
                                 : LumenColors.ink,
                             weight: isMyVote ? FontWeight.w600 : FontWeight.w400,
                           ),
@@ -2266,7 +2266,7 @@ class _PollCardState extends ConsumerState<_PollCard> {
                         if (opt.bookAuthor != null)
                           Text(
                             opt.bookAuthor!,
-                            style: ReadLogType.mono(
+                            style: LumenType.mono(
                               size: 10,
                               color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
                             ),
@@ -2276,10 +2276,10 @@ class _PollCardState extends ConsumerState<_PollCard> {
                   ),
                   Text(
                     '${opt.voteCount} · ${(pct * 100).toStringAsFixed(0)}%',
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                       size: 10,
                       color: isMyVote
-                          ? ReadLogColors.ink
+                          ? LumenColors.ink
                           : LumenColors.inkMuted,
                     ),
                   ),
@@ -2294,7 +2294,7 @@ class _PollCardState extends ConsumerState<_PollCard> {
           child: Text(
             '$total ${total == 1 ? 'voto total' : 'votos totais'}'
             '${poll.isOpen ? ' · toque para votar' : ''}',
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 10,
               color: LumenColors.inkSecondary,
             ),
@@ -3240,7 +3240,7 @@ class _ChallengesSection extends ConsumerWidget {
             Expanded(
               child: Text(
                 'DESAFIOS',
-                style: ReadLogType.kicker(
+                style: LumenType.kicker(
                   size: 10,
                   color: Theme.of(context).brightness == Brightness.dark
                       ? LumenColors.inkMutedInverse
@@ -3253,7 +3253,7 @@ class _ChallengesSection extends ConsumerWidget {
                 onTap: () => _showCreateSheet(context, ref),
                 child: Text(
                   'Novo',
-                  style: ReadLogType.authorName(
+                  style: LumenType.authorName(
                     size: 13,
                     color: Theme.of(context).brightness == Brightness.dark
                         ? LumenColors.inkMutedInverse
@@ -3275,7 +3275,7 @@ class _ChallengesSection extends ConsumerWidget {
                   club.canManage
                       ? 'Nenhum desafio ainda. Crie o primeiro.'
                       : 'Nenhum desafio criado ainda.',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 12,
                     color: Theme.of(context).brightness == Brightness.dark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
                   ),
@@ -3337,7 +3337,7 @@ class _ChallengeCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textColor = isActive ? ReadLogColors.ink : ReadLogColors.inkMuted;
+    final textColor = isActive ? LumenColors.ink : LumenColors.inkMuted;
 
     return InkWell(
       onTap: () => context.push(
@@ -3372,7 +3372,7 @@ class _ChallengeCard extends ConsumerWidget {
                       'meta: ${challenge.goalValue} ${challenge.goalType.unit}',
                       challenge.daysLeftLabel,
                     ].join(' · '),
-                    style: ReadLogType.mono(size: 11, color: ReadLogColors.inkMuted),
+                    style: LumenType.mono(size: 11, color: LumenColors.inkMuted),
                   ),
                 ],
               ),
@@ -3380,13 +3380,13 @@ class _ChallengeCard extends ConsumerWidget {
             const SizedBox(width: 12),
             Text(
               isActive ? 'ativo' : (challenge.status.dbValue == 'finished' ? 'encerrado' : 'cancelado'),
-              style: ReadLogType.kicker(
+              style: LumenType.kicker(
                 size: 9,
-                color: isActive ? ReadLogColors.progress : ReadLogColors.inkGhost,
+                color: isActive ? LumenColors.progress : LumenColors.inkGhost,
               ),
             ),
             const SizedBox(width: 6),
-            Icon(Icons.chevron_right, size: 14, color: ReadLogColors.inkGhost),
+            Icon(Icons.chevron_right, size: 14, color: LumenColors.inkGhost),
           ],
         ),
       ),
@@ -3682,9 +3682,9 @@ class _OpenPollCardState extends ConsumerState<_OpenPollCard> {
               ),
               Text(
                 isOpen ? 'aberta' : 'encerrada',
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 10,
-                  color: isOpen ? ReadLogColors.sage : LumenColors.inkSecondary,
+                  color: isOpen ? LumenColors.sage : LumenColors.inkSecondary,
                 ),
               ),
             ],
@@ -3703,10 +3703,10 @@ class _OpenPollCardState extends ConsumerState<_OpenPollCard> {
                       Expanded(
                         child: Text(
                           r.optionLabel,
-                          style: ReadLogType.mono(
+                          style: LumenType.mono(
                             size: 12,
                             color: r.votedByMe
-                                ? ReadLogColors.ink
+                                ? LumenColors.ink
                                 : LumenColors.ink,
                             weight: r.votedByMe ? FontWeight.w600 : FontWeight.w400,
                           ),
@@ -3714,10 +3714,10 @@ class _OpenPollCardState extends ConsumerState<_OpenPollCard> {
                       ),
                       Text(
                         '${r.voteCount} · ${r.pct.toStringAsFixed(0)}%',
-                        style: ReadLogType.mono(
+                        style: LumenType.mono(
                           size: 10,
                           color: r.votedByMe
-                              ? ReadLogColors.ink
+                              ? LumenColors.ink
                               : LumenColors.inkMuted,
                         ),
                       ),
@@ -3910,7 +3910,7 @@ class _SectionLabel extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Text(
       text.toUpperCase(),
-      style: ReadLogType.kicker(
+      style: LumenType.kicker(
         size: 10,
         color: isDark ? LumenColors.inkMutedInverse : LumenColors.inkMuted,
       ),
@@ -4010,7 +4010,7 @@ class _TimelineButton extends StatelessWidget {
             Expanded(
               child: Text(
                 'Linha do tempo',
-                style: ReadLogType.mono(size: 13, color: ReadLogColors.ink),
+                style: LumenType.mono(size: 13, color: LumenColors.ink),
               ),
             ),
             Icon(Icons.chevron_right, size: 14,
@@ -4047,7 +4047,7 @@ class _StatsButton extends StatelessWidget {
             Expanded(
               child: Text(
                 'Estatísticas',
-                style: ReadLogType.mono(size: 13, color: ReadLogColors.ink),
+                style: LumenType.mono(size: 13, color: LumenColors.ink),
               ),
             ),
             Icon(Icons.chevron_right, size: 14,

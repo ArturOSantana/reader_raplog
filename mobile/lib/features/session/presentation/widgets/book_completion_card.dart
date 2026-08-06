@@ -48,7 +48,7 @@ class BookCompletionCard extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // ── Fundo: ink com textura de papel sutil ────────────────
-          Container(color: ReadLogColors.ink),
+          Container(color: LumenColors.ink),
 
           // ── Faixa lateral esquerda — lombada do livro ─────────────
           Positioned(
@@ -58,7 +58,7 @@ class BookCompletionCard extends StatelessWidget {
             child: Container(
               width: 8,
               decoration: const BoxDecoration(
-                color: ReadLogColors.stamp,
+                color: LumenColors.stamp,
               ),
             ),
           ),
@@ -69,7 +69,7 @@ class BookCompletionCard extends StatelessWidget {
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: ReadLogColors.cream.withValues(alpha: 0.06),
+                  color: LumenColors.cream.withValues(alpha: 0.06),
                   width: 1,
                 ),
               ),
@@ -92,15 +92,15 @@ class BookCompletionCard extends StatelessWidget {
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         border: Border.all(
-                            color: ReadLogColors.stamp.withValues(alpha: 0.7)),
+                            color: LumenColors.stamp.withValues(alpha: 0.7)),
                         borderRadius: BorderRadius.circular(2),
                       ),
                       child: Text(
                         'LIVRO CONCLUÍDO',
-                        style: ReadLogType.mono(
+                        style: LumenType.mono(
                           size: 9,
                           weight: FontWeight.w600,
-                          color: ReadLogColors.stamp,
+                          color: LumenColors.stamp,
                         ).copyWith(letterSpacing: 1.4),
                       ),
                     ),
@@ -113,9 +113,9 @@ class BookCompletionCard extends StatelessWidget {
                         children: [
                           Text(
                             'ReadLog',
-                            style: ReadLogType.display(
+                            style: LumenType.display(
                               size: 11,
-                              color: ReadLogColors.brassLight
+                              color: LumenColors.brassLight
                                   .withValues(alpha: 0.6),
                             ).copyWith(letterSpacing: 1.6),
                           ),
@@ -123,7 +123,7 @@ class BookCompletionCard extends StatelessWidget {
                             width: 44,
                             height: 1,
                             color:
-                                ReadLogColors.brassLight.withValues(alpha: 0.3),
+                                LumenColors.brassLight.withValues(alpha: 0.3),
                           ),
                         ],
                       ),
@@ -138,10 +138,10 @@ class BookCompletionCard extends StatelessWidget {
                   book.title,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: ReadLogType.display(
+                  style: LumenType.display(
                     size: 26,
                     weight: FontWeight.w600,
-                    color: ReadLogColors.cream,
+                    color: LumenColors.cream,
                   ).copyWith(height: 1.2),
                 ),
 
@@ -149,9 +149,9 @@ class BookCompletionCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     book.author!,
-                    style: ReadLogType.mono(
+                    style: LumenType.mono(
                       size: 12,
-                      color: ReadLogColors.cream.withValues(alpha: 0.5),
+                      color: LumenColors.cream.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -170,8 +170,8 @@ class BookCompletionCard extends StatelessWidget {
                               : Icons.star_outline_rounded,
                           size: 18,
                           color: filled
-                              ? ReadLogColors.brass
-                              : ReadLogColors.cream.withValues(alpha: 0.2),
+                              ? LumenColors.brass
+                              : LumenColors.cream.withValues(alpha: 0.2),
                         ),
                       );
                     }),
@@ -187,7 +187,7 @@ class BookCompletionCard extends StatelessWidget {
                       Container(
                         width: 2,
                         height: null,
-                        color: ReadLogColors.brass.withValues(alpha: 0.5),
+                        color: LumenColors.brass.withValues(alpha: 0.5),
                         margin: const EdgeInsets.only(right: 10),
                       ),
                       Expanded(
@@ -195,12 +195,12 @@ class BookCompletionCard extends StatelessWidget {
                           '"$review"',
                           maxLines: 4,
                           overflow: TextOverflow.ellipsis,
-                          style: ReadLogType.display(
+                          style: LumenType.display(
                             size: 12,
                             weight: FontWeight.w300,
                             italic: true,
                             color:
-                                ReadLogColors.cream.withValues(alpha: 0.65),
+                                LumenColors.cream.withValues(alpha: 0.65),
                           ).copyWith(height: 1.55),
                         ),
                       ),
@@ -212,7 +212,7 @@ class BookCompletionCard extends StatelessWidget {
 
                 // Divisória tracejada — régua de sumário
                 _DashedDivider(
-                    color: ReadLogColors.cream.withValues(alpha: 0.15)),
+                    color: LumenColors.cream.withValues(alpha: 0.15)),
                 const SizedBox(height: 18),
 
                 // Estatísticas em réguas de sumário (leader rows)
@@ -236,9 +236,9 @@ class BookCompletionCard extends StatelessWidget {
                 // Data — rodapé
                 Text(
                   'Concluído em $_dateLabel',
-                  style: ReadLogType.mono(
+                  style: LumenType.mono(
                     size: 10,
-                    color: ReadLogColors.cream.withValues(alpha: 0.35),
+                    color: LumenColors.cream.withValues(alpha: 0.35),
                   ),
                 ),
               ],
@@ -265,9 +265,9 @@ class _CardLeaderRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: ReadLogType.mono(
+          style: LumenType.mono(
               size: 11,
-              color: ReadLogColors.cream.withValues(alpha: 0.5)),
+              color: LumenColors.cream.withValues(alpha: 0.5)),
         ),
         const SizedBox(width: 6),
         Expanded(
@@ -275,7 +275,7 @@ class _CardLeaderRow extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 3),
             child: CustomPaint(
               painter: _DotsPainter(
-                  color: ReadLogColors.cream.withValues(alpha: 0.18)),
+                  color: LumenColors.cream.withValues(alpha: 0.18)),
               size: const Size(double.infinity, 1),
             ),
           ),
@@ -283,10 +283,10 @@ class _CardLeaderRow extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           value,
-          style: ReadLogType.mono(
+          style: LumenType.mono(
             size: 13,
             weight: FontWeight.w600,
-            color: ReadLogColors.brassLight,
+            color: LumenColors.brassLight,
           ),
         ),
       ],

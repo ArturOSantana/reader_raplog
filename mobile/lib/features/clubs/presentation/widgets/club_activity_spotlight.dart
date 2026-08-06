@@ -98,9 +98,9 @@ class _SpotlightBody extends StatelessWidget {
           children: [
             Text(
               'MAIS ATIVOS',
-              style: ReadLogType.mono(
+              style: LumenType.mono(
                 size: 10,
-                color: ReadLogColors.inkMuted,
+                color: LumenColors.inkMuted,
               ).copyWith(letterSpacing: 1.4),
             ),
             if (hasCurrentBook && onPeriodChanged != null)
@@ -116,9 +116,9 @@ class _SpotlightBody extends StatelessWidget {
           period == 'current_book'
               ? 'Nessa leitura'
               : 'No clube, desde sempre',
-          style: ReadLogType.mono(
+          style: LumenType.mono(
             size: 11,
-            color: ReadLogColors.inkGhost,
+            color: LumenColors.inkGhost,
           ),
         ),
         const SizedBox(height: 14),
@@ -133,7 +133,7 @@ class _SpotlightBody extends StatelessWidget {
         // ── Demais membros (sem posição) ───────────────────────────────
         if (rest.isNotEmpty) ...[
           const SizedBox(height: 6),
-          const Divider(height: 1, color: ReadLogColors.hairline),
+          const Divider(height: 1, color: LumenColors.hairline),
           const SizedBox(height: 6),
           ...rest.map((e) => _RestRow(entry: e)),
         ],
@@ -188,13 +188,13 @@ class _ToggleLabel extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: Text(
         label,
-        style: ReadLogType.mono(
+        style: LumenType.mono(
           size: 11,
-          color: selected ? ReadLogColors.ink : ReadLogColors.inkGhost,
+          color: selected ? LumenColors.ink : LumenColors.inkGhost,
           weight: selected ? FontWeight.w600 : FontWeight.w400,
         ).copyWith(
           decoration: selected ? TextDecoration.underline : null,
-          decorationColor: ReadLogColors.inkMuted,
+          decorationColor: LumenColors.inkMuted,
         ),
       ),
     );
@@ -235,7 +235,7 @@ class _TopRow extends StatelessWidget {
                         width: 6,
                         height: 6,
                         decoration: const BoxDecoration(
-                          color: ReadLogColors.read,
+                          color: LumenColors.read,
                           shape: BoxShape.circle,
                         ),
                       )
@@ -243,16 +243,16 @@ class _TopRow extends StatelessWidget {
                         width: 5,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: ReadLogColors.inkGhost,
+                          color: LumenColors.inkGhost,
                           shape: BoxShape.circle,
                         ),
                       ),
               ),
               Text(
                 entry.userName ?? 'Leitor',
-                style: ReadLogType.mono(
+                style: LumenType.mono(
                   size: 13,
-                  color: isFirst ? ReadLogColors.ink : ReadLogColors.inkMuted,
+                  color: isFirst ? LumenColors.ink : LumenColors.inkMuted,
                   weight: isFirst ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
@@ -260,9 +260,9 @@ class _TopRow extends StatelessWidget {
           ),
           Text(
             sessionLabel,
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 11,
-              color: ReadLogColors.inkGhost,
+              color: LumenColors.inkGhost,
             ),
           ),
         ],
@@ -287,16 +287,16 @@ class _RestRow extends StatelessWidget {
         children: [
           Text(
             entry.userName ?? 'Leitor',
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 12,
-              color: ReadLogColors.inkGhost,
+              color: LumenColors.inkGhost,
             ),
           ),
           Text(
             '${entry.totalSessions} sessões',
-            style: ReadLogType.mono(
+            style: LumenType.mono(
               size: 11,
-              color: ReadLogColors.inkGhost,
+              color: LumenColors.inkGhost,
             ),
           ),
         ],
