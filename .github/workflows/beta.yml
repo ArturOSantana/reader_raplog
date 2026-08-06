@@ -6,6 +6,7 @@ on:
     paths:
       - 'mobile/**'
       - '.github/workflows/beta.yml'
+  workflow_dispatch:
 
 # Cancela runs anteriores ainda em andamento para a mesma branch
 concurrency:
