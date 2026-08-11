@@ -24,13 +24,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app:
-          - marketing
-          - web
-          - admin
+        include:
+          - app: marketing
+            pkg: "@lumen/marketing"
+            project_id_secret: VERCEL_PROJECT_ID_MARKETING
+            app_url_secret: NEXT_PUBLIC_APP_URL_MARKETING
+          - app: web
+            pkg: "@lumen/web"
+            project_id_secret: VERCEL_PROJECT_ID_WEB
+            app_url_secret: NEXT_PUBLIC_APP_URL_WEB
+          - app: admin
+            pkg: "@lumen/admin"
+            project_id_secret: VERCEL_PROJECT_ID_ADMIN
+            app_url_secret: NEXT_PUBLIC_APP_URL_ADMIN
 
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -48,77 +58,38 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Select Project ID
-        shell: bash
-        run: |
-          case "${{ matrix.app }}" in
-            marketing)
-              echo "VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_MARKETING }}" >> $GITHUB_ENV
-              ;;
-            web)
-              echo "VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_WEB }}" >> $GITHUB_ENV
-              ;;
-            admin)
-              echo "VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_ADMIN }}" >> $GITHUB_ENV
-              ;;
-          esac
-
       - name: Link project
-        working-directory: platform
+        working-directory: platform/apps/${{ matrix.app }}
         run: |
-          mkdir -p apps/${{ matrix.app }}/.vercel
-          cat > apps/${{ matrix.app }}/.vercel/project.json <<EOF
-          {
-            "projectId":"${VERCEL_PROJECT_ID}",
-            "orgId":"${VERCEL_ORG_ID}"
-          }
-          EOF
+          mkdir -p .vercel
+          printf '{"projectId":"%s","orgId":"%s"}\n' \
+            "${{ secrets[matrix.project_id_secret] }}" \
+            "${VERCEL_ORG_ID}" \
+            > .vercel/project.json
 
       - name: Pull environment
-        working-directory: platform
+        working-directory: platform/apps/${{ matrix.app }}
+        run: vercel pull --yes --environment=production --token=${VERCEL_TOKEN}
+
+      - name: Write .env.production
+        working-directory: platform/apps/${{ matrix.app }}
         run: |
-          vercel pull \
-            --yes \
-            --environment=production \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --cwd apps/${{ matrix.app }}
+          printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nNEXT_PUBLIC_SUPABASE_ANON_KEY=%s\nNEXT_PUBLIC_APP_URL=%s\nAPP_URL=%s\n' \
+            "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" \
+            "${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            "${{ secrets[matrix.app_url_secret] }}" \
+            "${{ secrets[matrix.app_url_secret] }}" \
+            > .env.production
 
       - name: Build
-        working-directory: platform
+        working-directory: platform/apps/${{ matrix.app }}
         env:
-          # Variáveis por app — cada app lê apenas as suas
-          NEXT_PUBLIC_SUPABASE_URL_ADMIN:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY_ADMIN: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_APP_URL_ADMIN:           ${{ secrets.NEXT_PUBLIC_APP_URL_ADMIN }}
-          APP_URL_ADMIN:                       ${{ secrets.NEXT_PUBLIC_APP_URL_ADMIN }}
-          NEXT_PUBLIC_SUPABASE_URL_WEB:        ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY_WEB:   ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_APP_URL_WEB:             ${{ secrets.NEXT_PUBLIC_APP_URL_WEB }}
-          APP_URL_WEB:                         ${{ secrets.NEXT_PUBLIC_APP_URL_WEB }}
-          NEXT_PUBLIC_SUPABASE_URL_MARKETING:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY_MARKETING: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_APP_URL_MARKETING:           ${{ secrets.NEXT_PUBLIC_APP_URL_MARKETING }}
-          APP_URL_MARKETING:                       ${{ secrets.NEXT_PUBLIC_APP_URL_MARKETING }}
-        run: |
-          APP="${{ matrix.app }}"
-          APP_UPPER="${APP^^}"
-
-          # Escreve .env.production com os valores reais dos secrets do GitHub.
-          # O vercel pull baixa vars sensíveis mascaradas ("[SENSITIVE]"), por isso
-          # usamos secrets do GitHub como fonte de verdade para NEXT_PUBLIC_*.
-          {
-            eval "echo NEXT_PUBLIC_SUPABASE_URL=\$NEXT_PUBLIC_SUPABASE_URL_${APP_UPPER}"
-            eval "echo NEXT_PUBLIC_SUPABASE_ANON_KEY=\$NEXT_PUBLIC_SUPABASE_ANON_KEY_${APP_UPPER}"
-            eval "echo NEXT_PUBLIC_APP_URL=\$NEXT_PUBLIC_APP_URL_${APP_UPPER}"
-            eval "echo APP_URL=\$APP_URL_${APP_UPPER}"
-          } > "apps/${APP}/.env.production"
-
-          # Build e deploy a partir do cwd da app — evita path duplicado no output
-          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/${APP}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets[matrix.app_url_secret] }}
+          APP_URL: ${{ secrets[matrix.app_url_secret] }}
+        run: vercel build --prod --token=${VERCEL_TOKEN}
 
       - name: Deploy
-        working-directory: platform
-        run: |
-          vercel deploy --prebuilt --prod \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --cwd apps/${{ matrix.app }}
+        working-directory: platform/apps/${{ matrix.app }}
+        run: vercel deploy --prebuilt --prod --token=${VERCEL_TOKEN}
