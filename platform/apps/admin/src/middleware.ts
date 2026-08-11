@@ -12,6 +12,8 @@ import { NextResponse, type NextRequest } from 'next/server'
  *
  * - Roles aceitas: super_admin, admin, support, moderator, analyst.
  * - Qualquer outro acesso → redireciona para /login.
+ * 
+ * sad
  */
 
 const SESSION_COOKIE = 'sb-ueyamtswrlbtzzwpwddj-auth-token'
