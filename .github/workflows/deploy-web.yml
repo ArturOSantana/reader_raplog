@@ -87,15 +87,18 @@ jobs:
         working-directory: platform
         env:
           # Variáveis por app — cada app lê apenas as suas
-          NEXT_PUBLIC_SUPABASE_URL_ADMIN:    ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL_ADMIN:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY_ADMIN: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_APP_URL_ADMIN:         ${{ secrets.NEXT_PUBLIC_APP_URL_ADMIN }}
-          NEXT_PUBLIC_SUPABASE_URL_WEB:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY_WEB: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_APP_URL_WEB:           ${{ secrets.NEXT_PUBLIC_APP_URL_WEB }}
-          NEXT_PUBLIC_SUPABASE_URL_MARKETING:    ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_APP_URL_ADMIN:           ${{ secrets.NEXT_PUBLIC_APP_URL_ADMIN }}
+          APP_URL_ADMIN:                       ${{ secrets.NEXT_PUBLIC_APP_URL_ADMIN }}
+          NEXT_PUBLIC_SUPABASE_URL_WEB:        ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY_WEB:   ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_APP_URL_WEB:             ${{ secrets.NEXT_PUBLIC_APP_URL_WEB }}
+          APP_URL_WEB:                         ${{ secrets.NEXT_PUBLIC_APP_URL_WEB }}
+          NEXT_PUBLIC_SUPABASE_URL_MARKETING:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY_MARKETING: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_APP_URL_MARKETING:     ${{ secrets.NEXT_PUBLIC_APP_URL_MARKETING }}
+          NEXT_PUBLIC_APP_URL_MARKETING:           ${{ secrets.NEXT_PUBLIC_APP_URL_MARKETING }}
+          APP_URL_MARKETING:                       ${{ secrets.NEXT_PUBLIC_APP_URL_MARKETING }}
         run: |
           APP="${{ matrix.app }}"
           APP_UPPER="${APP^^}"
@@ -107,17 +110,15 @@ jobs:
             eval "echo NEXT_PUBLIC_SUPABASE_URL=\$NEXT_PUBLIC_SUPABASE_URL_${APP_UPPER}"
             eval "echo NEXT_PUBLIC_SUPABASE_ANON_KEY=\$NEXT_PUBLIC_SUPABASE_ANON_KEY_${APP_UPPER}"
             eval "echo NEXT_PUBLIC_APP_URL=\$NEXT_PUBLIC_APP_URL_${APP_UPPER}"
+            eval "echo APP_URL=\$APP_URL_${APP_UPPER}"
           } > "apps/${APP}/.env.production"
 
-          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/${{ matrix.app }}
-
-      - name: Relocate Vercel output
-        working-directory: platform
-        run: |
-          mkdir -p .vercel
-          cp apps/${{ matrix.app }}/.vercel/project.json .vercel/project.json
-          cp -r apps/${{ matrix.app }}/.vercel/output .vercel/output
+          # Build e deploy a partir do cwd da app — evita path duplicado no output
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd apps/${APP}
 
       - name: Deploy
         working-directory: platform
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel deploy --prebuilt --prod \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --cwd apps/${{ matrix.app }}

@@ -3,7 +3,7 @@
     "deploymentEnabled": false
   },
   "framework": "nextjs",
-  "installCommand": "cd ../.. && npm install",
+  "installCommand": "echo skip",
   "buildCommand": "cd ../.. && npx turbo run build --filter=@lumen/admin",
   "outputDirectory": ".next"
 }
