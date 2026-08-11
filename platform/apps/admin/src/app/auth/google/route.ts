@@ -5,8 +5,8 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
-    const { origin } = new URL(request.url)
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ?? origin
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
+      || `https://${request.headers.get('host') ?? 'lumen-admin-ecru.vercel.app'}`
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
