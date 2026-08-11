@@ -34,8 +34,10 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.redirect(data.url)
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    return new Response(`Auth route error: ${msg}`, { status: 500 })
+  } catch {
+    const host = request.headers.get('host') ?? 'lumen-admin-ecru.vercel.app'
+    const base = (process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '')
+      || `https://${host}`
+    return NextResponse.redirect(`${base}/login?error=auth_exception`)
   }
 }
