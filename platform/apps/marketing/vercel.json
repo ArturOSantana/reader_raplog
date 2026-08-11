@@ -4,6 +4,5 @@
   },
   "framework": "nextjs",
   "installCommand": "echo skip",
-  "buildCommand": "cd ../.. && npx turbo run build --filter=@lumen/marketing",
-  "outputDirectory": ".next"
+  "buildCommand": "echo skip"
 }

@@ -73,13 +73,17 @@ jobs:
             "${{ secrets[matrix.app_url_secret] }}" \
             > .env.production
 
-      - name: Build
-        working-directory: platform/apps/${{ matrix.app }}
+      - name: Build (Turbo)
+        working-directory: platform
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_APP_URL: ${{ secrets[matrix.app_url_secret] }}
           APP_URL: ${{ secrets[matrix.app_url_secret] }}
+        run: npx turbo run build --filter=${{ matrix.pkg }}
+
+      - name: Package (vercel build)
+        working-directory: platform/apps/${{ matrix.app }}
         run: vercel build --prod --token=${VERCEL_TOKEN}
 
       - name: Deploy
