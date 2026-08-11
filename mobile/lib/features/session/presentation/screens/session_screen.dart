@@ -59,9 +59,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     setState(() {
       _readingBooks = books;
       if (widget.bookId != null) {
-        _selectedBook = books.firstWhere(
-          (b) => b.id == widget.bookId,
-          orElse: () => books.isNotEmpty ? books.first : books.first,
+        _selectedBook = books.cast<Book?>().firstWhere(
+          (b) => b!.id == widget.bookId,
+          orElse: () => books.isNotEmpty ? books.first : null,
         );
       } else if (books.isNotEmpty) {
         _selectedBook = books.first;
@@ -82,6 +82,21 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       await ref
           .read(sessionNotifierProvider.notifier)
           .recoverActiveSession(bookTitle: bookTitle);
+    }
+
+    // Após recovery, sincroniza _selectedBook com o livro da sessão ativa.
+    // Isso garante que _handleSessionFinished opera no livro correto mesmo
+    // quando o app foi morto pelo SO e reiniciado com outro livro selecionado.
+    if (!mounted) return;
+    final recoveredSession = ref.read(sessionNotifierProvider).session;
+    if (recoveredSession != null) {
+      final match = _readingBooks.cast<Book?>().firstWhere(
+        (b) => b!.id == recoveredSession.bookId,
+        orElse: () => null,
+      );
+      if (match != null && match.id != _selectedBook?.id) {
+        setState(() => _selectedBook = match);
+      }
     }
   }
 
@@ -177,11 +192,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
     if (finished == null || !mounted) return;
 
-    // Atualiza página do livro
-    if (_selectedBook != null && endPage > 0) {
+    // Atualiza página do livro — usa bookId direto da sessão como fonte de
+    // verdade para não depender de _selectedBook (pode estar dessincronizado
+    // em boot recovery com múltiplos livros em leitura).
+    if (endPage > 0) {
       await ref
           .read(bookRepositoryProvider)
-          .update(_selectedBook!.id, {'current_page': endPage});
+          .update(session.bookId, {'current_page': endPage});
     }
 
     ref.read(homeRefreshTriggerProvider.notifier).state++;
