@@ -334,6 +334,20 @@ class SessionNotifier extends Notifier<ActiveSessionState> {
     });
   }
 
+  /// Para o ticker e descarta a notificação imediatamente, sem alterar o
+  /// estado da sessão. Deve ser chamado no início do fluxo de finalização
+  /// para que a UI e a barra de status reflitam o encerramento antes do
+  /// await de rede do [finishSession].
+  void stopForFinish() {
+    _ticker?.cancel();
+    _ticker = null;
+    _inactivityWarningTimer?.cancel();
+    _inactivityWarningTimer = null;
+    _inactivityAutoPauseTimer?.cancel();
+    _inactivityAutoPauseTimer = null;
+    ReadingNotificationService.instance.dismiss();
+  }
+
   void _cleanup() {
     _ticker?.cancel();
     _ticker = null;

@@ -1242,7 +1242,7 @@ class _GoalProgressBar extends StatelessWidget {
 // _FinishSessionSheet — bottomsheet de finalização
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _FinishSessionSheet extends StatefulWidget {
+class _FinishSessionSheet extends ConsumerStatefulWidget {
   final ReadingSession session;
   final int elapsedSeconds;
   // Assinatura expandida: mood e miniReview agora são passados ao salvar
@@ -1256,10 +1256,10 @@ class _FinishSessionSheet extends StatefulWidget {
   });
 
   @override
-  State<_FinishSessionSheet> createState() => _FinishSessionSheetState();
+  ConsumerState<_FinishSessionSheet> createState() => _FinishSessionSheetState();
 }
 
-class _FinishSessionSheetState extends State<_FinishSessionSheet> {
+class _FinishSessionSheetState extends ConsumerState<_FinishSessionSheet> {
   final _endPageController = TextEditingController();
   final _notesController = TextEditingController();
   final _miniReviewController = TextEditingController();
@@ -1289,6 +1289,11 @@ class _FinishSessionSheetState extends State<_FinishSessionSheet> {
       );
       return;
     }
+
+    // Para o ticker e descarta a notificação persistente imediatamente,
+    // antes do pop e do await de rede, para que o timer não continue
+    // contando e a notificação não apareça durante o processamento.
+    ref.read(sessionNotifierProvider.notifier).stopForFinish();
 
     setState(() => _saving = true);
     Navigator.pop(context);
